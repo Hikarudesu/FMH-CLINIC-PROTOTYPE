@@ -1,0 +1,110 @@
+{% extends 'base/portal_user.html' %}
+
+{% block title %}{{ action }} Pet{% endblock %}
+
+{% block content %}
+
+<div class="pf-page">
+
+  <!-- Back link -->
+  <a href="{% url 'patients:my_pets' %}" class="pf-back-link">
+    <i class='bx bx-arrow-back'></i> Back to My Pets
+  </a>
+
+  <!-- Form Card -->
+  <div class="pf-card">
+
+    <!-- Card header with gradient -->
+    <div class="pf-card-header">
+      <div class="pf-header-bg">
+        <i class='bx bxs-dog pf-bg-icon pf-bg-1'></i>
+        <i class='bx bxs-bone pf-bg-icon pf-bg-2'></i>
+      </div>
+      <div class="pf-header-content">
+        <div class="pf-header-icon">
+          {% if action == 'Register' %}
+          <i class='bx bx-plus-circle'></i>
+          {% else %}
+          <i class='bx bx-edit-alt'></i>
+          {% endif %}
+        </div>
+        <h1>{{ action }} Pet</h1>
+        <p>{% if action == 'Register' %}Add a new furry friend to your family{% else %}Update {{ pet.name }}'s information{% endif %}</p>
+      </div>
+    </div>
+
+    <!-- Form Body -->
+    <form method="POST" class="pf-form" autocomplete="off">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="pf-error-banner">
+        <i class='bx bx-error-circle'></i> {{ form.non_field_errors.as_text }}
+      </div>
+      {% endif %}
+
+      <div class="pf-grid">
+        <!-- Name -->
+        <div class="pf-field {% if form.name.errors %}has-error{% endif %}">
+          <div class="pf-field-icon"><i class='bx bx-rename'></i></div>
+          {{ form.name }}
+          <label for="{{ form.name.id_for_label }}">Name</label>
+          {% if form.name.errors %}<span class="pf-field-error">{{ form.name.errors.0 }}</span>{% endif %}
+        </div>
+
+        <!-- Species -->
+        <div class="pf-field {% if form.species.errors %}has-error{% endif %}">
+          <div class="pf-field-icon"><i class='bx bxs-dog'></i></div>
+          {{ form.species }}
+          <label for="{{ form.species.id_for_label }}">Species</label>
+          {% if form.species.errors %}<span class="pf-field-error">{{ form.species.errors.0 }}</span>{% endif %}
+        </div>
+
+        <!-- Breed -->
+        <div class="pf-field {% if form.breed.errors %}has-error{% endif %}">
+          <div class="pf-field-icon"><i class='bx bx-category'></i></div>
+          {{ form.breed }}
+          <label for="{{ form.breed.id_for_label }}">Breed</label>
+          {% if form.breed.errors %}<span class="pf-field-error">{{ form.breed.errors.0 }}</span>{% endif %}
+        </div>
+
+        <!-- Age -->
+        <div class="pf-field {% if form.age.errors %}has-error{% endif %}">
+          <div class="pf-field-icon"><i class='bx bx-time-five'></i></div>
+          {{ form.age }}
+          <label for="{{ form.age.id_for_label }}">Age (years)</label>
+          {% if form.age.errors %}<span class="pf-field-error">{{ form.age.errors.0 }}</span>{% endif %}
+        </div>
+
+        <!-- Sex -->
+        <div class="pf-field {% if form.sex.errors %}has-error{% endif %}">
+          <div class="pf-field-icon"><i class='bx bx-male-female'></i></div>
+          {{ form.sex }}
+          <label for="{{ form.sex.id_for_label }}">Sex</label>
+          {% if form.sex.errors %}<span class="pf-field-error">{{ form.sex.errors.0 }}</span>{% endif %}
+        </div>
+
+        <!-- Color -->
+        <div class="pf-field {% if form.color.errors %}has-error{% endif %}">
+          <div class="pf-field-icon"><i class='bx bx-palette'></i></div>
+          {{ form.color }}
+          <label for="{{ form.color.id_for_label }}">Color</label>
+          {% if form.color.errors %}<span class="pf-field-error">{{ form.color.errors.0 }}</span>{% endif %}
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="pf-actions">
+        <button type="submit" class="pf-submit-btn">
+          <i class='bx bx-check'></i> {{ action }} Pet
+        </button>
+        <a href="{% url 'patients:my_pets' %}" class="pf-cancel-btn">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+{% endblock %}

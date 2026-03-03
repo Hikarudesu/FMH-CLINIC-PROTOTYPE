@@ -1,0 +1,344 @@
+{% extends 'base/portal_admin.html' %}
+{% load static %}
+
+{% block title %}Schedule Calendar{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h1>Schedule</h1>
+    <p class="page-subtitle">View and manage vet availability across branches</p>
+  </div>
+  <div class="page-header-actions">
+    <button class="btn-action outline danger" id="clearAllBtn"><i class='bx bx-trash'></i> Clear All</button>
+    <button class="btn-action outline" id="recurringBtn"><i class='bx bx-revision'></i> Manage Recurring</button>
+    <button class="btn-action primary" id="addScheduleBtn"><i class='bx bx-plus-circle'></i> Add Schedule</button>
+  </div>
+</div>
+
+<!-- Calendar Controls -->
+<div class="filter-bar">
+  <select class="filter-select" id="branchFilter">
+    <option value="">All Branches</option>
+    {% for branch in branches %}
+    <option value="{{ branch.id }}">{{ branch.name }}</option>
+    {% endfor %}
+  </select>
+
+  <div class="cal-nav">
+    <button class="cal-nav-btn" id="prevMonth"><i class='bx bx-chevron-left'></i></button>
+    <span class="cal-month-label" id="monthLabel">Loading...</span>
+    <button class="cal-nav-btn" id="nextMonth"><i class='bx bx-chevron-right'></i></button>
+  </div>
+
+  <div class="filter-actions">
+    <button class="filter-btn clear" id="todayBtn"><i class='bx bx-calendar'></i> Today</button>
+  </div>
+</div>
+
+<!-- Calendar Grid -->
+<div class="dashboard-card full-width">
+  <div class="card-body" style="padding: 12px; overflow-x: auto;">
+    <div class="cal-weekdays">
+      <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+</div>
+
+<!-- Day Detail Panel -->
+<div class="dashboard-card full-width" id="dayDetailPanel" style="display:none; margin-top:14px;">
+  <div class="card-header">
+    <h3><i class='bx bxs-calendar-event'></i> <span id="dayDetailTitle">Schedule Details</span></h3>
+    <button class="card-action" id="closeDayDetail" style="cursor:pointer; background:none; border:none; font-family:inherit;">Close</button>
+  </div>
+  <div class="card-body" id="dayDetailBody"></div>
+</div>
+
+<!-- ADD SCHEDULE MODAL -->
+<div class="schedule-modal-overlay" id="scheduleModal">
+  <div class="schedule-modal">
+    <div class="schedule-modal-header">
+      <h3><i class='bx bx-calendar-plus'></i> Add Schedule Entry</h3>
+      <button class="schedule-modal-close" id="closeModal"><i class='bx bx-x'></i></button>
+    </div>
+    <form method="POST" action="{% url 'employees:schedule_add' %}" class="pet-form" novalidate>
+      {% csrf_token %}
+      <div class="schedule-modal-body">
+        <div class="form-group" style="grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+          <div>
+            <strong style="display: block; font-size: 0.95rem;">Repeat Weekly?</strong>
+            <span style="font-size: 0.8rem; color: var(--text-2);">Create a recurring template instead of a single day</span>
+          </div>
+          <div class="toggle-switch-wrapper" style="margin: 0;">
+            <label class="toggle-switch">
+              <input type="checkbox" name="is_recurring" id="id_is_recurring">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="{{ form.branch.id_for_label }}">Branch</label>
+            {{ form.branch }}
+          </div>
+          <div class="form-group">
+            <label for="{{ form.staff.id_for_label }}">Staff Member</label>
+            {{ form.staff }}
+          </div>
+          <div class="form-group" id="singleDateGroup">
+            <label for="{{ form.date.id_for_label }}">Date</label>
+            {{ form.date }}
+          </div>
+          
+          <!-- Recurring Fields (Hidden Initially) -->
+          <div class="form-group recurring-group" style="display: none; grid-column: 1 / -1;">
+            <label>Days of Week</label>
+            <div class="day-checkboxes">
+              {{ recurring_form.days_of_week }}
+            </div>
+          </div>
+          <div class="form-group recurring-group" style="display: none;">
+            <label>Effective From</label>
+            {{ recurring_form.effective_from }}
+          </div>
+          <div class="form-group recurring-group" style="display: none;">
+            <label>Effective Until</label>
+            {{ recurring_form.effective_until }}
+          </div>
+          <!-- End Recurring Fields -->
+          <div class="form-group">
+            <label for="{{ form.shift_type.id_for_label }}">Shift Type</label>
+            {{ form.shift_type }}
+          </div>
+          <div class="form-group">
+            <label for="{{ form.start_time.id_for_label }}">Start Time</label>
+            {{ form.start_time }}
+          </div>
+          <div class="form-group">
+            <label for="{{ form.end_time.id_for_label }}">End Time</label>
+            {{ form.end_time }}
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <div class="toggle-switch-wrapper">
+              <label class="toggle-switch">
+                <input type="checkbox" name="is_available" id="id_is_available" checked>
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label">Available for Appointments</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 8px;">
+          <label for="{{ form.notes.id_for_label }}">Notes</label>
+          {{ form.notes }}
+        </div>
+      </div>
+      <div class="schedule-modal-footer">
+        <button type="submit" class="btn-action primary"><i class='bx bx-check'></i> Add Schedule</button>
+        <button type="button" class="btn-action outline" id="cancelModal">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- RECURRING SCHEDULE MODAL -->
+<div class="schedule-modal-overlay" id="recurringModal">
+  <div class="schedule-modal" style="max-width: 700px;">
+    <div class="schedule-modal-header">
+      <h3><i class='bx bx-revision'></i> Recurring Schedule Templates</h3>
+      <button class="schedule-modal-close" id="closeRecurringModal"><i class='bx bx-x'></i></button>
+    </div>
+    <div class="schedule-modal-body">
+      <!-- Existing Recurring Schedules -->
+      <div id="recurringList" style="margin-bottom: 16px;">
+        {% if recurring_schedules %}
+        <div class="schedule-entries">
+          {% for rs in recurring_schedules %}
+          <div class="schedule-entry">
+            <div class="schedule-entry-left">
+              <div class="schedule-entry-avatar">{{ rs.staff.first_name|make_list|first|upper }}</div>
+              <div class="schedule-entry-info">
+                <strong>{{ rs.staff.full_name }}</strong>
+                <span>{{ rs.get_day_of_week_display }} &middot; {{ rs.get_shift_type_display }}</span>
+              </div>
+            </div>
+            <div class="schedule-entry-details">
+              <div class="schedule-entry-time">
+                <i class='bx bx-time-five'></i> {{ rs.start_time|time:"g:i A" }} – {{ rs.end_time|time:"g:i A" }}
+              </div>
+              <div class="schedule-entry-branch">
+                <i class='bx bx-map-pin'></i> {{ rs.branch.name }}
+              </div>
+              <span class="shift-badge shift-{{ rs.shift_type|lower }}">{{ rs.get_shift_type_display }}</span>
+            </div>
+            <form method="POST" action="{% url 'employees:recurring_delete' rs.pk %}" style="margin:0;">
+              {% csrf_token %}
+              <button type="submit" class="pet-action-btn danger" title="Remove" onclick="return confirm('Remove this recurring template?');">
+                <i class='bx bx-trash'></i>
+              </button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding: 18px 0;">
+          <i class='bx bx-revision'></i>
+          <h4>No recurring templates yet</h4>
+          <p>Add a template below to auto-generate schedules.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Add New Recurring Schedule Form -->
+      <div style="border-top: 1px solid var(--border); padding-top: 16px;">
+        <h4 style="margin-bottom: 12px; font-size: 0.9rem; color: var(--text-2);"><i class='bx bx-plus-circle'></i> Add New Template</h4>
+        <form method="POST" action="{% url 'employees:recurring_add' %}" class="pet-form">
+          {% csrf_token %}
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Branch</label>
+              {{ recurring_form.branch }}
+            </div>
+            <div class="form-group">
+              <label>Staff Member</label>
+              {{ recurring_form.staff }}
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label>Days of Week</label>
+              <div class="day-checkboxes">
+                {{ recurring_form.days_of_week }}
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Shift Type</label>
+              {{ recurring_form.shift_type }}
+            </div>
+            <div class="form-group">
+              <label>Start Time</label>
+              {{ recurring_form.start_time }}
+            </div>
+            <div class="form-group">
+              <label>End Time</label>
+              {{ recurring_form.end_time }}
+            </div>
+            <div class="form-group">
+              <label>Effective From</label>
+              {{ recurring_form.effective_from }}
+            </div>
+            <div class="form-group">
+              <label>Effective Until</label>
+              {{ recurring_form.effective_until }}
+            </div>
+          </div>
+          <div class="form-actions" style="margin-top: 12px;">
+            <button type="submit" class="btn-action primary"><i class='bx bx-check'></i> Add Template</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="schedule-modal-footer">
+      <button type="button" class="btn-action outline" id="cancelRecurringModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT SCHEDULE MODAL -->
+<div class="schedule-modal-overlay" id="editScheduleModal">
+  <div class="schedule-modal">
+    <div class="schedule-modal-header">
+      <h3><i class='bx bx-edit'></i> Edit Schedule</h3>
+      <button class="schedule-modal-close" id="closeEditModal"><i class='bx bx-x'></i></button>
+    </div>
+    <form method="POST" action="" id="editScheduleForm" class="pet-form">
+      {% csrf_token %}
+      <div class="schedule-modal-body">
+        <div class="form-grid">
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <strong id="editStaffName" style="font-size: 1.1rem; display: block;"></strong>
+            <span id="editDateLabel" style="color: var(--text-2); display: block; margin-top: 4px;"></span>
+          </div>
+          <div class="form-group">
+            <label>Shift Type</label>
+            <select name="shift_type" id="editShiftType" class="form-control">
+              {% for val, label in shift_types %}
+              <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group" style="opacity: 0; pointer-events: none;"></div>
+          <div class="form-group">
+            <label>Start Time</label>
+            <input type="time" name="start_time" id="editStartTime" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>End Time</label>
+            <input type="time" name="end_time" id="editEndTime" class="form-control">
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <div class="toggle-switch-wrapper">
+              <label class="toggle-switch">
+                <input type="checkbox" name="is_available" id="editIsAvailable">
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label">Available for Appointments</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 8px;">
+          <label>Notes</label>
+          <textarea name="notes" id="editNotes" rows="2" class="form-control" placeholder="Optional notes..."></textarea>
+        </div>
+      </div>
+      <div class="schedule-modal-footer">
+        <button type="submit" class="btn-action primary" id="editSubmitBtn"><i class='bx bx-save'></i> Save Changes</button>
+        <button type="button" class="btn-action outline" id="cancelEditModal">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- CLEAR ALL CONFIRMATION MODAL -->
+<div class="schedule-modal-overlay" id="clearAllModal">
+  <div class="schedule-modal" style="max-width: 420px;">
+    <div class="schedule-modal-header" style="background: #fff5f5;">
+      <h3 style="color: #e63946;"><i class='bx bx-error-circle'></i> Clear All Schedules</h3>
+      <button class="schedule-modal-close" id="closeClearAllModal"><i class='bx bx-x'></i></button>
+    </div>
+    <div class="schedule-modal-body" style="text-align: center; padding: 24px;">
+      <i class='bx bx-trash' style="font-size: 3rem; color: #e63946; margin-bottom: 12px;"></i>
+      <h4 style="margin-bottom: 8px;">Are you sure?</h4>
+      <p style="font-size: 0.82rem; color: var(--text-2);">
+        This will permanently delete <strong>ALL</strong> schedule entries across every branch and vet. This action cannot be undone.
+      </p>
+    </div>
+    <div class="schedule-modal-footer" style="justify-content: center; gap: 10px;">
+      <button type="button" class="btn-action outline" id="cancelClearAllModal">Cancel</button>
+      <form method="POST" action="{% url 'employees:schedule_clear_all' %}" style="margin:0;">
+        {% csrf_token %}
+        <button type="submit" class="btn-action primary" style="background: #e63946; border-color: #e63946;"><i class='bx bx-trash'></i> Yes, Delete All</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Info Tip Box -->
+<div class="info-tip-box">
+  <h4><i class='bx bx-info-circle'></i> Schedule Management Tips</h4>
+  <ul>
+    <li>Click on any day in the calendar to see which vets are available</li>
+    <li>Use <strong>Recurring Templates</strong> to set a vet's weekly availability (e.g. Mon/Wed/Fri 9 AM–5 PM)</li>
+    <li>Use <strong>Generate</strong> to create schedule entries from your templates for a date range</li>
+    <li>Each entry can have a <strong>Shift Type</strong> like Surgery Only, Telehealth, or Check-up Only</li>
+    <li>Multiple vets can be assigned to the same day — no slot conflicts</li>
+  </ul>
+</div>
+
+<script>
+  const API_VETS_URL = "{% url 'appointments:api_vets' %}";
+</script>
+<script src="{% static 'js/employees/schedule.js' %}"></script>
+
+{% endblock %}

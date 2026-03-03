@@ -1,0 +1,289 @@
+{% extends 'base/portal_user.html' %}
+
+{% block title %}Symptom History{% endblock %}
+
+{% block content %}
+
+<!-- ══════ APPOINTMENTS HERO ══════ -->
+<div class="appt-hero">
+  <div class="appt-hero-bg">
+    <i class='bx bxs-dog hero-scatter sc-1'></i>
+    <i class='bx bx-bone hero-scatter sc-2'></i>
+    <i class='bx bx-paw hero-scatter sc-3'></i>
+    <i class='bx bxs-bone hero-scatter sc-4'></i>
+    <i class='bx bx-paw hero-scatter sc-5'></i>
+    <i class='bx bxs-dog hero-scatter sc-6'></i>
+  </div>
+  <div class="appt-hero-inner">
+    <div class="appt-hero-text">
+      <h1><i class='bx bx-calendar-event'></i> Symptom History</h1>
+      <p>Manage your past visits and track specific symptoms</p>
+    </div>
+    <a href="{% url 'appointments:portal_book' %}" class="appt-hero-book-btn">
+      <i class='bx bx-calendar-plus'></i> Book Appointment
+    </a>
+  </div>
+</div>
+
+<!-- ══════ TAB BAR ══════ -->
+<div class="appt-tabs" id="appointmentTabs">
+  <button class="appt-tab active" data-tab="pending">
+    <i class='bx bx-time-five'></i> <span>Pending</span>
+    <span class="appt-tab-badge">{{ pending_appts.count }}</span>
+  </button>
+  <button class="appt-tab" data-tab="confirmed">
+    <i class='bx bx-check-circle'></i> <span>Confirmed</span>
+    <span class="appt-tab-badge">{{ confirmed_appts.count }}</span>
+  </button>
+  <button class="appt-tab" data-tab="followups">
+    <i class='bx bx-revision'></i> <span>Follow-ups</span>
+    <span class="appt-tab-badge">{{ follow_ups.count }}</span>
+  </button>
+  <button class="appt-tab" data-tab="completed">
+    <i class='bx bx-check'></i> <span>Completed</span>
+    <span class="appt-tab-badge">{{ completed_appts.count }}</span>
+  </button>
+  <button class="appt-tab" data-tab="cancelled">
+    <i class='bx bx-x-circle'></i> <span>Cancelled</span>
+    <span class="appt-tab-badge">{{ cancelled_appts.count }}</span>
+  </button>
+</div>
+
+<!-- ══════ TAB CONTENT ══════ -->
+
+<!-- 1. Pending -->
+<div class="appt-tab-content active" id="tab-pending">
+  {% if pending_appts %}
+    <div class="appt-card-list">
+    {% for appt in pending_appts %}
+      <div class="appt-card" style="animation-delay: {{ forloop.counter0 }}s;">
+        <div class="appt-card-accent pending"></div>
+        <div class="appt-card-inner">
+          <div class="appt-card-icon pending">
+            <i class='bx bx-time-five'></i>
+          </div>
+          <div class="appt-card-body">
+            <div class="appt-card-top">
+              <h3>{{ appt.pet_name }} {% if appt.pet_breed %}<span class="appt-card-breed">· {{ appt.pet_breed }}</span>{% endif %}</h3>
+              <span class="appt-status-pill pending">{{ appt.get_status_display }}</span>
+            </div>
+            <div class="appt-card-meta">
+              <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
+              <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
+              <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
+            </div>
+            {% if appt.notes %}
+            <div class="appt-card-notes">
+              <i class='bx bx-note'></i> <strong>Vet Notes:</strong> {{ appt.notes }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  {% else %}
+    <div class="appt-empty">
+      <div class="appt-empty-icon"><i class='bx bx-calendar-x'></i></div>
+      <h3>No pending appointments</h3>
+      <p>You have no appointments awaiting confirmation right now.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- 2. Confirmed -->
+<div class="appt-tab-content" id="tab-confirmed">
+  {% if confirmed_appts %}
+    <div class="appt-card-list">
+    {% for appt in confirmed_appts %}
+      <div class="appt-card">
+        <div class="appt-card-accent confirmed"></div>
+        <div class="appt-card-inner">
+          <div class="appt-card-icon confirmed">
+            <i class='bx bx-check-circle'></i>
+          </div>
+          <div class="appt-card-body">
+            <div class="appt-card-top">
+              <h3>{{ appt.pet_name }} {% if appt.pet_breed %}<span class="appt-card-breed">· {{ appt.pet_breed }}</span>{% endif %}</h3>
+              <span class="appt-status-pill confirmed">{{ appt.get_status_display }}</span>
+            </div>
+            <div class="appt-card-meta">
+              <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
+              <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
+              <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
+            </div>
+            {% if appt.notes %}
+            <div class="appt-card-notes">
+              <i class='bx bx-note'></i> <strong>Vet Notes:</strong> {{ appt.notes }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  {% else %}
+    <div class="appt-empty">
+      <div class="appt-empty-icon"><i class='bx bx-calendar-check'></i></div>
+      <h3>No confirmed appointments</h3>
+      <p>No confirmed appointments currently upcoming.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- 3. Follow-ups -->
+<div class="appt-tab-content" id="tab-followups">
+  {% if follow_ups %}
+    <div class="appt-card-list">
+    {% for followup in follow_ups %}
+      <div class="appt-card">
+        <div class="appt-card-accent followup"></div>
+        <div class="appt-card-inner">
+          <div class="appt-card-icon followup">
+            <i class='bx bx-plus-medical'></i>
+          </div>
+          <div class="appt-card-body">
+            <div class="appt-card-top">
+              <h3>{{ followup.pet_name }} <span class="appt-card-breed">· Return Visit</span></h3>
+              {% if followup.is_completed %}
+                <span class="appt-status-pill completed">Completed</span>
+              {% else %}
+                <span class="appt-status-pill followup">Pending Follow-up</span>
+              {% endif %}
+            </div>
+            <div class="appt-card-meta">
+              <span><i class='bx bx-calendar'></i> {{ followup.follow_up_date|date:"M j, Y" }}{% if followup.follow_up_end_date and followup.follow_up_end_date != followup.follow_up_date %} – {{ followup.follow_up_end_date|date:"M j, Y" }}{% endif %}</span>
+            </div>
+            {% if followup.reason %}
+            <div class="appt-card-notes followup">
+              <i class='bx bx-info-circle'></i> <strong>Reason:</strong> {{ followup.reason }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  {% else %}
+    <div class="appt-empty">
+      <div class="appt-empty-icon"><i class='bx bx-revision'></i></div>
+      <h3>No follow-up visits</h3>
+      <p>No follow-up visits requested by the veterinarian.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- 4. Completed -->
+<div class="appt-tab-content" id="tab-completed">
+  {% if completed_appts %}
+    <div class="appt-card-list">
+    {% for appt in completed_appts %}
+      <div class="appt-card">
+        <div class="appt-card-accent completed"></div>
+        <div class="appt-card-inner">
+          <div class="appt-card-icon completed">
+            <i class='bx bx-check'></i>
+          </div>
+          <div class="appt-card-body">
+            <div class="appt-card-top">
+              <h3>{{ appt.pet_name }} {% if appt.pet_breed %}<span class="appt-card-breed">· {{ appt.pet_breed }}</span>{% endif %}</h3>
+              <span class="appt-status-pill completed">{{ appt.get_status_display }}</span>
+            </div>
+            <div class="appt-card-meta">
+              <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
+              <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
+              <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
+            </div>
+            {% if appt.notes %}
+            <div class="appt-card-notes">
+              <i class='bx bx-note'></i> <strong>Vet Notes:</strong> {{ appt.notes }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  {% else %}
+    <div class="appt-empty">
+      <div class="appt-empty-icon"><i class='bx bx-check'></i></div>
+      <h3>No completed appointments</h3>
+      <p>No past appointments completed yet.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- 5. Cancelled -->
+<div class="appt-tab-content" id="tab-cancelled">
+  {% if cancelled_appts %}
+    <div class="appt-card-list">
+    {% for appt in cancelled_appts %}
+      <div class="appt-card">
+        <div class="appt-card-accent cancelled"></div>
+        <div class="appt-card-inner">
+          <div class="appt-card-icon cancelled">
+            <i class='bx bx-x-circle'></i>
+          </div>
+          <div class="appt-card-body">
+            <div class="appt-card-top">
+              <h3>{{ appt.pet_name }} {% if appt.pet_breed %}<span class="appt-card-breed">· {{ appt.pet_breed }}</span>{% endif %}</h3>
+              <span class="appt-status-pill cancelled">{{ appt.get_status_display }}</span>
+            </div>
+            <div class="appt-card-meta">
+              <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
+              <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
+              <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
+            </div>
+            {% if appt.notes %}
+            <div class="appt-card-notes">
+              <i class='bx bx-note'></i> <strong>Vet Notes:</strong> {{ appt.notes }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  {% else %}
+    <div class="appt-empty">
+      <div class="appt-empty-icon"><i class='bx bx-x-circle'></i></div>
+      <h3>No cancelled appointments</h3>
+      <p>No cancelled appointments.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Info Tip Box -->
+<div class="info-tip-box" style="margin-top: 2rem;">
+  <h4><i class='bx bx-info-circle'></i> Scheduling Tips</h4>
+  <ul>
+    <li>Book appointments at least 24 hours in advance for best availability</li>
+    <li>You'll receive email and notification reminders before your appointment</li>
+    <li>Cancel or reschedule at least 4 hours before your scheduled time</li>
+    <li>Bring your pet's previous records for first-time visits</li>
+  </ul>
+</div>
+
+<!-- Tab Navigation JS -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const tabs = document.querySelectorAll(".appt-tab");
+    const tabContents = document.querySelectorAll(".appt-tab-content");
+
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        tabs.forEach(t => t.classList.remove("active"));
+        tabContents.forEach(c => c.classList.remove("active"));
+        tab.classList.add("active");
+        document.getElementById("tab-" + tab.dataset.tab).classList.add("active");
+      });
+    });
+
+    /* Stagger card reveal */
+    document.querySelectorAll('.appt-card').forEach(function (card, i) {
+      card.style.animationDelay = (i * 0.06) + 's';
+    });
+  });
+</script>
+
+{% endblock %}

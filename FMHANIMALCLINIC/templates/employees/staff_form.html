@@ -1,0 +1,106 @@
+{% extends 'base/portal_admin.html' %}
+
+{% block title %}{{ action }} Staff{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h1>{{ action }} Staff Member</h1>
+    <p class="page-subtitle">{% if action == 'Add' %}Register a new staff member to the clinic{% else %}Update {{ member.full_name }}'s information{% endif %}</p>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'employees:staff_list' %}" class="btn-action outline"><i class='bx bx-arrow-back'></i> Back to Staff</a>
+  </div>
+</div>
+
+<!-- Staff Form Card -->
+<div class="dashboard-card full-width">
+  <div class="card-header">
+    <h3><i class='bx bx-user-circle'></i> Staff Information</h3>
+  </div>
+  <div class="card-body">
+    <form method="POST" class="pet-form">
+      {% csrf_token %}
+
+      <div class="form-section-title"><i class='bx bx-user'></i> Personal Details</div>
+      <div class="form-grid">
+        <div class="form-group {% if form.first_name.errors %}has-error{% endif %}">
+          <label for="{{ form.first_name.id_for_label }}">First Name</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}<span class="form-error">{{ form.first_name.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="form-group {% if form.last_name.errors %}has-error{% endif %}">
+          <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}<span class="form-error">{{ form.last_name.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="form-group {% if form.email.errors %}has-error{% endif %}">
+          <label for="{{ form.email.id_for_label }}">Email</label>
+          {{ form.email }}
+          {% if form.email.errors %}<span class="form-error">{{ form.email.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="form-group {% if form.phone.errors %}has-error{% endif %}">
+          <label for="{{ form.phone.id_for_label }}">Phone</label>
+          {{ form.phone }}
+          {% if form.phone.errors %}<span class="form-error">{{ form.phone.errors.0 }}</span>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-section-title"><i class='bx bx-briefcase'></i> Employment Details</div>
+      <div class="form-grid">
+        <div class="form-group {% if form.position.errors %}has-error{% endif %}">
+          <label for="{{ form.position.id_for_label }}">Position</label>
+          {{ form.position }}
+          {% if form.position.errors %}<span class="form-error">{{ form.position.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="form-group {% if form.salary.errors %}has-error{% endif %}">
+          <label for="{{ form.salary.id_for_label }}">Salary (₱)</label>
+          {{ form.salary }}
+          {% if form.salary.errors %}<span class="form-error">{{ form.salary.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="form-group {% if form.branch.errors %}has-error{% endif %}">
+          <label for="{{ form.branch.id_for_label }}">Branch</label>
+          {{ form.branch }}
+          {% if form.branch.errors %}<span class="form-error">{{ form.branch.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="form-group {% if form.date_hired.errors %}has-error{% endif %}">
+          <label for="{{ form.date_hired.id_for_label }}">Date Hired</label>
+          {{ form.date_hired }}
+          {% if form.date_hired.errors %}<span class="form-error">{{ form.date_hired.errors.0 }}</span>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-section-title"><i class='bx bx-id-card'></i> License Information <span class="form-section-hint">(For Veterinarians)</span></div>
+      <div class="form-grid">
+        <div class="form-group {% if form.license_number.errors %}has-error{% endif %}">
+          <label for="{{ form.license_number.id_for_label }}">License Number</label>
+          {{ form.license_number }}
+          {% if form.license_number.errors %}<span class="form-error">{{ form.license_number.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="form-group {% if form.license_expiry.errors %}has-error{% endif %}">
+          <label for="{{ form.license_expiry.id_for_label }}">License Expiry</label>
+          {{ form.license_expiry }}
+          {% if form.license_expiry.errors %}<span class="form-error">{{ form.license_expiry.errors.0 }}</span>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-grid" style="margin-top: 12px;">
+        <div class="form-group">
+          <label class="form-checkbox-label">
+            {{ form.is_active }}
+            <span>Active Staff Member</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-action primary"><i class='bx bx-check'></i> {{ action }} Staff</button>
+        <a href="{% url 'employees:staff_list' %}" class="btn-action outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

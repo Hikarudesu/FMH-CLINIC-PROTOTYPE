@@ -1,0 +1,138 @@
+{% extends 'base/portal_user.html' %}
+{% load static %}
+
+{% block title %}Digital Catalog{% endblock %}
+
+{% block content %}
+
+<!-- ══════ CATALOG HERO ══════ -->
+<div class="cat-hero">
+  <div class="cat-hero-bg">
+    <i class='bx bxs-dog hero-scatter sc-1'></i>
+    <i class='bx bx-bone hero-scatter sc-2'></i>
+    <i class='bx bx-paw hero-scatter sc-3'></i>
+    <i class='bx bxs-bone hero-scatter sc-4'></i>
+    <i class='bx bx-paw hero-scatter sc-5'></i>
+    <i class='bx bxs-dog hero-scatter sc-6'></i>
+  </div>
+  <div class="cat-hero-inner">
+    <div class="cat-hero-text">
+      <h1><i class='bx bx-store-alt'></i> Digital Catalog</h1>
+      <p>Browse products &amp; supplies available across our clinic branches</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Filter & Search Bar ── -->
+<div class="cat-toolbar">
+  <div class="cat-search-wrap">
+    <i class='bx bx-search'></i>
+    <input type="text" placeholder="Search products..." id="catalogSearch">
+  </div>
+  <form method="GET" action="{% url 'inventory:catalog' %}" class="cat-branch-filter">
+    <i class='bx bx-building-house'></i>
+    <select name="branch" onchange="this.form.submit()">
+      <option value="">All Branches</option>
+      {% for branch in branches %}
+        <option value="{{ branch.id }}" {% if selected_branch and selected_branch.id == branch.id %}selected{% endif %}>
+          {{ branch.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+{% if selected_branch %}
+<div class="cat-active-filter">
+  <span><i class='bx bx-filter-alt'></i> Showing products at <strong>{{ selected_branch.name }}</strong></span>
+  <a href="{% url 'inventory:catalog' %}" class="cat-clear-filter"><i class='bx bx-x'></i> Clear</a>
+</div>
+{% endif %}
+
+{% if products %}
+<!-- Product Stats -->
+<div class="cat-stats-row">
+  <div class="cat-stat">
+    <div class="cat-stat-icon"><i class='bx bx-package'></i></div>
+    <div>
+      <span class="cat-stat-num">{{ products|length }}</span>
+      <span class="cat-stat-label">Products</span>
+    </div>
+  </div>
+</div>
+
+<!-- Product Grid -->
+<div class="cat-grid" id="catalogGrid">
+  {% for product in products %}
+  <div class="cat-card" data-name="{{ product.name|lower }}" data-desc="{{ product.description|lower }}">
+    <!-- Availability indicator -->
+    <div class="cat-card-status {% if product.is_available %}available{% else %}out-of-stock{% endif %}">
+      {% if product.is_available %}
+        <i class='bx bx-check-circle'></i> In Stock
+      {% else %}
+        <i class='bx bx-x-circle'></i> Out of Stock
+      {% endif %}
+    </div>
+
+    <!-- Card body -->
+    <div class="cat-card-body">
+      <div class="cat-card-icon-wrap {% if product.is_available %}available{% else %}unavailable{% endif %}">
+        <i class='bx bx-capsule'></i>
+      </div>
+      <h3 class="cat-card-name">{{ product.name }}</h3>
+      <p class="cat-card-desc">{{ product.description|default:"No description provided." }}</p>
+    </div>
+
+    <!-- Card footer -->
+    <div class="cat-card-foot">
+      <div class="cat-card-price">
+        <span class="cat-price-symbol">&#8369;</span>
+        <span class="cat-price-value">{{ product.price }}</span>
+      </div>
+      <div class="cat-card-meta">
+        <span class="cat-meta-branch"><i class='bx bx-building-house'></i> {{ product.branch.name }}</span>
+        {% if product.is_available %}
+        <span class="cat-meta-stock"><i class='bx bx-box'></i> {{ product.stock_quantity }} in stock</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('catalogSearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      const q = this.value.toLowerCase();
+      document.querySelectorAll('.cat-card').forEach(function(card) {
+        const name = card.dataset.name || '';
+        const desc = card.dataset.desc || '';
+        card.style.display = (name.includes(q) || desc.includes(q)) ? '' : 'none';
+      });
+    });
+  }
+
+  /* Stagger animation */
+  document.querySelectorAll('.cat-card').forEach(function(card, i) {
+    card.style.animationDelay = (i * 0.06) + 's';
+  });
+});
+</script>
+
+{% else %}
+<div class="pets-empty-hero">
+  <div class="pets-empty-visual">
+    <div class="pets-empty-ring ring-1"></div>
+    <div class="pets-empty-ring ring-2"></div>
+    <div class="pets-empty-ring ring-3"></div>
+    <div class="pets-empty-center-icon">
+      <i class='bx bx-package'></i>
+    </div>
+  </div>
+  <h2>No products found</h2>
+  <p>No products are currently listed{% if selected_branch %} for this branch{% endif %}.<br>Check back later for updates.</p>
+</div>
+{% endif %}
+{% endblock %}

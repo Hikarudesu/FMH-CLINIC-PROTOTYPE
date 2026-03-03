@@ -1,0 +1,102 @@
+{% extends 'base/portal_admin.html' %}
+{% load static %}
+
+{% block title %}Inventory Management{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h1>Inventory Management</h1>
+    <p class="page-subtitle">Track and manage your inventory items</p>
+  </div>
+  <div class="page-header-actions" style="display: flex; gap: 12px; align-items: center;">
+    <!-- Filter Bar -->
+    <form method="GET" action="{% url 'inventory:management' %}" class="filter-bar" style="margin-bottom: 0;">
+      <i class='bx bx-filter-alt'></i>
+      <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-2);">Filters</span>
+      <select name="branch" class="filter-select" onchange="this.form.submit()" style="margin-left: 8px;">
+        <option value="">All Branches</option>
+        {% for branch in branches %}
+          <option value="{{ branch.id }}" {% if selected_branch_id|add:"0" == branch.id %}selected{% endif %}>
+            {{ branch.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </form>
+
+    <a href="{% url 'inventory:adjustment_new' %}" class="btn-action" style="background: #fb3b66; color: white;">
+      <i class='bx bx-plus'></i> Create New
+    </a>
+  </div>
+</div>
+
+<div class="dashboard-grid" style="grid-template-columns: 1fr;">
+  <div class="dashboard-card" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="portal-table">
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Item Name</th>
+            <th>Type</th>
+            <th>Quantity</th>
+            <th>Date <i class='bx bx-up-arrow-alt'></i></th>
+            <th>Reason</th>
+            <th>Cost</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for adj in adjustments %}
+          <tr>
+            <td style="font-weight: 600; color: var(--text-1);">{{ adj.reference }}</td>
+            <td>{{ adj.product.name }}</td>
+            <td>{{ adj.adjustment_type }}</td>
+            <td>
+              {% if adj.adjustment_type == 'Damage' or adj.adjustment_type == 'Expiration' %}
+                <span style="color: var(--danger);">{{ adj.quantity }}</span>
+              {% else %}
+                <span style="color: var(--success);">{{ adj.quantity|default:"-" }}</span>
+              {% endif %}
+            </td>
+            <td>{{ adj.date|date:"M j, Y" }}</td>
+            <td>{{ adj.reason|default:"N/A" }}</td>
+            <td>${{ adj.cost_per_unit }}</td>
+            <td style="text-align: right;">
+              <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                <button class="btn-action outline" style="padding: 4px 10px; font-size: 0.8rem; border-color: var(--border);">Edit</button>
+                <button class="btn-action outline" style="padding: 4px 10px; font-size: 0.8rem; border-color: var(--border); color: var(--danger);">Delete</button>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 40px 20px; color: var(--text-3);">
+              <i class='bx bx-folder-open' style="font-size: 2rem; margin-bottom: 10px;"></i>
+              <p>No inventory adjustments found.</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Rough Pagination Footer Stub -->
+    <div style="padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; color: var(--text-2); font-size: 0.85rem;">
+      <div>
+        Showing 1 to {{ adjustments|length }} entries
+        <select style="margin-left: 10px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg);">
+            <option>Show 10</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button class="btn-action outline" style="padding: 4px 8px; height: auto;" disabled><i class='bx bx-chevron-left'></i></button>
+        <span>Page 1 of 1</span>
+        <button class="btn-action outline" style="padding: 4px 8px; height: auto;" disabled><i class='bx bx-chevron-right'></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

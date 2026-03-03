@@ -1,0 +1,342 @@
+{% extends 'base/portal_user.html' %}
+
+{% block title %}My Pets{% endblock %}
+
+{% block content %}
+
+<!-- ══════ PETS HERO HEADER ══════ -->
+<div class="pets-hero-banner">
+  <div class="pets-hero-bg-shapes">
+    <i class='bx bxs-dog hero-scatter sc-1'></i>
+    <i class='bx bx-bone hero-scatter sc-2'></i>
+    <i class='bx bx-paw hero-scatter sc-3'></i>
+    <i class='bx bxs-bone hero-scatter sc-4'></i>
+    <i class='bx bx-paw hero-scatter sc-5'></i>
+    <i class='bx bxs-dog hero-scatter sc-6'></i>
+  </div>
+  <div class="pets-hero-inner">
+    <div class="pets-hero-text">
+      <h1><i class='bx bx-paw'></i> My Pets</h1>
+      <p>Manage your fur family — track health, appointments &amp; records</p>
+    </div>
+    <a href="{% url 'patients:add_pet' %}" class="pets-hero-add-btn">
+      <i class='bx bx-plus'></i> Register Pet
+    </a>
+  </div>
+</div>
+
+<!-- Tab Bar -->
+<div class="pets-tabs">
+  <button class="pets-tab active" onclick="switchTab('pets')">
+    <i class='bx bx-grid-alt'></i> <span>Pets</span>
+    {% if pets %}<span class="pets-tab-badge">{{ pets|length }}</span>{% endif %}
+  </button>
+  <button class="pets-tab" onclick="switchTab('records')">
+    <i class='bx bx-file-blank'></i> <span>Records</span>
+  </button>
+</div>
+
+<!-- ═══════════════ PETS TAB ═══════════════ -->
+<div id="tab-pets" class="tab-content active">
+
+  {% if pets %}
+
+  <!-- Search + View Toggle -->
+  <div class="pets-toolbar">
+    <div class="pets-search-wrap">
+      <i class='bx bx-search'></i>
+      <input type="text" placeholder="Search pets..." id="petSearch">
+    </div>
+    <div class="pets-view-toggle">
+      <button class="pvt-btn active" data-view="grid" title="Grid"><i class='bx bx-grid-alt'></i></button>
+      <button class="pvt-btn" data-view="list" title="List"><i class='bx bx-list-ul'></i></button>
+    </div>
+  </div>
+
+  <!-- Pet Cards Grid -->
+  <div class="mp-grid" id="petCardsGrid">
+    {% for pet in pets %}
+    <div class="mp-card" data-name="{{ pet.name|lower }}" data-species="{{ pet.species|lower }}" data-breed="{{ pet.breed|lower }}"
+         onclick="openPetDetail(this)"
+         data-pet-name="{{ pet.name }}"
+         data-pet-species="{{ pet.species }}"
+         data-pet-breed="{{ pet.breed|default:'—' }}"
+         data-pet-age="{{ pet.age }}"
+         data-pet-sex="{{ pet.get_sex_display }}"
+         data-pet-color="{{ pet.color|default:'—' }}"
+         data-pet-since="{{ pet.created_at|date:'F j, Y' }}"
+         data-pet-edit="{% url 'patients:edit_pet' pet.pk %}"
+         data-pet-delete="{% url 'patients:delete_pet' pet.pk %}">
+
+      <!-- Accent top strip -->
+      <div class="mp-card-accent"></div>
+
+      <!-- Card body -->
+      <div class="mp-card-body-v3">
+        <!-- Avatar + identity -->
+        <div class="mp-card-identity">
+          <div class="mp-card-avatar-v3">
+            <span>{{ pet.name|make_list|first|upper }}</span>
+            <div class="mp-avatar-ring"></div>
+          </div>
+          <div class="mp-card-name-block">
+            <h3>{{ pet.name }}</h3>
+            <span class="mp-species-pill"><i class='bx bx-paw'></i> {{ pet.species }}{% if pet.breed %} &middot; {{ pet.breed }}{% endif %}</span>
+          </div>
+        </div>
+
+        <!-- Info grid -->
+        <div class="mp-card-info-grid">
+          <div class="mp-info-item">
+            <div class="mp-info-icon"><i class='bx bx-time-five'></i></div>
+            <div class="mp-info-text">
+              <span class="mp-info-label">Age</span>
+              <span class="mp-info-value">{{ pet.age }} yr{{ pet.age|pluralize }}</span>
+            </div>
+          </div>
+          <div class="mp-info-item">
+            <div class="mp-info-icon"><i class='bx bx-male-female'></i></div>
+            <div class="mp-info-text">
+              <span class="mp-info-label">Sex</span>
+              <span class="mp-info-value">{{ pet.get_sex_display }}</span>
+            </div>
+          </div>
+          {% if pet.color %}
+          <div class="mp-info-item">
+            <div class="mp-info-icon"><i class='bx bx-palette'></i></div>
+            <div class="mp-info-text">
+              <span class="mp-info-label">Color</span>
+              <span class="mp-info-value">{{ pet.color }}</span>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Card footer -->
+      <div class="mp-card-footer-v3">
+        <span class="mp-card-since"><i class='bx bx-calendar'></i> Since {{ pet.created_at|date:"M Y" }}</span>
+        <span class="mp-card-view-btn"><i class='bx bx-chevron-right'></i></span>
+      </div>
+
+      <!-- Hover shimmer -->
+      <div class="mp-card-shimmer"></div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <!-- Empty State -->
+  <div class="pets-empty-hero">
+    <div class="pets-empty-visual">
+      <div class="pets-empty-ring ring-1"></div>
+      <div class="pets-empty-ring ring-2"></div>
+      <div class="pets-empty-ring ring-3"></div>
+      <div class="pets-empty-center-icon">
+        <i class='bx bx-paw'></i>
+      </div>
+    </div>
+    <h2>No pets registered yet</h2>
+    <p>Register your furry, feathery, or scaly friends to keep<br>track of their health, appointments, and vaccinations.</p>
+    <a href="{% url 'patients:add_pet' %}" class="pets-empty-cta">
+      <i class='bx bx-plus-circle'></i> Register Your First Pet
+    </a>
+    <div class="pets-empty-features">
+      <div class="pets-empty-feature">
+        <i class='bx bx-calendar-check'></i>
+        <span>Track appointments</span>
+      </div>
+      <div class="pets-empty-feature">
+        <i class='bx bx-file'></i>
+        <span>Medical records</span>
+      </div>
+      <div class="pets-empty-feature">
+        <i class='bx bx-injection'></i>
+        <span>Vaccination logs</span>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ═══════════════ MEDICAL RECORDS TAB ═══════════════ -->
+<div id="tab-records" class="tab-content" style="display: none;">
+
+  {% if medical_records %}
+  <div class="mr-timeline">
+    {% for record in medical_records %}
+    <div class="mr-item">
+      <div class="mr-dot"></div>
+      <div class="mr-card">
+        <div class="mr-card-head">
+          <div class="mr-pet-badge">
+            <span class="mr-pet-initial">{{ record.pet.name|make_list|first|upper }}</span>
+            <span class="mr-pet-name">{{ record.pet.name }}</span>
+          </div>
+          <span class="mr-date"><i class='bx bx-calendar'></i> {{ record.date_recorded }}</span>
+        </div>
+        <div class="mr-card-body">
+          <div class="mr-field">
+            <span class="mr-field-label"><i class='bx bx-search-alt'></i> Diagnosis</span>
+            <p class="mr-field-value">{{ record.diagnosis|truncatechars:120 }}</p>
+          </div>
+          <div class="mr-field">
+            <span class="mr-field-label"><i class='bx bx-first-aid'></i> Treatment</span>
+            <p class="mr-field-value">{{ record.treatment|truncatechars:120 }}</p>
+          </div>
+        </div>
+        <div class="mr-card-foot">
+          {% if record.vet %}<span class="mr-meta"><i class='bx bx-user'></i> Dr. {{ record.vet.last_name }}</span>{% endif %}
+          {% if record.weight %}<span class="mr-meta"><i class='bx bx-body'></i> {{ record.weight }} kg</span>{% endif %}
+          {% if record.temperature %}<span class="mr-meta"><i class='bx bx-thermometer'></i> {{ record.temperature }} °C</span>{% endif %}
+          <a target="_blank" href="{% url 'records:print_record' record.pk %}" class="mr-print-btn"><i class='bx bx-printer'></i> Print</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="pets-empty-hero" style="padding: 50px 20px;">
+    <div class="pets-empty-visual" style="width: 110px; height: 110px;">
+      <div class="pets-empty-ring ring-1"></div>
+      <div class="pets-empty-ring ring-2"></div>
+      <div class="pets-empty-ring ring-3"></div>
+      <div class="pets-empty-center-icon">
+        <i class='bx bx-folder-open'></i>
+      </div>
+    </div>
+    <h2>No medical records yet</h2>
+    <p>Once our veterinarians treat your pets, their medical history will appear here.</p>
+  </div>
+  {% endif %}
+</div>
+
+
+<!-- ═══════════════ PET DETAIL MODAL ═══════════════ -->
+<div class="modal-overlay" id="petDetailModal">
+  <div class="modal-content mp-detail-modal">
+    <!-- Header -->
+    <div class="mp-detail-header">
+      <div class="mp-detail-avatar" id="modalAvatar"><span></span></div>
+      <div class="mp-detail-headline">
+        <h2 id="modalPetName"></h2>
+        <p id="modalPetSpecies"></p>
+      </div>
+      <button class="modal-close" id="closePetDetail">&times;</button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body mp-detail-body">
+      <div class="mp-detail-grid">
+        <div class="mp-detail-field">
+          <div class="mp-detail-field-icon"><i class='bx bx-category'></i></div>
+          <div>
+            <span class="mp-detail-label">Breed</span>
+            <span class="mp-detail-value" id="modalBreed"></span>
+          </div>
+        </div>
+        <div class="mp-detail-field">
+          <div class="mp-detail-field-icon"><i class='bx bx-time-five'></i></div>
+          <div>
+            <span class="mp-detail-label">Age</span>
+            <span class="mp-detail-value" id="modalAge"></span>
+          </div>
+        </div>
+        <div class="mp-detail-field">
+          <div class="mp-detail-field-icon"><i class='bx bx-male-female'></i></div>
+          <div>
+            <span class="mp-detail-label">Sex</span>
+            <span class="mp-detail-value" id="modalSex"></span>
+          </div>
+        </div>
+        <div class="mp-detail-field">
+          <div class="mp-detail-field-icon"><i class='bx bx-palette'></i></div>
+          <div>
+            <span class="mp-detail-label">Color</span>
+            <span class="mp-detail-value" id="modalColor"></span>
+          </div>
+        </div>
+        <div class="mp-detail-field full-width">
+          <div class="mp-detail-field-icon"><i class='bx bx-calendar'></i></div>
+          <div>
+            <span class="mp-detail-label">Registered Since</span>
+            <span class="mp-detail-value" id="modalSince"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="modal-footer mp-detail-footer">
+      <a id="modalEditLink" href="#" class="btn-action outline"><i class='bx bx-edit-alt'></i> Edit</a>
+      <a id="modalDeleteLink" href="#" class="btn-action danger-outline"><i class='bx bx-trash'></i> Remove</a>
+    </div>
+  </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* ── Search ── */
+  const searchInput = document.getElementById('petSearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', function () {
+      const q = this.value.toLowerCase();
+      document.querySelectorAll('.mp-card').forEach(function (card) {
+        const match = (card.dataset.name || '').includes(q) ||
+                      (card.dataset.species || '').includes(q) ||
+                      (card.dataset.breed || '').includes(q);
+        card.style.display = match ? '' : 'none';
+      });
+    });
+  }
+
+  /* ── Stagger reveal ── */
+  document.querySelectorAll('.mp-card').forEach(function (card, i) {
+    card.style.animationDelay = (i * 0.07) + 's';
+  });
+
+  /* ── View Toggle (grid / list) ── */
+  document.querySelectorAll('.pvt-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.pvt-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      const grid = document.getElementById('petCardsGrid');
+      if (this.dataset.view === 'list') {
+        grid.classList.add('list-view');
+      } else {
+        grid.classList.remove('list-view');
+      }
+    });
+  });
+
+  /* ── Close modal ── */
+  var modal = document.getElementById('petDetailModal');
+  document.getElementById('closePetDetail').addEventListener('click', function () {
+    modal.classList.remove('active');
+  });
+  modal.addEventListener('click', function (e) {
+    if (e.target === modal) modal.classList.remove('active');
+  });
+});
+
+/* ── Open detail modal ── */
+function openPetDetail(card) {
+  var modal = document.getElementById('petDetailModal');
+  document.getElementById('modalAvatar').querySelector('span').textContent = card.dataset.petName.charAt(0).toUpperCase();
+  document.getElementById('modalPetName').textContent = card.dataset.petName;
+  document.getElementById('modalPetSpecies').textContent = card.dataset.petSpecies;
+  document.getElementById('modalBreed').textContent = card.dataset.petBreed;
+  document.getElementById('modalAge').textContent = card.dataset.petAge + ' year(s)';
+  document.getElementById('modalSex').textContent = card.dataset.petSex;
+  document.getElementById('modalColor').textContent = card.dataset.petColor;
+  document.getElementById('modalSince').textContent = card.dataset.petSince;
+  document.getElementById('modalEditLink').href = card.dataset.petEdit;
+  document.getElementById('modalDeleteLink').href = card.dataset.petDelete;
+  modal.classList.add('active');
+}
+</script>
+
+{% endblock %}
+

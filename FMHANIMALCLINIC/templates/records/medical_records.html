@@ -1,0 +1,45 @@
+{% extends 'base/portal_user.html' %}
+
+{% block title %}Medical Records{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h1>Medical Records</h1>
+    <p class="page-subtitle">View your pet's medical history</p>
+  </div>
+</div>
+
+<!-- Search Bar -->
+<div class="portal-search">
+  <i class='bx bx-search'></i>
+  <input type="text" placeholder="Search records..." id="recordsSearch">
+</div>
+
+<!-- Empty State -->
+<div class="dashboard-card full-width">
+  <div class="card-body">
+    <div class="empty-state-large">
+      <div class="empty-state-icon">
+        <i class='bx bx-file-find'></i>
+      </div>
+      <h3>No medical records</h3>
+      <p>Medical records will appear here after your pet's first visit.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Info Tip Box -->
+<div class="info-tip-box">
+  <h4><i class='bx bx-info-circle'></i> Understanding Your Pet's Medical Records</h4>
+  <ul>
+    <li>Medical records contain important information about your pet's health history</li>
+    <li>Records include diagnoses, treatments, medications, and lab results</li>
+    <li>You can view and download records for each of your registered pets</li>
+    <li>Keep records up to date by attending regular check-ups</li>
+  </ul>
+</div>
+
+{% endblock %}

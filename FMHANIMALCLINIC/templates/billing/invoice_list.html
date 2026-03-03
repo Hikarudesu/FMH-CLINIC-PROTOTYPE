@@ -1,0 +1,92 @@
+{% extends 'base/portal_admin.html' %}
+{% load static %}
+
+{% block title %}Invoices & Payments{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+    <div>
+        <h1 style="color: #272742; font-size: 1.5rem; margin-bottom: 4px; font-weight: 600;">Invoices & Payments</h1>
+        <p style="color: var(--text-2); font-size: 0.95rem; margin: 0;">Manage your invoices, statements, and track payments.</p>
+    </div>
+    
+    <div style="display: flex; gap: 12px; align-items: center;">
+        <div style="position: relative;">
+            <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-3);"></i>
+            <input type="text" placeholder="Search invoices..." style="background: var(--surface); color: var(--text-1); padding: 8px 12px 8px 36px; border: 1px solid var(--border); border-radius: var(--radius-sm); width: 250px; outline: none; font-size: 0.9rem;">
+        </div>
+        <a href="{% url 'billing:invoice_create' %}" class="btn-action primary" style="text-decoration: none; padding: 8px 16px; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 8px; font-weight: 600;">
+            <i class="bx bx-plus"></i> Create Invoice
+        </a>
+    </div>
+</div>
+
+<div class="dashboard-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; box-shadow: var(--shadow-xs);">
+    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+        <thead>
+            <tr style="border-bottom: 1px solid var(--border); background: var(--bg);">
+                <th style="padding: 16px; font-size: 0.85rem; color: var(--text-2); font-weight: 600;">Invoice #</th>
+                <th style="padding: 16px; font-size: 0.85rem; color: var(--text-2); font-weight: 600;">Date</th>
+                <th style="padding: 16px; font-size: 0.85rem; color: var(--text-2); font-weight: 600;">Patient/Owner</th>
+                <th style="padding: 16px; font-size: 0.85rem; color: var(--text-2); font-weight: 600;">Total</th>
+                <th style="padding: 16px; font-size: 0.85rem; color: var(--text-2); font-weight: 600;">Status</th>
+                <th style="padding: 16px; font-size: 0.85rem; color: var(--text-2); font-weight: 600; text-align: center;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in invoices %}
+            <tr style="border-bottom: 1px solid var(--border); transition: background 0.2s var(--ease); hover: background: var(--bg);">
+                <td style="padding: 16px; font-size: 0.9rem; color: var(--text-1); font-weight: 600;">{{ invoice.invoice_number }}</td>
+                <td style="padding: 16px; font-size: 0.9rem; color: var(--text-2);">{{ invoice.date }}</td>
+                <td style="padding: 16px; font-size: 0.9rem; color: var(--text-1); font-weight: 500;">{{ invoice.pet|default:"Walk-in" }}</td>
+                <td style="padding: 16px; font-size: 0.9rem; color: var(--text-1); font-weight: 500;">${{ invoice.total_amount }}</td>
+                <td style="padding: 16px;">
+                    {% if invoice.status == 'PAID' %}
+                        <span style="background: var(--success-light, #d1fae5); color: var(--success, #10b981); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.2);">Paid</span>
+                    {% elif invoice.status == 'PENDING' %}
+                        <span style="background: var(--warning-light, #fef3c7); color: var(--warning, #f59e0b); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(245, 158, 11, 0.2);">Pending</span>
+                    {% else %}
+                        <span style="background: var(--border); color: var(--text-2); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">{{ invoice.get_status_display }}</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 16px; text-align: center; display: flex; gap: 8px; justify-content: center;">
+                    <a href="{% url 'billing:invoice_update' invoice.pk %}" class="btn-action outline" style="padding: 6px 14px; color: var(--text-2); font-size: 0.8rem; text-decoration: none; font-weight: 500;">Review</a>
+                    <form method="POST" action="{% url 'billing:invoice_delete' invoice.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this invoice?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-action outline" style="padding: 6px 14px; color: var(--danger, #ef4444); font-size: 0.8rem; font-weight: 500; border-color: rgba(239, 68, 68, 0.3);">Cancel</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="padding: 32px; text-align: center; color: var(--text-2);">No invoices found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<style>
+/* Base overrides for nice visual feel */
+.btn-action.primary {
+    background: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s var(--ease);
+}
+.btn-action.primary:hover {
+    filter: brightness(0.9);
+}
+.btn-action.outline {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s var(--ease);
+}
+.btn-action.outline:hover {
+    background: var(--bg);
+}
+</style>
+{% endblock %}

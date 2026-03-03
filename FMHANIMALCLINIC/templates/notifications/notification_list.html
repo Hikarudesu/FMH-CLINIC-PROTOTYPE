@@ -1,0 +1,165 @@
+{% extends 'base/portal_user.html' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+
+<!-- ══════ NOTIFICATIONS HERO ══════ -->
+<div class="notif-hero">
+  <div class="notif-hero-bg">
+    <i class='bx bxs-dog hero-scatter sc-1'></i>
+    <i class='bx bx-bone hero-scatter sc-2'></i>
+    <i class='bx bx-paw hero-scatter sc-3'></i>
+    <i class='bx bxs-bone hero-scatter sc-4'></i>
+    <i class='bx bx-paw hero-scatter sc-5'></i>
+    <i class='bx bxs-dog hero-scatter sc-6'></i>
+  </div>
+  <div class="notif-hero-inner">
+    <div class="notif-hero-text">
+      <h1><i class='bx bx-bell'></i> Notifications</h1>
+      <p>Stay updated on appointments, follow-ups &amp; clinic news</p>
+    </div>
+    {% if unread_count > 0 %}
+    <button id="markAllReadBtn" class="notif-mark-all-btn" onclick="markAllNotificationsRead()">
+      <i class='bx bx-check'></i> Mark All Read
+      <span class="notif-badge-count">{{ unread_count }}</span>
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+{% if notifications %}
+
+<!-- Filter Bar -->
+<div class="notif-filter-bar">
+  <button class="notif-filter active" data-filter="all">All</button>
+  <button class="notif-filter" data-filter="unread">Unread</button>
+  <button class="notif-filter" data-filter="read">Read</button>
+</div>
+
+<!-- Notification List -->
+<div class="notif-list" id="notifList">
+  {% for notif in notifications %}
+  <div class="notif-card {% if not notif.is_read %}unread{% endif %}"
+       data-id="{{ notif.pk }}"
+       data-read="{{ notif.is_read|yesno:'true,false' }}">
+
+    <!-- Type accent -->
+    <div class="notif-type-accent
+      {% if notif.notification_type == 'APPOINTMENT' %}type-appointment
+      {% elif notif.notification_type == 'FOLLOW_UP' %}type-followup
+      {% elif notif.notification_type == 'INVENTORY_RESTOCK' or notif.notification_type == 'LOW_INVENTORY' %}type-inventory
+      {% else %}type-general{% endif %}">
+    </div>
+
+    <div class="notif-card-inner">
+      <!-- Icon -->
+      <div class="notif-icon-wrap
+        {% if notif.notification_type == 'APPOINTMENT' %}icon-appointment
+        {% elif notif.notification_type == 'FOLLOW_UP' %}icon-followup
+        {% elif notif.notification_type == 'INVENTORY_RESTOCK' or notif.notification_type == 'LOW_INVENTORY' %}icon-inventory
+        {% else %}icon-general{% endif %}">
+        {% if notif.notification_type == 'APPOINTMENT' %}
+          <i class='bx bx-calendar-event'></i>
+        {% elif notif.notification_type == 'FOLLOW_UP' %}
+          <i class='bx bx-plus-medical'></i>
+        {% elif notif.notification_type == 'INVENTORY_RESTOCK' or notif.notification_type == 'LOW_INVENTORY' %}
+          <i class='bx bx-package'></i>
+        {% else %}
+          <i class='bx bx-bell'></i>
+        {% endif %}
+      </div>
+
+      <!-- Content -->
+      <div class="notif-content">
+        <div class="notif-content-top">
+          <h4 class="notif-title">{{ notif.title }}</h4>
+          {% if not notif.is_read %}
+          <span class="notif-unread-dot" title="Unread"></span>
+          {% endif %}
+        </div>
+        <p class="notif-message">{{ notif.message }}</p>
+        <div class="notif-meta">
+          <span class="notif-time"><i class='bx bx-time-five'></i> {{ notif.created_at|timesince }} ago</span>
+          <span class="notif-type-label">{{ notif.get_notification_type_display }}</span>
+        </div>
+      </div>
+
+      <!-- Action -->
+      {% if not notif.is_read %}
+      <button class="notif-read-btn" onclick="markOneRead(this, {{ notif.pk }})" title="Mark as read">
+        <i class='bx bx-check'></i>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+function markAllNotificationsRead() {
+  fetch("{% url 'notifications:mark_all_read' %}", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": "{{ csrf_token }}",
+      "Content-Type": "application/json"
+    }
+  }).then(response => {
+    if (response.ok) window.location.reload();
+  });
+}
+
+function markOneRead(btn, pk) {
+  event.stopPropagation();
+  fetch(`/notifications/${pk}/read/`, {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": "{{ csrf_token }}",
+      "Content-Type": "application/json"
+    }
+  }).then(response => {
+    if (response.ok) {
+      const card = btn.closest('.notif-card');
+      card.classList.remove('unread');
+      card.dataset.read = 'true';
+      const dot = card.querySelector('.notif-unread-dot');
+      if (dot) dot.remove();
+      btn.remove();
+    }
+  });
+}
+
+/* ── Filter tabs ── */
+document.querySelectorAll('.notif-filter').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.notif-filter').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    const filter = this.dataset.filter;
+    document.querySelectorAll('.notif-card').forEach(function(card) {
+      if (filter === 'all') {
+        card.style.display = '';
+      } else if (filter === 'unread') {
+        card.style.display = card.dataset.read === 'false' ? '' : 'none';
+      } else {
+        card.style.display = card.dataset.read === 'true' ? '' : 'none';
+      }
+    });
+  });
+});
+</script>
+
+{% else %}
+<div class="pets-empty-hero">
+  <div class="pets-empty-visual">
+    <div class="pets-empty-ring ring-1"></div>
+    <div class="pets-empty-ring ring-2"></div>
+    <div class="pets-empty-ring ring-3"></div>
+    <div class="pets-empty-center-icon">
+      <i class='bx bx-bell-off'></i>
+    </div>
+  </div>
+  <h2>No notifications yet</h2>
+  <p>You're all caught up! We'll let you know when there's an update from the clinic.</p>
+</div>
+{% endif %}
+{% endblock %}

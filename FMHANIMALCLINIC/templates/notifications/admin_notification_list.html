@@ -1,0 +1,86 @@
+{% extends 'base/portal_admin.html' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Notifications</h1>
+    <p class="page-subtitle">Stay updated on clinic events and inventory 🔔</p>
+  </div>
+  {% if unread_count > 0 %}
+  <div class="page-header-actions">
+    <button id="markAllReadBtn" class="btn-action primary" onclick="markAllNotificationsRead()">
+      <i class='bx bx-check'></i> Mark All Read
+    </button>
+  </div>
+  {% endif %}
+</div>
+
+{% if notifications %}
+<div class="pet-cards-grid" style="display: block;">
+  {% for notif in notifications %}
+  <div class="pet-card {% if not notif.is_read %}unread{% endif %}" style="margin-bottom: 1rem; opacity: {% if notif.is_read %}0.7{% else %}1{% endif %};">
+    <div class="pet-card-content" style="padding: 1.5rem;">
+      <div class="pet-card-top">
+        <div class="pet-card-title">
+          <h3 class="pet-name" style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;">
+            {% if notif.notification_type == 'APPOINTMENT' %}
+              <i class='bx bx-calendar-event' style="color: var(--primary); font-size: 1.4rem;"></i>
+            {% elif notif.notification_type == 'FOLLOW_UP' %}
+              <i class='bx bx-plus-medical' style="color: var(--warning); font-size: 1.4rem;"></i>
+            {% elif notif.notification_type == 'LOW_INVENTORY' %}
+              <i class='bx bx-error' style="color: var(--danger); font-size: 1.4rem;"></i>
+            {% elif notif.notification_type == 'INVENTORY_RESTOCK' %}
+              <i class='bx bx-check-shield' style="color: var(--success); font-size: 1.4rem;"></i>
+            {% else %}
+              <i class='bx bx-bell' style="color: var(--primary); font-size: 1.4rem;"></i>
+            {% endif %}
+            {{ notif.title }}
+          </h3>
+          <span class="pet-species-tag">{{ notif.created_at|timesince }} ago</span>
+        </div>
+        {% if not notif.is_read %}
+        <div class="pet-card-actions">
+            <span class="pet-species-tag" style="background: var(--primary-light); color: var(--primary);"><i class='bx bx-envelope'></i> New</span>
+        </div>
+        {% endif %}
+      </div>
+      <div class="pet-card-divider" style="margin: 0.75rem 0;"></div>
+      <p style="color: var(--text-muted); line-height: 1.5; font-size: 0.95rem;">{{ notif.message }}</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+function markAllNotificationsRead() {
+    fetch("{% url 'notifications:mark_all_read' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/json"
+        }
+    }).then(response => {
+        if(response.ok) {
+            window.location.reload();
+        }
+    });
+}
+</script>
+
+{% else %}
+<div class="pets-empty-hero">
+  <div class="pets-empty-visual">
+    <div class="pets-empty-ring ring-1"></div>
+    <div class="pets-empty-ring ring-2"></div>
+    <div class="pets-empty-ring ring-3"></div>
+    <div class="pets-empty-center-icon">
+      <i class='bx bx-bell-off'></i>
+    </div>
+  </div>
+  <h2>No notifications yet</h2>
+  <p>You're all caught up! No recent alerts or updates.</p>
+</div>
+{% endif %}
+{% endblock %}

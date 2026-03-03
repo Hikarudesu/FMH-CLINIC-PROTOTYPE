@@ -1,0 +1,137 @@
+{% extends 'base/portal_admin.html' %}
+
+{% block title %}Staff Management{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h1>Staff Management</h1>
+    <p class="page-subtitle">Manage clinic staff members and their details</p>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'employees:staff_add' %}" class="btn-action primary">
+      <i class='bx bx-user-plus'></i> Add Staff
+    </a>
+  </div>
+</div>
+
+<!-- Search & Filter Bar -->
+<div class="filter-bar">
+  <form method="GET" style="display:contents;" id="staffFilterForm">
+    <div class="portal-search" style="margin-bottom:0; flex:1; min-width:200px;">
+      <i class='bx bx-search'></i>
+      <input type="text" name="q" placeholder="Search by name or email..." value="{{ q }}" id="staffSearch">
+    </div>
+    <select class="filter-select" name="branch" onchange="document.getElementById('staffFilterForm').submit()">
+      <option value="">All Branches</option>
+      {% for branch in branches %}
+      <option value="{{ branch.id }}" {% if selected_branch == branch.id|stringformat:"d" %}selected{% endif %}>{{ branch.name }}</option>
+      {% endfor %}
+    </select>
+    <select class="filter-select" name="position" onchange="document.getElementById('staffFilterForm').submit()">
+      <option value="">All Positions</option>
+      {% for value, label in positions %}
+      <option value="{{ value }}" {% if selected_position == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <div class="filter-actions">
+      <a href="{% url 'employees:staff_list' %}" class="filter-btn clear"><i class='bx bx-x'></i> Clear</a>
+    </div>
+  </form>
+</div>
+
+{% if staff %}
+<!-- Staff Table -->
+<div class="dashboard-card full-width">
+  <div class="card-body" style="padding: 0;">
+    <table class="portal-table staff-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Position</th>
+          <th>Branch</th>
+          <th>Salary</th>
+          <th>License Expiry</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for member in staff %}
+        <tr>
+          <td>
+            <div class="staff-name-cell">
+              <div class="staff-avatar">{{ member.first_name|make_list|first|upper }}</div>
+              <div>
+                <strong>{{ member.full_name }}</strong>
+                <span class="staff-email">{{ member.email }}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="position-badge position-{{ member.position|lower }}">{{ member.get_position_display }}</span>
+          </td>
+          <td>{{ member.branch.name|default:"—" }}</td>
+          <td class="staff-salary">₱{{ member.salary|floatformat:2 }}</td>
+          <td>
+            {% if member.license_expiry %}
+              <span class="{% if member.license_expired %}text-danger-inline{% endif %}">
+                {{ member.license_expiry|date:"M d, Y" }}
+                {% if member.license_expired %}<i class='bx bx-error-circle'></i>{% endif %}
+              </span>
+            {% else %}
+              <span class="text-muted">N/A</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if member.is_active %}
+              <span class="status-badge confirmed">Active</span>
+            {% else %}
+              <span class="status-badge pending">Inactive</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="table-actions">
+              <a href="{% url 'employees:staff_edit' member.pk %}" class="pet-action-btn" title="Edit">
+                <i class='bx bx-edit-alt'></i>
+              </a>
+              <a href="{% url 'employees:staff_delete' member.pk %}" class="pet-action-btn danger" title="Delete">
+                <i class='bx bx-trash'></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+<!-- Empty State -->
+<div class="dashboard-card full-width">
+  <div class="card-body">
+    <div class="empty-state-large">
+      <div class="empty-state-icon">
+        <i class='bx bx-group'></i>
+      </div>
+      <h3>No staff members found</h3>
+      <p>Add your first staff member to get started managing your clinic team.</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Info Tip Box -->
+<div class="info-tip-box">
+  <h4><i class='bx bx-info-circle'></i> Staff Management Tips</h4>
+  <ul>
+    <li>Keep veterinarian license expiry dates updated to ensure compliance</li>
+    <li>Assign staff to their primary branch for accurate scheduling</li>
+    <li>Use the position filter to quickly find specific roles</li>
+  </ul>
+</div>
+
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'base/portal_admin.html' %}
+{% load static %}
+
+{% block title %}Medical Records{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="admin-page-header">
+  <div>
+    <h1>Medical Records</h1>
+    <p class="subtitle">Manage and track all medical records</p>
+  </div>
+  <div class="admin-header-actions">
+    <form method="get" action="{% url 'records:admin_list' %}" style="margin: 0;">
+      <div class="admin-search-box">
+        <i class='bx bx-search'></i>
+        <input type="text" name="q" value="{{ search_query }}" placeholder="Search records..." class="admin-search-input">
+      </div>
+    </form>
+    <a href="{% url 'records:admin_create' %}" class="admin-btn primary">
+      <i class='bx bx-plus'></i> Create New
+    </a>
+  </div>
+</div>
+
+<!-- Main Table Container -->
+<div class="admin-table-card">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Pet</th>
+        <th>Wt / Temp</th>
+        <th>History / Signs</th>
+        <th>Tx / Rx</th>
+        <th>Follow-up</th>
+        <th>Status</th>
+        <th style="text-align: right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for record in records %}
+      <tr>
+        <td>
+          <span class="cell-primary">{{ record.date_recorded|date:"M j, Y" }}</span>
+        </td>
+        <td>
+          <div class="cell-stack">
+            <span class="cell-primary">{{ record.pet.name }}</span>
+            <span class="cell-secondary">{{ record.pet.owner.get_full_name|default:record.pet.owner.username }}</span>
+          </div>
+        </td>
+        <td>
+          <span class="cell-secondary">{{ record.weight|default:"--" }} kg / {{ record.temperature|default:"--" }} °C</span>
+        </td>
+        <td>
+          <span class="cell-secondary">{{ record.history_clinical_signs|default:"--"|truncatechars:35 }}</span>
+        </td>
+        <td>
+          <div class="cell-stack">
+            <span class="cell-secondary"><strong>Tx:</strong> {{ record.treatment|default:"--"|truncatechars:20 }}</span>
+            {% if record.rx %}<span class="cell-secondary"><strong>Rx:</strong> {{ record.rx|truncatechars:20 }}</span>{% endif %}
+          </div>
+        </td>
+        <td>
+          <span class="cell-secondary">{{ record.ff_up|date:"M j, Y"|default:"--" }}</span>
+        </td>
+        <td>
+          {% if record.status == 'Active' %}
+            <span class="admin-badge active">Active</span>
+          {% else %}
+            <span class="admin-badge inactive">{{ record.status }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="actions-cell">
+            <a href="{% url 'records:admin_edit' record.pk %}" class="action-btn" title="Edit"><i class='bx bx-edit-alt'></i></a>
+            <a href="{% url 'records:admin_delete' record.pk %}" class="action-btn danger" title="Delete"><i class='bx bx-trash'></i></a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="8">
+          <div class="admin-empty-state">
+            <i class='bx bx-file'></i>
+            <h3>No medical records found</h3>
+            <p>Create a new medical record to get started.</p>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination -->
+{% if records %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);">
+  <div style="color: var(--text-2); font-size: 0.875rem;">
+    Showing {{ records|length }} record{% if records|length != 1 %}s{% endif %}
+  </div>
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <button class="admin-btn outline sm" disabled><i class='bx bx-chevron-left'></i></button>
+    <span style="font-size: 0.875rem; color: var(--text-2);">Page 1</span>
+    <button class="admin-btn outline sm" disabled><i class='bx bx-chevron-right'></i></button>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

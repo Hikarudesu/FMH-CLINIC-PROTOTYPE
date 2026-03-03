@@ -1,0 +1,236 @@
+{% extends 'base/portal_admin.html' %}
+
+{% block title %}Create Medical Record{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom: 24px;">
+    <div>
+        <h1 style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">
+            Create Medical Record
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 14px; margin: 0;">
+            Log new record mapped from index card
+        </p>
+    </div>
+    
+    <div class="page-header-actions">
+        <!-- Back Button -->
+        <a href="{% url 'records:admin_list' %}" class="btn btn-outline" style="display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-sm); font-weight: 500; text-decoration: none;">
+            <i class='bx bx-arrow-back'></i> Back to List
+        </a>
+    </div>
+</div>
+
+<div class="dashboard-card" style="padding: 32px; max-width: 900px; margin: 0 auto; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+    
+    <!-- Crude Card Header Design Simulation -->
+    <div style="border-bottom: 2px solid var(--primary); padding-bottom: 16px; margin-bottom: 24px; position: relative;">
+        <h2 style="color: var(--primary); font-family: monospace; font-size: 18px; letter-spacing: 1px; margin: 0;">
+            VETERINARY MEDICAL RECORD
+        </h2>
+    </div>
+
+    <form method="post" action="{% url 'records:admin_create' %}" style="display: flex; flex-direction: column; gap: 24px;">
+        {% csrf_token %}
+        
+        <style>
+            .section-title {
+                font-size: 14px;
+                font-weight: 700;
+                color: var(--primary);
+                text-transform: uppercase;
+                margin-bottom: 16px;
+                padding-bottom: 8px;
+                border-bottom: 2px solid var(--border);
+                letter-spacing: 0.5px;
+            }
+            .form-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 16px;
+                margin-bottom: 32px;
+            }
+            .form-group {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            .form-label {
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--text-secondary);
+                text-transform: uppercase;
+            }
+            .form-control-custom {
+                width: 100%;
+                padding: 10px 12px;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                background-color: var(--bg);
+                color: var(--text-primary);
+                font-size: 14px;
+                font-family: inherit;
+                transition: all 0.2s;
+            }
+            .form-control-custom:focus {
+                border-color: var(--primary);
+                box-shadow: 0 0 0 3px rgba(44, 122, 123, 0.1);
+                outline: none;
+            }
+            textarea.form-control-custom {
+                min-height: 80px;
+                resize: vertical;
+            }
+        </style>
+
+        <!-- Owner & Contact Information -->
+        <div>
+            <h3 class="section-title">Owner & Contact Information</h3>
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="form-group">
+                    <label class="form-label">Name of Owner</label>
+                    <input type="text" id="ro-owner-name" name="owner_name" class="form-control-custom" placeholder="Enter owner name" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contact #</label>
+                    <input type="text" id="ro-owner-contact" name="owner_contact" class="form-control-custom" placeholder="Enter contact number" />
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Address</label>
+                    <input type="text" id="ro-owner-address" name="owner_address" class="form-control-custom" placeholder="Enter full address" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Pet Identification -->
+        <div>
+            <h3 class="section-title">Pet Identification</h3>
+            <div class="form-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Name of Pet</label>
+                    <input list="pets-list" name="pet_name" id="ro-pet-name" class="form-control-custom" placeholder="Select or enter pet name" required autocomplete="off" />
+                    <datalist id="pets-list">
+                        {% for pet_name, data in pets_data.items %}
+                        <option value="{{ pet_name }}">Owner: {{ data.owner_name }}</option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">D.O.B. / Age</label>
+                    <input type="text" id="ro-pet-age" name="pet_age" class="form-control-custom" placeholder="e.g. 5 yrs" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Color</label>
+                    <input type="text" id="ro-pet-color" name="pet_color" class="form-control-custom" placeholder="e.g. Brown" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Breed</label>
+                    <input type="text" id="ro-pet-breed" name="pet_breed" class="form-control-custom" placeholder="e.g. Labrador" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sex</label>
+                    <input type="text" id="ro-pet-sex" name="pet_sex" class="form-control-custom" placeholder="e.g. Male" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Species</label>
+                    <input type="text" id="ro-pet-species" name="pet_species" class="form-control-custom" placeholder="e.g. Canine" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Clinical Tracking -->
+        <div>
+            <h3 class="section-title">Clinical Tracking</h3>
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                 <div class="form-group">
+                    <label class="form-label">Date</label>
+                    {{ form.date_recorded }}
+                    {% if form.date_recorded.errors %}
+                        <div style="color: var(--accent); font-size: 12px; margin-top: 4px;">{{ form.date_recorded.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">FF-UP (Follow-Up Date)</label>
+                    {{ form.ff_up }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Weight (kg)</label>
+                    {{ form.weight }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Temperature (°C)</label>
+                    {{ form.temperature }}
+                </div>
+                
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">History / Clinical Signs</label>
+                    {{ form.history_clinical_signs }}
+                    {% if form.history_clinical_signs.errors %}
+                        <div style="color: var(--accent); font-size: 12px; margin-top: 4px;">{{ form.history_clinical_signs.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">TX (Treatment)</label>
+                    {{ form.treatment }}
+                    {% if form.treatment.errors %}
+                        <div style="color: var(--accent); font-size: 12px; margin-top: 4px;">{{ form.treatment.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">RX (Prescription)</label>
+                    {{ form.rx }}
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            // Ensure Django form fields match custom styling
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                if (!el.classList.contains('form-control-custom')) {
+                    el.classList.add('form-control-custom');
+                }
+            });
+        </script>
+
+        <div style="margin-top: 8px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary" style="background: var(--primary); color: white; padding: 12px 32px; border-radius: var(--radius-sm); font-weight: 600; border: none; font-size: 15px; cursor: pointer; transition: background-color 0.2s;">
+                <i class='bx bx-save'></i> Save Medical Record
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Scripts for Dynamic Pet Data Loading -->
+{% if pets_json %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const petsData = {{ pets_json|safe }};
+    const petInput = document.getElementById('ro-pet-name');
+    
+    function updatePetDetails() {
+        if (!petInput) return;
+        const petName = petInput.value;
+        const data = petsData[petName];
+        
+        if (data) {
+            document.getElementById('ro-owner-name').value = data.owner_name || '';
+            document.getElementById('ro-owner-address').value = data.owner_address || '';
+            document.getElementById('ro-owner-contact').value = data.owner_contact || '';
+            
+            document.getElementById('ro-pet-age').value = data.pet_age ? data.pet_age + ' yrs' : '';
+            document.getElementById('ro-pet-color').value = data.pet_color || '';
+            document.getElementById('ro-pet-breed').value = data.pet_breed || '';
+            document.getElementById('ro-pet-sex').value = data.pet_sex || '';
+            document.getElementById('ro-pet-species').value = data.pet_species || '';
+        }
+    }
+
+    if (petInput) {
+        petInput.addEventListener('input', updatePetDetails);
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,258 @@
+{% extends 'base/portal_admin.html' %}
+{% load static %}
+
+{% block title %}Patients Management{% endblock %}
+
+{% block content %}
+<style>
+  /* Modal Overlay */
+  .pm-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease-in-out;
+  }
+  .pm-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  .pm-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: 90%;
+    max-width: 550px;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(20px);
+    transition: transform 0.2s ease-in-out;
+    overflow: hidden;
+  }
+  .pm-modal-overlay.active .pm-modal {
+    transform: translateY(0);
+  }
+  .pm-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid var(--primary);
+  }
+  .pm-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-2);
+    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .pm-modal-close:hover {
+    color: var(--accent);
+  }
+  .pm-modal-body {
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .pm-detail-group {
+    margin-bottom: 14px;
+  }
+  .pm-detail-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-2);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .pm-detail-value {
+    font-size: 0.95rem;
+    color: var(--text-1);
+    font-weight: 500;
+  }
+  .pm-modal-footer {
+    padding: 16px 24px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+  }
+  @media (max-width: 640px) {
+    .pm-modal-body {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<!-- Page Header -->
+<div class="admin-page-header">
+  <div>
+    <h1>Patients Management</h1>
+    <p class="subtitle">Manage your clients and their pets in one place</p>
+  </div>
+  <div class="admin-header-actions">
+    <form method="get" action="{% url 'patients:admin_list' %}" style="margin: 0;">
+      <div class="admin-search-box">
+        <i class='bx bx-search'></i>
+        <input type="text" name="q" value="{{ search_query }}" placeholder="Search patients..." class="admin-search-input">
+      </div>
+    </form>
+    <a href="{% url 'patients:admin_add_pet' %}" class="admin-btn primary">
+      <i class='bx bx-plus'></i> Add Patient
+    </a>
+  </div>
+</div>
+
+<!-- Main Table Container -->
+<div class="admin-table-card">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Code</th>
+        <th>Client (Owner)</th>
+        <th>Species</th>
+        <th>Breed</th>
+        <th>Age</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th style="text-align: right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for pet in pets %}
+      <tr>
+        <td>
+          <a href="#" onclick="openPatientDetail('{{ pet.name|escapejs }}', '{{ pet.species|default:'-'|escapejs }}', '{{ pet.breed|default:'-'|escapejs }}', '{{ pet.sex|default:'-'|escapejs }}', '{{ pet.age|escapejs }}', '{{ pet.color|default:'-'|escapejs }}', '{{ pet.owner.get_full_name|default:pet.owner.username|escapejs }}', '{{ pet.owner.phone_number|default:'-'|escapejs }}', '{{ pet.owner.email|default:'-'|escapejs }}', '{% url 'patients:admin_edit_pet' pet.id %}'); return false;" class="cell-link">{{ pet.name }}</a>
+        </td>
+        <td><span class="cell-secondary">{{ pet.name|truncatechars:1 }}{{ pet.id|stringformat:"02d" }}P{{ pet.owner.id|stringformat:"02d" }}X</span></td>
+        <td>
+          <div class="cell-stack">
+            <span class="cell-primary">{{ pet.owner.get_full_name|default:pet.owner.username }}</span>
+            <span class="cell-secondary">{{ pet.owner.phone_number|default:"No phone" }}</span>
+          </div>
+        </td>
+        <td>{{ pet.species|default:"-" }}</td>
+        <td>{{ pet.breed|default:"-" }}</td>
+        <td>{{ pet.age }} yrs</td>
+        <td><span class="admin-badge active">Active</span></td>
+        <td><span class="cell-secondary">{{ pet.created_at|date:"M j, Y" }}</span></td>
+        <td>
+          <div class="actions-cell">
+            <a href="{% url 'patients:admin_edit_pet' pet.id %}" class="action-btn" title="Edit"><i class='bx bx-edit-alt'></i></a>
+            <a href="{% url 'patients:admin_delete_pet' pet.id %}" class="action-btn danger" title="Delete"><i class='bx bx-trash'></i></a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="9">
+          <div class="admin-empty-state">
+            <i class='bx bxs-dog'></i>
+            <h3>No patients found</h3>
+            <p>Add your first patient to get started.</p>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- PATIENT DETAILS MODAL -->
+<div class="pm-modal-overlay" id="patientDetailModal">
+  <div class="pm-modal">
+    <div class="pm-modal-header">
+      <div>
+        <h3 id="modalPetName" style="color: var(--text-1); margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px; font-size: 1.15rem;">
+          Pet Name <span class="admin-badge active" style="font-size: 0.7rem;">Active</span>
+        </h3>
+        <p id="modalOwnerNameTitle" style="color: var(--text-2); margin: 0; font-size: 0.875rem;">Owner: Client Name</p>
+      </div>
+      <button class="pm-modal-close" onclick="closePatientDetail()"><i class='bx bx-x'></i></button>
+    </div>
+    
+    <div class="pm-modal-body">
+      <!-- Left Column: Pet Specs -->
+      <div>
+        <h4 style="color: var(--text-2); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; display: flex; align-items: center; gap: 6px;"><i class='bx bxs-dog'></i> Pet Details</h4>
+        
+        <div class="pm-detail-group">
+          <span class="pm-detail-label">Species & Breed</span>
+          <span class="pm-detail-value"><span id="modalSpecies">Dog</span> - <span id="modalBreed">Husky</span></span>
+        </div>
+        <div class="pm-detail-group">
+          <span class="pm-detail-label">Age & Sex</span>
+          <span class="pm-detail-value"><span id="modalAge">2</span> yrs • <span id="modalSex">Male</span></span>
+        </div>
+        <div class="pm-detail-group">
+          <span class="pm-detail-label">Color</span>
+          <span class="pm-detail-value" id="modalColor">Black/White</span>
+        </div>
+      </div>
+      
+      <!-- Right Column: Owner Info -->
+      <div>
+        <h4 style="color: var(--text-2); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; display: flex; align-items: center; gap: 6px;"><i class='bx bxs-user-detail'></i> Owner Info</h4>
+        
+        <div class="pm-detail-group">
+          <span class="pm-detail-label">Full Name</span>
+          <span class="pm-detail-value" id="modalOwnerName">John Doe</span>
+        </div>
+        <div class="pm-detail-group">
+          <span class="pm-detail-label">Contact Number</span>
+          <span class="pm-detail-value" id="modalOwnerPhone">09123456789</span>
+        </div>
+        <div class="pm-detail-group">
+          <span class="pm-detail-label">Email Address</span>
+          <span class="pm-detail-value" style="word-break: break-all;" id="modalOwnerEmail">john@example.com</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="pm-modal-footer">
+      <a href="#" id="modalEditBtn" class="admin-btn primary"><i class='bx bx-edit'></i> Edit Patient</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openPatientDetail(name, species, breed, sex, age, color, ownerName, ownerPhone, ownerEmail, editUrl) {
+    document.getElementById('modalPetName').innerHTML = name + ' <span class="admin-badge active" style="font-size: 0.7rem;">Active</span>';
+    document.getElementById('modalOwnerNameTitle').innerText = 'Owner: ' + ownerName;
+    
+    document.getElementById('modalSpecies').innerText = species;
+    document.getElementById('modalBreed').innerText = breed;
+    document.getElementById('modalAge').innerText = age;
+    document.getElementById('modalSex').innerText = sex;
+    document.getElementById('modalColor').innerText = color;
+    
+    document.getElementById('modalOwnerName').innerText = ownerName;
+    document.getElementById('modalOwnerPhone').innerText = ownerPhone;
+    document.getElementById('modalOwnerEmail').innerText = ownerEmail;
+    
+    document.getElementById('modalEditBtn').href = editUrl;
+    
+    document.getElementById('patientDetailModal').classList.add('active');
+  }
+
+  function closePatientDetail() {
+    document.getElementById('patientDetailModal').classList.remove('active');
+  }
+
+  document.getElementById('patientDetailModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closePatientDetail();
+    }
+  });
+</script>
+
+{% endblock %}

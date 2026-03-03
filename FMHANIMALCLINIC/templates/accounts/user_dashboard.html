@@ -1,0 +1,275 @@
+{% extends 'base/portal_user.html' %}
+
+{% block title %}My Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- No Branch Warning Banner -->
+{% if not user.branch %}
+<div class="dashboard-alert warning">
+  <div class="dashboard-alert-icon">
+    <i class='bx bx-error-circle'></i>
+  </div>
+  <div class="dashboard-alert-content">
+    <strong>No clinic branch selected</strong>
+    <p>You haven't selected a clinic branch yet. Please select one to book appointments and access clinic services.</p>
+  </div>
+  <a href="{% url 'select_branch' %}" class="dashboard-alert-action">Select Branch <i class='bx bx-right-arrow-alt'></i></a>
+</div>
+{% endif %}
+
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="page-subtitle">Welcome back! Here's an overview of your pet care</p>
+    {% if user.branch %}
+    <span class="branch-badge">
+      <i class='bx bx-map-pin'></i> {{ user.branch.name }} — {{ user.branch.city }}
+    </span>
+    {% endif %}
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'appointments:portal_book' %}" class="btn-action primary"><i class='bx bx-calendar-plus'></i> Book Appointment</a>
+    <a href="{% url 'patients:add_pet' %}" class="btn-action outline"><i class='bx bx-plus-circle'></i> Register Pet</a>
+  </div>
+</div>
+
+<!-- Search Bar -->
+<div class="portal-search">
+  <i class='bx bx-search'></i>
+  <input type="text" placeholder="Search pets, records, appointments..." id="dashboardSearch">
+</div>
+
+<!-- Stat Cards -->
+<div class="stats-grid">
+  <div class="stat-card teal">
+    <div class="stat-icon-bg"><i class='bx bxs-dog'></i></div>
+    <div class="stat-label"><i class='bx bxs-dog'></i> My Pets</div>
+    <div class="stat-value">{{ pet_count|default:"0" }}</div>
+    <div class="stat-sub">registered pets</div>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-icon-bg"><i class='bx bxs-calendar-check'></i></div>
+    <div class="stat-label"><i class='bx bx-calendar-check'></i> Upcoming Appointments</div>
+    <div class="stat-value">{{ upcoming_count|default:"0" }}</div>
+    <div class="stat-sub">scheduled this week</div>
+  </div>
+  <div class="stat-card orange">
+    <div class="stat-icon-bg"><i class='bx bxs-bell-ring'></i></div>
+    <div class="stat-label"><i class='bx bx-bell'></i> Follow-ups</div>
+    <div class="stat-value">{{ follow_up_count|default:"0" }}</div>
+    <div class="stat-sub">pending return visits</div>
+  </div>
+  <div class="stat-card purple">
+    <div class="stat-icon-bg"><i class='bx bxs-envelope'></i></div>
+    <div class="stat-label"><i class='bx bx-envelope'></i> Notifications</div>
+    <div class="stat-value">{{ unread_notif_count|default:"0" }}</div>
+    <div class="stat-sub">unread</div>
+  </div>
+</div>
+
+<!-- Medical Alerts / Follow-ups -->
+{% if follow_ups %}
+<div class="dashboard-card full-width" style="margin-bottom: 14px;">
+  <div class="card-header">
+    <h3><i class='bx bxs-bell-ring' style="color: #f57c00;"></i> Medical Alerts / Follow-ups</h3>
+    <span class="badge" style="background: #f57c00; color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700;">{{ follow_ups|length }}</span>
+  </div>
+  <div class="card-body">
+    <div class="schedule-entries">
+      {% for fu in follow_ups %}
+      <div class="schedule-entry" style="border-left: 4px solid {% if fu.is_completed %}#2e7d32{% else %}#f57c00{% endif %};">
+        <div class="schedule-entry-left">
+          <div class="schedule-entry-avatar" style="background: {% if fu.is_completed %}#2e7d32{% else %}#f57c00{% endif %};">
+            <i class='bx {% if fu.is_completed %}bx-check{% else %}bx-calendar-exclamation{% endif %}'></i>
+          </div>
+          <div class="schedule-entry-info">
+            <strong>{{ fu.pet_name }}</strong>
+            <span>{{ fu.reason|default:"Routine follow-up visit" }}</span>
+          </div>
+        </div>
+        <div class="schedule-entry-details">
+          <div class="pet-alert-meta" style="display: flex; gap: 1rem; margin-top: 10px; font-size: 0.85rem; color: #666;">
+            <span>
+              <i class='bx bx-calendar'></i> {{ fu.follow_up_date|date:"M d, Y" }}
+              {% if fu.follow_up_end_date and fu.follow_up_end_date != fu.follow_up_date %}
+                - {{ fu.follow_up_end_date|date:"M d, Y" }}
+              {% endif %}
+            </span>
+          </div>
+          <span class="status-badge {% if fu.is_completed %}confirmed{% else %}pending{% endif %}">
+            {% if fu.is_completed %}Completed{% else %}Upcoming{% endif %}
+          </span>
+          <!-- Calendar Add Button (ICS download) -->
+          {% if not fu.is_completed %}
+          <div class="pet-alert-actions" style="margin-top: 10px;">
+            <a href="javascript:void(0)" class="pet-action-btn" title="Add to Calendar" onclick="downloadICS('{{ fu.pet_name|escapejs }}', '{{ fu.follow_up_date|date:'Y-m-d' }}', '{{ fu.reason|escapejs }} {% if fu.follow_up_end_date %}(Ends: {{ fu.follow_up_end_date|date:'Y-m-d' }}){% endif %}')">
+              <i class='bx bx-calendar-plus'></i> Add to Calendar
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Quick Actions -->
+<div class="dashboard-card full-width" style="margin-bottom: 14px;">
+  <div class="card-header">
+    <h3><i class='bx bxs-zap'></i> Quick Actions</h3>
+  </div>
+  <div class="card-body">
+    <div class="quick-actions">
+      <a href="{% url 'appointments:portal_book' %}" class="quick-action-btn">
+        <i class='bx bx-calendar-plus'></i>
+        Book Appointment
+      </a>
+      <a href="{% url 'patients:add_pet' %}" class="quick-action-btn">
+        <i class='bx bx-plus-circle'></i>
+        Register Pet
+      </a>
+      <a href="{% url 'patients:my_pets' %}" class="quick-action-btn">
+        <i class='bx bx-file'></i>
+        View Records
+      </a>
+      <a href="{% url 'inventory:catalog' %}" class="quick-action-btn">
+        <i class='bx bx-cart'></i>
+        Browse Catalog
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Content Grid -->
+<div class="dashboard-grid">
+  <div class="dashboard-card">
+    <div class="card-header">
+      <h3><i class='bx bxs-calendar'></i> Upcoming Appointments</h3>
+      <a href="{% url 'appointments:my_appointments' %}" class="card-action">View All</a>
+    </div>
+    <div class="card-body">
+      {% if upcoming_appointments %}
+      <div class="schedule-entries">
+        {% for appt in upcoming_appointments %}
+        <div class="schedule-entry" style="border-left: 4px solid var(--primary);">
+          <div class="schedule-entry-left">
+            <div class="schedule-entry-avatar">{{ appt.pet_name|make_list|first|upper }}</div>
+            <div class="schedule-entry-info">
+              <strong>{{ appt.pet_name }}</strong>
+              <span>{{ appt.branch.name }}</span>
+              {% if appt.notes %}
+              <div style="font-size: 0.85rem; color: var(--text-2); margin-top: 4px;">
+                <strong>Vet Notes:</strong> {{ appt.notes }}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="schedule-entry-details">
+            <div class="schedule-entry-time"><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M d" }}</div>
+            <div class="schedule-entry-time"><i class='bx bx-time-five'></i> {{ appt.appointment_time|time:"g:i A" }}</div>
+            <span class="status-badge {{ appt.status|lower }}">{{ appt.get_status_display }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class='bx bx-calendar-x'></i>
+        <h4>No upcoming appointments</h4>
+        <p>Book your first appointment to get started.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="dashboard-card">
+    <div class="card-header">
+      <h3><i class='bx bxs-file-doc'></i> Recent Medical Records</h3>
+      <a href="{% url 'patients:my_pets' %}" class="card-action">View All</a>
+    </div>
+    <div class="card-body">
+      <div class="empty-state">
+        <i class='bx bx-file-blank'></i>
+        <h4>No records yet</h4>
+        <p>Records appear after your pet's first visit.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-card">
+    <div class="card-header">
+      <h3><i class='bx bx-history'></i> My Recent Changes</h3>
+    </div>
+    <div class="card-body">
+      <ul class="activity-list">
+        {% for activity in recent_activities %}
+        <li class="activity-item">
+          <div class="activity-icon {% if 'Created' in activity.action %}teal{% elif 'Updated' in activity.action %}blue{% else %}orange{% endif %}">
+            <i class='bx {% if 'Created' in activity.action %}bx-plus{% elif 'Updated' in activity.action %}bx-edit-alt{% else %}bx-trash{% endif %}'></i>
+          </div>
+          <div class="activity-text">
+            <p><strong>{{ activity.action }}</strong>: {{ activity.object_name }}</p>
+            <span>{{ activity.timestamp|timesince }} ago</span>
+          </div>
+        </li>
+        {% empty %}
+        <li class="activity-item">
+          <div class="activity-icon teal"><i class='bx bx-check'></i></div>
+          <div class="activity-text">
+            <p>No recent changes detected</p>
+            <span>Your activity history will appear here.</span>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Info Tip Box -->
+<div class="info-tip-box">
+  <h4><i class='bx bx-info-circle'></i> Getting Started with FMHSYNC</h4>
+  <ul>
+    <li>Register your pets to keep track of their health records and vaccination schedules</li>
+    <li>Book appointments online and receive reminders before your visit</li>
+    <li>Check your <strong>Medical Alerts</strong> section for upcoming follow-up visits</li>
+    <li>Use the Digital Catalog to browse products and services available at your branch</li>
+  </ul>
+</div>
+
+<script>
+// ICS Calendar download for follow-ups
+function downloadICS(petName, dateStr, reason) {
+  const dtStart = dateStr.replace(/-/g, '');
+  const dtEnd = dtStart; // Same day
+  const summary = 'Follow-up: ' + petName;
+  const description = reason || 'Routine follow-up visit at FMH Animal Clinic';
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//FMHSYNC//EN',
+    'BEGIN:VEVENT',
+    'DTSTART;VALUE=DATE:' + dtStart,
+    'DTEND;VALUE=DATE:' + dtEnd,
+    'SUMMARY:' + summary,
+    'DESCRIPTION:' + description,
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'followup_' + petName.replace(/\s+/g, '_') + '.ics';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends 'base/portal_admin.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+  <h1>Dashboard</h1>
+  <div class="page-header-actions">
+    <a href="{% url 'appointments:admin_list' %}" class="btn-action primary"><i class='bx bx-calendar-plus'></i> New Appointment</a>
+    <a href="{% url 'patients:my_pets' %}" class="btn-action outline"><i class='bx bx-user-plus'></i> View Patients</a>
+  </div>
+</div>
+
+<!-- Tab Bar -->
+<div class="tab-bar">
+  <button class="tab-item active"><i class='bx bx-grid-alt'></i> Overview</button>
+  <a href="{% url 'appointments:admin_list' %}" class="tab-item"><i class='bx bx-calendar'></i> Appointments</a>
+  <a href="#" class="tab-item"><i class='bx bx-package'></i> Inventory</a>
+  <a href="{% url 'employees:staff_list' %}" class="tab-item"><i class='bx bx-group'></i> Staff</a>
+</div>
+
+<!-- Stat Cards -->
+<div class="stats-grid">
+  <div class="stat-card teal">
+    <div class="stat-label"><i class='bx bx-calendar-check'></i> Today's Appointments</div>
+    <div class="stat-value">{{ today_count }}</div>
+    <div class="stat-sub">{{ today_confirmed }} confirmed, {{ today_pending }} pending</div>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-label"><i class='bx bxs-dog'></i> Registered Pets</div>
+    <div class="stat-value">{{ patient_count }}</div>
+    <div class="stat-sub">total in system</div>
+  </div>
+  <div class="stat-card orange">
+    <div class="stat-label"><i class='bx bx-building-house'></i> Active Branches</div>
+    <div class="stat-value">{{ branches|length }}</div>
+    <div class="stat-sub">{{ branches|length }} branch{{ branches|length|pluralize:"es" }}</div>
+  </div>
+  <div class="stat-card purple">
+    <div class="stat-label"><i class='bx bx-group'></i> Active Staff</div>
+    <div class="stat-value">{{ active_staff }}</div>
+    <div class="stat-sub">of {{ total_staff }} total staff</div>
+  </div>
+</div>
+
+<!-- Content Grid -->
+<div class="dashboard-grid">
+  <!-- Today's Appointments -->
+  <div class="dashboard-card">
+    <div class="card-header">
+      <h3><i class='bx bxs-calendar'></i> Today's Appointments</h3>
+      <a href="{% url 'appointments:admin_list' %}" class="card-action">View All</a>
+    </div>
+    <div class="card-body">
+      {% if todays_appointments %}
+      <table class="portal-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Patient</th>
+            <th>Owner</th>
+            <th>Vet</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for appt in todays_appointments %}
+          <tr>
+            <td>{{ appt.appointment_time|time:"g:i A" }}</td>
+            <td><strong>{{ appt.pet_name }}</strong></td>
+            <td>{{ appt.owner_name }}</td>
+            <td>{{ appt.preferred_vet.full_name|default:"Any available" }}</td>
+            <td>
+              <span class="status-badge {{ appt.status|lower }}">{{ appt.get_status_display }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state" style="padding: 18px 0;">
+        <i class='bx bx-calendar-x'></i>
+        <h4>No appointments today</h4>
+        <p>Appointments will show here when booked.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="dashboard-card">
+    <div class="card-header">
+      <h3><i class='bx bxs-time-five'></i> Recent Activity</h3>
+      <a href="{% url 'appointments:admin_list' %}" class="card-action">View All</a>
+    </div>
+    <div class="card-body">
+      <ul class="activity-list">
+        {% for appt in recent_appointments %}
+        <li class="activity-item">
+          <div class="activity-icon {% if appt.source == 'PORTAL' %}blue{% else %}teal{% endif %}">
+            <i class='bx {% if appt.source == "PORTAL" %}bx-user{% else %}bx-walk{% endif %}'></i>
+          </div>
+          <div class="activity-text">
+            <p><strong>{{ appt.owner_name }}</strong> booked {{ appt.pet_name }} — {{ appt.branch.name }}</p>
+            <span>{{ appt.created_at|timesince }} ago · {{ appt.get_source_display }}</span>
+          </div>
+        </li>
+        {% empty %}
+        <li class="activity-item">
+          <div class="activity-icon teal"><i class='bx bx-check'></i></div>
+          <div class="activity-text">
+            <p>System initialized — FMHSYNC is ready</p>
+            <span>No recent bookings yet</span>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Branch Overview -->
+<div class="dashboard-grid">
+  <div class="dashboard-card full-width">
+    <div class="card-header">
+      <h3><i class='bx bxs-building-house'></i> Branch Overview</h3>
+    </div>
+    <div class="card-body">
+      {% if branches %}
+      <div class="branch-grid">
+        {% for branch in branches %}
+        <div class="branch-card">
+          <h4>{{ branch.name }}</h4>
+          <p>{{ branch.address|default:"No address set" }}</p>
+          <div class="branch-status"><span class="dot"></span> Active</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class='bx bx-building-house'></i>
+        <h4>No branches configured</h4>
+        <p>Add branches in the admin panel.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

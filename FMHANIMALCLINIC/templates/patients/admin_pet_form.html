@@ -1,0 +1,184 @@
+{% extends 'base/portal_admin.html' %}
+
+{% block title %}Register New Patient{% endblock %}
+
+{% block content %}
+<style>
+  .pm-header {
+    margin-bottom: 24px;
+  }
+  .pm-title {
+    color: var(--text-primary);
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+  .pm-subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin: 0;
+  }
+  .admin-form-container {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px;
+    max-width: 800px;
+    margin-top: 24px;
+  }
+  .admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .admin-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .admin-field label {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .admin-input {
+    width: 100%;
+    padding: 12px 16px;
+    background-color: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .admin-input:focus {
+    border-color: var(--primary);
+  }
+  select.admin-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a0a0b0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+  }
+  .admin-field-full {
+    grid-column: 1 / -1;
+  }
+  .admin-actions {
+    margin-top: 32px;
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+  }
+  .btn-cancel {
+    padding: 10px 24px;
+    background-color: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.2s;
+  }
+  .btn-cancel:hover {
+    background-color: var(--surface-hover);
+  }
+  .btn-submit {
+    padding: 10px 24px;
+    background-color: var(--primary);
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-submit:hover {
+    opacity: 0.9;
+  }
+  .error-text {
+    color: #ff4d4d;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+</style>
+
+<div class="pm-header">
+  <h1 class="pm-title">Register New Patient</h1>
+  <p class="pm-subtitle">Assign a new pet to an existing client in the system</p>
+</div>
+
+<div class="admin-form-container">
+  <form method="POST" autocomplete="off">
+    {% csrf_token %}
+    
+    <div class="admin-grid">
+      <!-- Owner Selection (Full Width) -->
+      <div class="admin-field admin-field-full">
+        <label for="{{ form.owner.id_for_label }}">Client (Owner) *</label>
+        {{ form.owner }}
+        <script>document.getElementById('{{ form.owner.id_for_label }}').classList.add('admin-input');</script>
+        {% if form.owner.errors %}<div class="error-text">{{ form.owner.errors.0 }}</div>{% endif %}
+      </div>
+
+      <!-- Name -->
+      <div class="admin-field">
+        <label for="{{ form.name.id_for_label }}">Pet Name *</label>
+        {{ form.name }}
+        <script>document.getElementById('{{ form.name.id_for_label }}').classList.add('admin-input');</script>
+        {% if form.name.errors %}<div class="error-text">{{ form.name.errors.0 }}</div>{% endif %}
+      </div>
+
+      <!-- Species -->
+      <div class="admin-field">
+        <label for="{{ form.species.id_for_label }}">Species *</label>
+        {{ form.species }}
+        <script>document.getElementById('{{ form.species.id_for_label }}').classList.add('admin-input');</script>
+        {% if form.species.errors %}<div class="error-text">{{ form.species.errors.0 }}</div>{% endif %}
+      </div>
+
+      <!-- Breed -->
+      <div class="admin-field">
+        <label for="{{ form.breed.id_for_label }}">Breed</label>
+        {{ form.breed }}
+        <script>document.getElementById('{{ form.breed.id_for_label }}').classList.add('admin-input');</script>
+        {% if form.breed.errors %}<div class="error-text">{{ form.breed.errors.0 }}</div>{% endif %}
+      </div>
+
+      <!-- Color -->
+      <div class="admin-field">
+        <label for="{{ form.color.id_for_label }}">Color</label>
+        {{ form.color }}
+        <script>document.getElementById('{{ form.color.id_for_label }}').classList.add('admin-input');</script>
+        {% if form.color.errors %}<div class="error-text">{{ form.color.errors.0 }}</div>{% endif %}
+      </div>
+
+      <!-- Age -->
+      <div class="admin-field">
+        <label for="{{ form.age.id_for_label }}">Age (Years) *</label>
+        {{ form.age }}
+        <script>document.getElementById('{{ form.age.id_for_label }}').classList.add('admin-input');</script>
+        {% if form.age.errors %}<div class="error-text">{{ form.age.errors.0 }}</div>{% endif %}
+      </div>
+
+      <!-- Sex -->
+      <div class="admin-field">
+        <label for="{{ form.sex.id_for_label }}">Sex *</label>
+        {{ form.sex }}
+        <script>document.getElementById('{{ form.sex.id_for_label }}').classList.add('admin-input');</script>
+        {% if form.sex.errors %}<div class="error-text">{{ form.sex.errors.0 }}</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="admin-actions">
+      <a href="{% url 'patients:admin_list' %}" class="btn-cancel">Cancel</a>
+      <button type="submit" class="btn-submit">Register Patient</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'base/portal_user.html' %}
+
+{% block title %}Statement of Account{% endblock %}
+
+{% block content %}
+
+<!-- ══════ STATEMENT HERO ══════ -->
+<div class="stmt-hero">
+  <div class="stmt-hero-bg">
+    <i class='bx bxs-dog hero-scatter sc-1'></i>
+    <i class='bx bx-bone hero-scatter sc-2'></i>
+    <i class='bx bx-paw hero-scatter sc-3'></i>
+    <i class='bx bxs-bone hero-scatter sc-4'></i>
+    <i class='bx bx-paw hero-scatter sc-5'></i>
+    <i class='bx bxs-dog hero-scatter sc-6'></i>
+  </div>
+  <div class="stmt-hero-inner">
+    <div class="stmt-hero-text">
+      <h1><i class='bx bx-receipt'></i> Statement of Account</h1>
+      <p>View and manage your billing history</p>
+      <div class="stmt-status-badge">
+        <div class="stmt-status-dot"></div>
+        <i class='bx bx-check-shield'></i>
+        <span>All Settled</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ EMPTY STATE ══════ -->
+<div class="stmt-empty">
+  <div class="stmt-empty-visual">
+    <div class="stmt-empty-ring r1"></div>
+    <div class="stmt-empty-ring r2"></div>
+    <div class="stmt-empty-ring r3"></div>
+    <div class="stmt-empty-icon">
+      <i class='bx bx-wallet'></i>
+    </div>
+  </div>
+  <h2>No pending statements</h2>
+  <p>Your account is fully settled. Thank you for choosing FMH Animal Clinic!</p>
+  <div class="stmt-empty-features">
+    <div class="stmt-feature">
+      <i class='bx bx-shield-quarter'></i>
+      <span>Secure billing</span>
+    </div>
+    <div class="stmt-feature">
+      <i class='bx bx-history'></i>
+      <span>Past invoices</span>
+    </div>
+    <div class="stmt-feature">
+      <i class='bx bx-printer'></i>
+      <span>Printable receipts</span>
+    </div>
+  </div>
+</div>
+
+<!-- Info Tip Box -->
+<div class="info-tip-box" style="margin-top: 2rem;">
+  <h4><i class='bx bx-info-circle'></i> About Statements</h4>
+  <ul>
+    <li>Your past invoices and receipts will appear here once generated</li>
+    <li>If you have any questions regarding your bill, please contact the clinic front desk</li>
+    <li>Payment confirmations are sent to your registered email address</li>
+  </ul>
+</div>
+{% endblock %}

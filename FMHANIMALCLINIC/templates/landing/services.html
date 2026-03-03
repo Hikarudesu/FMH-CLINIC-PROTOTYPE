@@ -1,0 +1,207 @@
+{% extends 'base/main.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- ============================================
+     SERVICES HERO SECTION
+     ============================================ -->
+<section class="services-hero" id="services-hero">
+  <!-- Video Background -->
+  <video class="hero-video" autoplay muted loop playsinline preload="metadata">
+    <source src="{% static 'video/service-hero.mp4' %}" type="video/mp4">
+  </video>
+  
+  <!-- Video Overlay -->
+  <div class="hero-video-overlay"></div>
+  
+  <div class="container">
+    <div class="services-hero-content">
+      <h1>
+        <span class="line"><span class="line-inner">Comprehensive</span></span>
+        <span class="line"><span class="line-inner">Veterinary <span class="highlight serif">Services</span></span></span>
+      </h1>
+      
+      <p>Expert medical care and wellness solutions for your beloved pets across all FMH Animal Clinic branches.</p>
+      
+      <div class="hero-buttons">
+        <a href="#services" class="btn btn-red btn-lg">
+          <i class='bx bx-chevron-down'></i> Explore Services
+        </a>
+        <a href="{% url 'contact_page' %}" class="btn btn-outline btn-lg">
+          <i class='bx bx-calendar-check'></i> Book Now
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     SERVICES SECTION
+     ============================================ -->
+<section class="services" id="services">
+  <div class="container">
+    <h2 class="section-title fade-in" id="services-title">Our <span class="teal-text">Services</span></h2>
+    <p class="section-subtitle fade-in">Comprehensive veterinary care for your beloved pets across all FMH Animal Clinic branches.</p>
+
+    <div class="services-grid">
+
+      <!-- Card 1: Consultation & Treatment -->
+      <div class="service-card fade-in">
+        <img src="{% static 'image/consultation.png' %}" alt="Consultation" class="service-card-bg">
+        <div class="service-card-overlay"></div>
+        <div class="service-card-content">
+          <div class="service-icon"><i class='bx bx-conversation'></i></div>
+          <h3>Consultation &amp; Treatment</h3>
+        </div>
+        <p class="service-card-desc">Expert veterinary consultations and personalized treatment plans for your pet's health and well-being.</p>
+      </div>
+
+      <!-- Card 2: Animal Wellness Check -->
+      <div class="service-card fade-in">
+        <img src="{% static 'image/wellness.jpg' %}" alt="Wellness Check" class="service-card-bg">
+        <div class="service-card-overlay"></div>
+        <div class="service-card-content">
+          <div class="service-icon"><i class='bx bx-heart-circle'></i></div>
+          <h3>Animal Wellness Check</h3>
+        </div>
+        <p class="service-card-desc">Regular wellness examinations to keep your pets healthy with preventive care and early detection.</p>
+      </div>
+
+      <!-- Card 3: Soft Tissue Surgery -->
+      <div class="service-card fade-in">
+        <img src="{% static 'image/soft-tissue.png' %}" alt="Surgery" class="service-card-bg">
+        <div class="service-card-overlay"></div>
+        <div class="service-card-content">
+          <div class="service-icon"><i class='bx bx-band-aid'></i></div>
+          <h3>Soft Tissue Surgery</h3>
+        </div>
+        <p class="service-card-desc">Safe and professional surgical procedures performed by experienced veterinary surgeons.</p>
+      </div>
+
+      <!-- Card 4: Diagnostics -->
+      <div class="service-card fade-in">
+        <img src="{% static 'image/diagnostic.jpg' %}" alt="Diagnostics" class="service-card-bg">
+        <div class="service-card-overlay"></div>
+        <div class="service-card-content">
+          <div class="service-icon"><i class='bx bx-analyse'></i></div>
+          <h3>Diagnostics</h3>
+        </div>
+        <p class="service-card-desc">Advanced diagnostic tools combined with AI-powered analysis for accurate and fast results.</p>
+      </div>
+
+      <!-- Card 5: Ultrasound / X-Ray -->
+      <div class="service-card fade-in">
+        <img src="{% static 'image/xray.jpg' %}" alt="Ultrasound / X-Ray" class="service-card-bg">
+        <div class="service-card-overlay"></div>
+        <div class="service-card-content">
+          <div class="service-icon"><i class='bx bx-pulse'></i></div>
+          <h3>Ultrasound / X-Ray</h3>
+        </div>
+        <p class="service-card-desc">State-of-the-art imaging services for detailed internal examinations and diagnosis.</p>
+      </div>
+
+      <!-- Card 6: Pet Grooming -->
+      <div class="service-card fade-in">
+        <img src="{% static 'image/grooming.jpg' %}" alt="Pet Grooming" class="service-card-bg">
+        <div class="service-card-overlay"></div>
+        <div class="service-card-content">
+          <div class="service-icon"><i class='bx bx-bath'></i></div>
+          <h3>Pet Grooming</h3>
+        </div>
+        <p class="service-card-desc">Professional grooming services to keep your pets clean, comfortable, and looking their best.</p>
+      </div>
+
+      <!-- Card 7: Emergency Care -->
+      <div class="service-card fade-in">
+        <img src="{% static 'image/health.png' %}" alt="Emergency Care" class="service-card-bg">
+        <div class="service-card-overlay"></div>
+        <div class="service-card-content">
+          <div class="service-icon"><i class='bx bx-plus-medical'></i></div>
+          <h3>Emergency Care</h3>
+        </div>
+        <p class="service-card-desc">Critical care services available for urgent medical situations requiring immediate attention.</p>
+      </div>
+
+      <!-- Card 8: Pet Retail -->
+      <div class="service-card fade-in">
+        <img src="{% static 'image/pet-retail.png' %}" alt="Pet Retail" class="service-card-bg">
+        <div class="service-card-overlay"></div>
+        <div class="service-card-content">
+          <div class="service-icon"><i class='bx bx-shopping-bag'></i></div>
+          <h3>Pet Retail</h3>
+        </div>
+        <p class="service-card-desc">Quality pet supplies, food, and accessories for your furry friends.</p>
+      </div>
+
+      <!-- Card 9: Confinement -->
+      <div class="service-card fade-in">
+        <img src="{% static 'image/confinement.png' %}" alt="Confinement" class="service-card-bg">
+        <div class="service-card-overlay"></div>
+        <div class="service-card-content">
+          <div class="service-icon"><i class='bx bx-home-heart'></i></div>
+          <h3>Confinement</h3>
+        </div>
+        <p class="service-card-desc">Safe and comfortable confinement facilities for pets requiring observation or recovery.</p>
+      </div>
+
+      <!-- Card 10: Vaccination & Immunization -->
+      <div class="service-card fade-in">
+        <img src="{% static 'image/dog.png' %}" alt="Vaccinations" class="service-card-bg">
+        <div class="service-card-overlay"></div>
+        <div class="service-card-content">
+          <div class="service-icon"><i class='bx bx-injection'></i></div>
+          <h3>Vaccination</h3>
+        </div>
+        <p class="service-card-desc">Essential vaccinations and immunization plans tailored to your pet's age and lifestyle.</p>
+      </div>
+
+      <!-- Card 11: Microchipping -->
+      <div class="service-card fade-in">
+        <img src="{% static 'image/quick.png' %}" alt="Microchipping" class="service-card-bg">
+        <div class="service-card-overlay"></div>
+        <div class="service-card-content">
+          <div class="service-icon"><i class='bx bx-id-card'></i></div>
+          <h3>Microchipping</h3>
+        </div>
+        <p class="service-card-desc">Permanent identification for your pets to ensure they can always be reunited with you.</p>
+      </div>
+
+      <!-- Card 12: Nutrition Counseling -->
+      <div class="service-card fade-in">
+        <img src="{% static 'image/quick4.png' %}" alt="Nutrition" class="service-card-bg">
+        <div class="service-card-overlay"></div>
+        <div class="service-card-content">
+          <div class="service-icon"><i class='bx bx-bowl-rice'></i></div>
+          <h3>Nutrition Counseling</h3>
+        </div>
+        <p class="service-card-desc">Expert dietary advice and weight management plans to keep your pet healthy and active.</p>
+      </div>
+
+      <!-- Card 13: In-House Pharmacy -->
+      <div class="service-card fade-in">
+        <img src="{% static 'image/quick2.png' %}" alt="Pharmacy" class="service-card-bg">
+        <div class="service-card-overlay"></div>
+        <div class="service-card-content">
+          <div class="service-icon"><i class='bx bx-capsule'></i></div>
+          <h3>In-House Pharmacy</h3>
+        </div>
+        <p class="service-card-desc">Convenient access to prescription medications and preventive treatments right at the clinic.</p>
+      </div>
+
+      <!-- Card 14: Telemedicine -->
+      <div class="service-card fade-in">
+        <img src="{% static 'image/quick3.png' %}" alt="Telemedicine" class="service-card-bg">
+        <div class="service-card-overlay"></div>
+        <div class="service-card-content">
+          <div class="service-icon"><i class='bx bx-laptop'></i></div>
+          <h3>Telemedicine</h3>
+        </div>
+        <p class="service-card-desc">Remote consultations for follow-ups and non-emergency advice from the comfort of your home.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% endblock %}

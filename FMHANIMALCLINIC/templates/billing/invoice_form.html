@@ -1,0 +1,141 @@
+{% extends 'base/portal_admin.html' %}
+{% load static %}
+
+{% block title %}Invoice Details{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom: 30px;">
+  <h1 style="color: #272742; font-size: 1.5rem; margin-bottom: 4px; font-weight: 600;">{% if form.instance.pk %}Edit Invoice #{{ form.instance.invoice_number }}{% else %}Create New Invoice{% endif %}</h1>
+</div>
+
+<div class="dashboard-card" style="max-width: 1000px; padding: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm);">
+  <form method="POST">
+    {% csrf_token %}
+    
+    {% if form.non_field_errors %}
+      <div class="portal-message danger" style="margin-bottom: 20px;">
+        {{ form.non_field_errors.as_text }}
+      </div>
+    {% endif %}
+
+    <h3 style="font-size: 1.1rem; color: var(--text-1); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border);">Invoice Details</h3>
+    <div class="pd-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+      
+      <!-- Patient -->
+      <div class="form-group" style="margin:0;">
+        <label for="{{ form.pet.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Patient</label>
+        {{ form.pet }}
+        {% if form.pet.errors %}<small style="color: var(--danger);">{{ form.pet.errors.as_text }}</small>{% endif %}
+      </div>
+
+      <!-- Branch -->
+      <div class="form-group" style="margin:0;">
+        <label for="{{ form.branch.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Branch</label>
+        {{ form.branch }}
+        {% if form.branch.errors %}<small style="color: var(--danger);">{{ form.branch.errors.as_text }}</small>{% endif %}
+      </div>
+      
+      <!-- Due Date -->
+      <div class="form-group" style="margin:0;">
+        <label for="{{ form.due_date.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Due Date</label>
+        {{ form.due_date }}
+        {% if form.due_date.errors %}<small style="color: var(--danger);">{{ form.due_date.errors.as_text }}</small>{% endif %}
+      </div>
+
+      <!-- Status -->
+      <div class="form-group" style="margin:0;">
+        <label for="{{ form.status.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Status <span style="font-weight: normal; color: var(--text-3); font-size: 0.8rem;">(Stock adjusts when PAID)</span></label>
+        {{ form.status }}
+        {% if form.status.errors %}<small style="color: var(--danger);">{{ form.status.errors.as_text }}</small>{% endif %}
+      </div>
+      
+      <!-- Tax Amount -->
+      <div class="form-group" style="margin:0;">
+        <label for="{{ form.tax_amount.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Tax Amount</label>
+        {{ form.tax_amount }}
+        {% if form.tax_amount.errors %}<small style="color: var(--danger);">{{ form.tax_amount.errors.as_text }}</small>{% endif %}
+      </div>
+
+      <!-- Notes -->
+      <div class="form-group" style="margin:0; grid-column: span 2;">
+        <label for="{{ form.notes.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Notes</label>
+        {{ form.notes }}
+        {% if form.notes.errors %}<small style="color: var(--danger);">{{ form.notes.errors.as_text }}</small>{% endif %}
+      </div>
+    </div>
+
+
+    <h3 style="font-size: 1.1rem; color: var(--text-1); margin-top: 32px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border);">Line Items</h3>
+    
+    {{ items.management_form }}
+    
+    <div style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px;">
+        {% for item_form in items %}
+            <div class="item-form-row" style="display: grid; grid-template-columns: 2fr 1fr 1fr 2fr auto; gap: 16px; align-items: start; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--border);">
+                {{ item_form.id }}
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-2); margin-bottom: 4px; display: block;">Item</label>
+                    {{ item_form.billable_item }}
+                    {% if item_form.billable_item.errors %}<small style="color: var(--danger);">{{ item_form.billable_item.errors.as_text }}</small>{% endif %}
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-2); margin-bottom: 4px; display: block;">Qty</label>
+                    {{ item_form.quantity }}
+                    {% if item_form.quantity.errors %}<small style="color: var(--danger);">{{ item_form.quantity.errors.as_text }}</small>{% endif %}
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-2); margin-bottom: 4px; display: block;">Price (ea)</label>
+                    {{ item_form.unit_price }}
+                    {% if item_form.unit_price.errors %}<small style="color: var(--danger);">{{ item_form.unit_price.errors.as_text }}</small>{% endif %}
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-2); margin-bottom: 4px; display: block;">Custom Desc</label>
+                    {{ item_form.description }}
+                    {% if item_form.description.errors %}<small style="color: var(--danger);">{{ item_form.description.errors.as_text }}</small>{% endif %}
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-top: 24px;">
+                    {% if items.can_delete %}
+                        <label style="font-size: 0.8rem; font-weight: 600; color: var(--danger); margin-bottom: 4px;">Del?</label>
+                        {{ item_form.DELETE }}
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Actions -->
+    <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 12px; padding-top: 24px; border-top: 1px solid var(--border);">
+        <a href="{% url 'billing:bills_and_payment' %}" class="btn-action outline" style="text-decoration: none; padding: 10px 20px; font-weight: 500;">Cancel</a>
+        <button type="submit" class="btn-action primary" style="padding: 10px 20px; font-weight: 600; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm);"><i class="bx bx-save"></i> Save Invoice</button>
+    </div>
+  </form>
+</div>
+
+<style>
+/* Consistent Design System Inputs */
+.form-control, .form-select, textarea.form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-1);
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.2s var(--ease);
+}
+.form-control::placeholder, .form-select::placeholder {
+    color: var(--text-3);
+}
+.form-control:focus, .form-select:focus, textarea.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 150, 136, 0.15);
+    outline: none;
+}
+.item-form-row:last-child {
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+</style>
+{% endblock %}
