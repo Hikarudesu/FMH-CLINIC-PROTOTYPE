@@ -72,6 +72,39 @@
               <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
               <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
             </div>
+            <div class="appt-card-details">
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Species:</span>
+                <span class="appt-detail-value">{{ appt.pet_species|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">D.O.B / Age:</span>
+                <span class="appt-detail-value">{{ appt.pet_dob|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Sex:</span>
+                <span class="appt-detail-value">{{ appt.pet_sex|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Color:</span>
+                <span class="appt-detail-value">{{ appt.pet_color|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Reason:</span>
+                <span class="appt-detail-value">{{ appt.get_reason_display|default:"-" }}</span>
+              </div>
+              {% if appt.preferred_vet %}
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Vet:</span>
+                <span class="appt-detail-value">{{ appt.preferred_vet.full_name }}</span>
+              </div>
+              {% endif %}
+            </div>
+            {% if appt.pet_symptoms %}
+            <div class="appt-card-notes symptoms">
+              <i class='bx bx-first-aid'></i> <strong>Symptoms:</strong> {{ appt.pet_symptoms }}
+            </div>
+            {% endif %}
             {% if appt.notes %}
             <div class="appt-card-notes">
               <i class='bx bx-note'></i> <strong>Vet Notes:</strong> {{ appt.notes }}
@@ -112,6 +145,39 @@
               <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
               <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
             </div>
+            <div class="appt-card-details">
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Species:</span>
+                <span class="appt-detail-value">{{ appt.pet_species|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">D.O.B / Age:</span>
+                <span class="appt-detail-value">{{ appt.pet_dob|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Sex:</span>
+                <span class="appt-detail-value">{{ appt.pet_sex|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Color:</span>
+                <span class="appt-detail-value">{{ appt.pet_color|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Reason:</span>
+                <span class="appt-detail-value">{{ appt.get_reason_display|default:"-" }}</span>
+              </div>
+              {% if appt.preferred_vet %}
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Vet:</span>
+                <span class="appt-detail-value">{{ appt.preferred_vet.full_name }}</span>
+              </div>
+              {% endif %}
+            </div>
+            {% if appt.pet_symptoms %}
+            <div class="appt-card-notes symptoms">
+              <i class='bx bx-first-aid'></i> <strong>Symptoms:</strong> {{ appt.pet_symptoms }}
+            </div>
+            {% endif %}
             {% if appt.notes %}
             <div class="appt-card-notes">
               <i class='bx bx-note'></i> <strong>Vet Notes:</strong> {{ appt.notes }}
@@ -194,6 +260,39 @@
               <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
               <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
             </div>
+            <div class="appt-card-details">
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Species:</span>
+                <span class="appt-detail-value">{{ appt.pet_species|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">D.O.B / Age:</span>
+                <span class="appt-detail-value">{{ appt.pet_dob|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Sex:</span>
+                <span class="appt-detail-value">{{ appt.pet_sex|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Color:</span>
+                <span class="appt-detail-value">{{ appt.pet_color|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Reason:</span>
+                <span class="appt-detail-value">{{ appt.get_reason_display|default:"-" }}</span>
+              </div>
+              {% if appt.preferred_vet %}
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Vet:</span>
+                <span class="appt-detail-value">{{ appt.preferred_vet.full_name }}</span>
+              </div>
+              {% endif %}
+            </div>
+            {% if appt.pet_symptoms %}
+            <div class="appt-card-notes symptoms">
+              <i class='bx bx-first-aid'></i> <strong>Symptoms:</strong> {{ appt.pet_symptoms }}
+            </div>
+            {% endif %}
             {% if appt.notes %}
             <div class="appt-card-notes">
               <i class='bx bx-note'></i> <strong>Vet Notes:</strong> {{ appt.notes }}
@@ -233,6 +332,28 @@
               <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
               <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
               <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
+            </div>
+            <div class="appt-card-details">
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Species:</span>
+                <span class="appt-detail-value">{{ appt.pet_species|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">D.O.B / Age:</span>
+                <span class="appt-detail-value">{{ appt.pet_dob|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Sex:</span>
+                <span class="appt-detail-value">{{ appt.pet_sex|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Color:</span>
+                <span class="appt-detail-value">{{ appt.pet_color|default:"-" }}</span>
+              </div>
+              <div class="appt-detail-row">
+                <span class="appt-detail-label">Reason:</span>
+                <span class="appt-detail-value">{{ appt.get_reason_display|default:"-" }}</span>
+              </div>
             </div>
             {% if appt.notes %}
             <div class="appt-card-notes">

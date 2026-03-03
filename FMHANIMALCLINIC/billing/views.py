@@ -1,10 +1,5 @@
 """Views for the billing app."""
-from django.shortcuts import render
-
-# Create your views here.
-
-
-from django.urls import reverse_lazy, reverse
+from django.urls import reverse_lazy
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, CreateView, UpdateView
 from django.db import transaction

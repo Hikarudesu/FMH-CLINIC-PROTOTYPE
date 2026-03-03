@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from branches.models import Branch
-from employees.models import StaffMember, VetSchedule
+from employees.models import StaffMember
 
 
 class Appointment(models.Model):
@@ -29,10 +29,15 @@ class Appointment(models.Model):
     owner_name = models.CharField(max_length=200)
     owner_email = models.EmailField(blank=True)
     owner_phone = models.CharField(max_length=20, blank=True)
+    owner_address = models.TextField(blank=True, help_text='Full address of the owner')
 
     # Pet info
     pet_name = models.CharField(max_length=150)
+    pet_species = models.CharField(max_length=60, blank=True, help_text='e.g. Dog, Cat, Bird')
     pet_breed = models.CharField(max_length=150, blank=True)
+    pet_dob = models.CharField(max_length=50, blank=True, null=True, help_text='Date of birth or age (e.g., "2020-01-15" or "3 years")')
+    pet_sex = models.CharField(max_length=10, blank=True)
+    pet_color = models.CharField(max_length=60, blank=True)
     pet_symptoms = models.TextField(
         blank=True, help_text='Specific symptoms recorded for this visit')
 
@@ -114,7 +119,7 @@ class Appointment(models.Model):
     @classmethod
     def cleanup_expired(cls):
         """Delete appointments that are 1+ day past their booked time."""
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         cutoff = timezone.now() - timedelta(days=1)
         expired = cls.objects.filter(
             appointment_date__lt=cutoff.date()

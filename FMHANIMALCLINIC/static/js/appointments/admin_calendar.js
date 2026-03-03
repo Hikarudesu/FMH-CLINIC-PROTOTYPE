@@ -71,12 +71,23 @@ document.addEventListener("DOMContentLoaded", function () {
   let currentDate = new Date();
   let events = [];
 
+  // Get view from URL parameter (persisted across filter submissions)
+  const urlParams = new URLSearchParams(window.location.search);
+  const viewParam = urlParams.get('view') || 'table';
+  currentView = viewParam;
+
   // ─── View Tab Switching ───
   viewTabs.forEach((tab) => {
     tab.addEventListener("click", function () {
       viewTabs.forEach((t) => t.classList.remove("active"));
       this.classList.add("active");
       currentView = this.dataset.view;
+      
+      // Update hidden field in filter form
+      const currentViewInput = document.getElementById("currentViewInput");
+      if (currentViewInput) {
+        currentViewInput.value = currentView;
+      }
 
       const detailsContainer = document.getElementById("calendarDetailsContainer");
       if (detailsContainer) detailsContainer.style.display = "none";
@@ -91,6 +102,25 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   });
+
+  // Initialize view on page load
+  viewTabs.forEach((tab) => {
+    if (tab.dataset.view === currentView) {
+      tab.classList.add("active");
+    } else {
+      tab.classList.remove("active");
+    }
+  });
+  
+  // Show correct view on page load
+  if (currentView === "table") {
+    if (tableView) tableView.style.display = "";
+    if (calendarView) calendarView.style.display = "none";
+  } else {
+    if (tableView) tableView.style.display = "none";
+    if (calendarView) calendarView.style.display = "";
+    loadCalendarView();
+  }
 
   // ─── Calendar Navigation ───
   if (calPrev) calPrev.addEventListener("click", () => navigateCal(-1));
@@ -420,10 +450,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const modal = document.getElementById("appointmentDetailModal");
     if (!modal) return;
 
-    // Set styling and border colors based on vet
+    // Set styling colors based on vet
     const vetCol = getVetColor(eventData.vetId);
-    document.getElementById("detailModalHeader").style.borderLeftColor = vetCol;
-    document.getElementById("detailVetAvatar").style.background = vetCol;
+
+    // Owner avatar — first letter of owner name
+    const ownerAv = document.getElementById("detailOwnerAvatar");
+    if (ownerAv) {
+      ownerAv.textContent = (eventData.ownerName || "?").charAt(0).toUpperCase();
+    }
 
     // Setup Top Text
     document.getElementById("detailOwnerName").textContent =
@@ -433,21 +467,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Status Badge
     const statusB = document.getElementById("detailStatusBadge");
-    statusB.className = `status-badge ${eventData.status.toLowerCase()}`;
+    statusB.className = `dm-status dm-status--${eventData.status.toLowerCase()}`;
     statusB.textContent = eventData.statusDisplay;
 
     // Timings
     document.getElementById("detailTime").textContent = eventData.timeLabel;
     const dObj = new Date(eventData.date);
     document.getElementById("detailDate").textContent =
-      `${DAYS[dObj.getDay()]}, ${MONTHS[dObj.getMonth()]} ${dObj.getDate()}, ${dObj.getFullYear()}`;
+      `${MONTHS[dObj.getMonth()]} ${dObj.getDate()}, ${dObj.getFullYear()}`;
 
     // Vet
-    document.getElementById("detailVetAvatar").textContent = (
-      eventData.vetName || "A"
-    )
-      .charAt(0)
-      .toUpperCase();
     document.getElementById("detailVetName").textContent =
       eventData.vetName || "Any Available Vet";
 
@@ -455,9 +484,9 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("detailBranch").textContent = eventData.branch;
     document.getElementById("detailReason").textContent = eventData.reason;
     document.getElementById("detailSourceBadge").className =
-      `source-badge source-${eventData.source.toLowerCase()}`;
+      `dm-source dm-source--${eventData.source.toLowerCase()}`;
     document.getElementById("detailSourceBadge").textContent =
-      eventData.source === "PORTAL" ? "Portal (Logged-in)" : "Walk-in (Public)";
+      eventData.source === "PORTAL" ? "Portal" : "Walk-in";
 
     // Contact Info
     document.getElementById("detailPhone").textContent =
@@ -525,6 +554,24 @@ document.addEventListener("DOMContentLoaded", function () {
     quickCreateModal.addEventListener("click", (e) => {
       if (e.target === quickCreateModal) closeModal(quickCreateModal);
     });
+
+  // ─── Follow-up Toggle for Quick Create ───
+  const quickFollowUpEnabled = document.getElementById("quickFollowUpEnabled");
+  const quickFollowUpFields = document.getElementById("quickFollowUpFields");
+  const quickFollowUpDate = document.getElementById("quickFollowUpDate");
+
+  if (quickFollowUpEnabled && quickFollowUpFields) {
+    quickFollowUpEnabled.addEventListener("change", function () {
+      if (this.checked) {
+        quickFollowUpFields.style.display = "grid";
+        quickFollowUpFields.style.gridColumn = "1 / -1";
+        if (quickFollowUpDate) quickFollowUpDate.required = true;
+      } else {
+        quickFollowUpFields.style.display = "none";
+        if (quickFollowUpDate) quickFollowUpDate.required = false;
+      }
+    });
+  }
 
   // ─── Quick Create Dynamic Dropdowns ───
   const qcBranch = document.querySelector('#quickCreateModal [name="branch"]');
@@ -652,5 +699,153 @@ document.addEventListener("DOMContentLoaded", function () {
     qcVet.addEventListener("change", () => {
       fetchQCTimes();
     });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // OWNER / PET AUTO-FILL LOGIC
+  // ═══════════════════════════════════════════════════════════════
+  const ownerSelect = document.getElementById("ownerSelect");
+  const petSelect = document.getElementById("petSelect");
+  const selectedUserIdField = document.querySelector('input[name="selected_user_id"]');
+  const selectedPetIdField = document.querySelector('input[name="selected_pet_id"]');
+  const sourceSelect = document.querySelector('select[name="source"]');
+
+  // Form fields for auto-fill
+  const ownerNameField = document.querySelector('input[name="owner_name"]');
+  const ownerPhoneField = document.querySelector('input[name="owner_phone"]');
+  const ownerEmailField = document.querySelector('input[name="owner_email"]');
+  const ownerAddressField = document.querySelector('textarea[name="owner_address"]');
+  const petNameField = document.querySelector('input[name="pet_name"]');
+  const petSpeciesField = document.querySelector('input[name="pet_species"]');
+  const petBreedField = document.querySelector('input[name="pet_breed"]');
+  const petDobField = document.querySelector('input[name="pet_dob"]');
+  const petSexField = document.querySelector('select[name="pet_sex"]');
+  const petColorField = document.querySelector('input[name="pet_color"]');
+
+  let ownersCache = [];
+  let petsCache = [];
+
+  // Load owners on modal open
+  function loadOwners() {
+    if (ownersCache.length > 0) return;
+    fetch("/appointments/api/owners/")
+      .then((r) => r.json())
+      .then((data) => {
+        ownersCache = data.owners || [];
+        ownerSelect.innerHTML = '<option value="">-- Walk-in (type manually) --</option>';
+        ownersCache.forEach((owner) => {
+          const opt = document.createElement("option");
+          opt.value = owner.id;
+          opt.textContent = owner.name;
+          opt.dataset.email = owner.email;
+          opt.dataset.phone = owner.phone;
+          opt.dataset.address = owner.address;
+          ownerSelect.appendChild(opt);
+        });
+      })
+      .catch(() => {
+        console.error("Failed to load owners");
+      });
+  }
+
+  // When owner is selected, auto-fill owner fields and load pets
+  if (ownerSelect) {
+    ownerSelect.addEventListener("change", function () {
+      const ownerId = this.value;
+      if (selectedUserIdField) selectedUserIdField.value = ownerId || "";
+
+      if (ownerId) {
+        // Find owner data from cache
+        const owner = ownersCache.find((o) => o.id == ownerId);
+        if (owner) {
+          if (ownerNameField) ownerNameField.value = owner.name;
+          if (ownerEmailField) ownerEmailField.value = owner.email || "";
+          if (ownerPhoneField) ownerPhoneField.value = owner.phone || "";
+          if (ownerAddressField) ownerAddressField.value = owner.address || "";
+        }
+        // Auto-set source to PORTAL when selecting registered user
+        if (sourceSelect) sourceSelect.value = "PORTAL";
+
+        // Load pets for this owner
+        petSelect.disabled = true;
+        petSelect.innerHTML = '<option value="">Loading pets...</option>';
+
+        fetch(`/appointments/api/pets/?owner_id=${ownerId}`)
+          .then((r) => r.json())
+          .then((data) => {
+            petsCache = data.pets || [];
+            petSelect.innerHTML = '<option value="">-- Select a pet --</option>';
+            if (petsCache.length === 0) {
+              petSelect.innerHTML =
+                '<option value="">-- No pets registered --</option>';
+            } else {
+              petsCache.forEach((pet) => {
+                const opt = document.createElement("option");
+                opt.value = pet.id;
+                opt.textContent = `${pet.name} (${pet.species})`;
+                opt.dataset.name = pet.name;
+                opt.dataset.species = pet.species;
+                opt.dataset.breed = pet.breed;
+                opt.dataset.dob = pet.dob;
+                opt.dataset.sex = pet.sex;
+                opt.dataset.color = pet.color;
+                petSelect.appendChild(opt);
+              });
+            }
+            petSelect.disabled = false;
+          })
+          .catch(() => {
+            petSelect.innerHTML = '<option value="">-- Error loading pets --</option>';
+            petSelect.disabled = false;
+          });
+      } else {
+        // Walk-in mode: clear fields and disable pet select
+        if (ownerNameField) ownerNameField.value = "";
+        if (ownerEmailField) ownerEmailField.value = "";
+        if (ownerPhoneField) ownerPhoneField.value = "";
+        if (ownerAddressField) ownerAddressField.value = "";
+        if (sourceSelect) sourceSelect.value = "WALKIN";
+        petSelect.innerHTML = '<option value="">-- Select owner first --</option>';
+        petSelect.disabled = true;
+        clearPetFields();
+      }
+    });
+  }
+
+  // When pet is selected, auto-fill pet fields
+  if (petSelect) {
+    petSelect.addEventListener("change", function () {
+      const petId = this.value;
+      if (selectedPetIdField) selectedPetIdField.value = petId || "";
+
+      if (petId) {
+        const pet = petsCache.find((p) => p.id == petId);
+        if (pet) {
+          if (petNameField) petNameField.value = pet.name;
+          if (petSpeciesField) petSpeciesField.value = pet.species || "";
+          if (petBreedField) petBreedField.value = pet.breed || "";
+          if (petDobField) petDobField.value = pet.dob || "";
+          if (petSexField) petSexField.value = pet.sex || "";
+          if (petColorField) petColorField.value = pet.color || "";
+        }
+      } else {
+        clearPetFields();
+      }
+    });
+  }
+
+  function clearPetFields() {
+    if (petNameField) petNameField.value = "";
+    if (petSpeciesField) petSpeciesField.value = "";
+    if (petBreedField) petBreedField.value = "";
+    if (petDobField) petDobField.value = "";
+    if (petSexField) petSexField.value = "";
+    if (petColorField) petColorField.value = "";
+    if (selectedPetIdField) selectedPetIdField.value = "";
+  }
+
+  // Load owners when quick create modal opens
+  if (quickCreateBtn && ownerSelect) {
+    quickCreateBtn.addEventListener("click", loadOwners);
   }
 });

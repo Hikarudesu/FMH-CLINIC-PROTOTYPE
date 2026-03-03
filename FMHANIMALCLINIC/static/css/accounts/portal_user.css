@@ -3072,9 +3072,37 @@
 .appt-card-notes.followup {
   border-left-color: #8b5cf6;
 }
+.appt-card-notes.symptoms {
+  border-left-color: var(--accent);
+}
 .appt-card-notes i {
   color: var(--text-3);
   margin-right: 2px;
+}
+
+/* Pet Details Grid */
+.appt-card-details {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border-radius: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px 16px;
+}
+.appt-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+}
+.appt-detail-label {
+  color: var(--text-3);
+  font-weight: 500;
+}
+.appt-detail-value {
+  color: var(--text-1);
+  font-weight: 500;
 }
 
 /* ── Empty State ── */

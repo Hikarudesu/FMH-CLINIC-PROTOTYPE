@@ -14,8 +14,9 @@ from accounts.decorators import role_required
 from branches.models import Branch
 from employees.models import StaffMember, VetSchedule
 from notifications.models import FollowUp, Notification
+from patients.models import Pet
 from .models import Appointment
-from .forms import PublicAppointmentForm, PortalAppointmentForm, AdminQuickCreateForm
+from .forms import PublicAppointmentForm, PortalAppointmentForm, AdminQuickCreateForm, AppointmentEditForm
 
 
 # ──────────────────────── AVAILABILITY ENGINE ────────────────────────
@@ -338,6 +339,9 @@ def admin_list(request):
     vet_id = request.GET.get('vet', '')
     if vet_id:
         appointments = appointments.filter(preferred_vet_id=vet_id)
+    
+    # View parameter (table, daily, weekly, monthly)
+    current_view = request.GET.get('view', 'table')
 
     branches = Branch.objects.filter(is_active=True)
     vets = StaffMember.objects.filter(
@@ -357,6 +361,7 @@ def admin_list(request):
         'selected_branch': branch_id,
         'selected_source': source,
         'selected_vet': vet_id,
+        'current_view': current_view,
         'quick_form': quick_form,
     })
 
@@ -441,7 +446,56 @@ def admin_quick_create(request):
     if request.method == 'POST':
         form = AdminQuickCreateForm(request.POST)
         if form.is_valid():
-            form.save()
+            appointment = form.save()
+            
+            # Notify user if appointment is confirmed and has a linked user
+            if appointment.status == 'CONFIRMED' and appointment.user:
+                Notification.objects.create(
+                    user=appointment.user,
+                    title=f'Appointment Confirmed for {appointment.pet_name}',
+                    message=(
+                        f'Great news! Your appointment for {appointment.pet_name} '
+                        f'has been confirmed for {appointment.appointment_date.strftime("%B %d, %Y")} '
+                        f'at {appointment.appointment_time.strftime("%I:%M %p")}. '
+                        f'Location: {appointment.branch.name}.'
+                    ),
+                    notification_type='APPOINTMENT',
+                )
+            
+            # Handle follow-up creation
+            follow_up_enabled = request.POST.get('follow_up_enabled')
+            if follow_up_enabled == 'on':
+                follow_up_date = request.POST.get('follow_up_date')
+                follow_up_end_date = request.POST.get('follow_up_end_date')
+                follow_up_reason = request.POST.get('follow_up_reason', '')
+                if follow_up_date:
+                    followup = FollowUp.objects.create(
+                        appointment=appointment,
+                        pet_name=appointment.pet_name,
+                        follow_up_date=follow_up_date,
+                        follow_up_end_date=follow_up_end_date if follow_up_end_date else None,
+                        reason=follow_up_reason,
+                        created_by=request.user,
+                    )
+
+                    # Format date string for notification
+                    date_str = str(follow_up_date)
+                    if follow_up_end_date and follow_up_end_date != follow_up_date:
+                        date_str = f"{follow_up_date} to {follow_up_end_date}"
+
+                    # Create notification for the appointment owner
+                    if appointment.user:
+                        Notification.objects.create(
+                            user=appointment.user,
+                            title=f'Follow-up Scheduled for {appointment.pet_name}',
+                            message=(
+                                f'A follow-up visit has been scheduled for {appointment.pet_name} '
+                                f'from {date_str}. Reason: {follow_up_reason or "Routine follow-up"}'
+                            ),
+                            notification_type='FOLLOW_UP',
+                            related_follow_up=followup,
+                        )
+            
             messages.success(request, 'Appointment created successfully.')
         else:
             messages.error(
@@ -456,58 +510,110 @@ def admin_edit(request, pk):
     appointment = get_object_or_404(Appointment, pk=pk)
 
     if request.method == 'POST':
-        appointment.status = request.POST.get('status', appointment.status)
-        appointment.notes = request.POST.get('notes', appointment.notes)
-        appointment.save(update_fields=['status', 'notes'])
-
-        # Handle follow-up creation
-        follow_up_enabled = request.POST.get('follow_up_enabled')
-        if follow_up_enabled == 'on':
-            follow_up_date = request.POST.get('follow_up_date')
-            follow_up_end_date = request.POST.get('follow_up_end_date')
-            follow_up_reason = request.POST.get('follow_up_reason', '')
-            if follow_up_date:
-                followup = FollowUp.objects.create(
-                    appointment=appointment,
-                    pet_name=appointment.pet_name,
-                    follow_up_date=follow_up_date,
-                    follow_up_end_date=follow_up_end_date if follow_up_end_date else None,
-                    reason=follow_up_reason,
-                    created_by=request.user,
-                )
-
-                # Format date string for notification
-                date_str = str(follow_up_date)
-                if follow_up_end_date and follow_up_end_date != follow_up_date:
-                    date_str = f"{follow_up_date} to {follow_up_end_date}"
-
-                # Create notification for the appointment owner
-                if appointment.user:
-                    Notification.objects.create(
-                        user=appointment.user,
-                        title=f'Follow-up Scheduled for {appointment.pet_name}',
-                        message=(
-                            f'A follow-up visit has been scheduled for {appointment.pet_name} '
-                            f'from {date_str}. Reason: {follow_up_reason or "Routine follow-up"}'
+        # Capture original status before update
+        original_status = appointment.status
+        
+        form = AppointmentEditForm(request.POST, instance=appointment)
+        if form.is_valid():
+            updated_appointment = form.save()
+            
+            # Check if status changed and notify user
+            if updated_appointment.status != original_status and updated_appointment.user:
+                status_notifications = {
+                    'CONFIRMED': {
+                        'title': f'Appointment Confirmed for {updated_appointment.pet_name}',
+                        'message': (
+                            f'Great news! Your appointment for {updated_appointment.pet_name} '
+                            f'has been confirmed for {updated_appointment.appointment_date.strftime("%B %d, %Y")} '
+                            f'at {updated_appointment.appointment_time.strftime("%I:%M %p")}. '
+                            f'Location: {updated_appointment.branch.name}.'
                         ),
-                        notification_type='FOLLOW_UP',
-                        related_follow_up=followup,
+                    },
+                    'COMPLETED': {
+                        'title': f'Appointment Completed for {updated_appointment.pet_name}',
+                        'message': (
+                            f'The appointment for {updated_appointment.pet_name} '
+                            f'on {updated_appointment.appointment_date.strftime("%B %d, %Y")} '
+                            f'has been marked as completed. Thank you for visiting us!'
+                        ),
+                    },
+                    'CANCELLED': {
+                        'title': f'Appointment Cancelled for {updated_appointment.pet_name}',
+                        'message': (
+                            f'Your appointment for {updated_appointment.pet_name} '
+                            f'scheduled on {updated_appointment.appointment_date.strftime("%B %d, %Y")} '
+                            f'at {updated_appointment.appointment_time.strftime("%I:%M %p")} '
+                            f'has been cancelled. Please contact us if you have any questions.'
+                        ),
+                    },
+                }
+                
+                notification_data = status_notifications.get(updated_appointment.status)
+                if notification_data:
+                    Notification.objects.create(
+                        user=updated_appointment.user,
+                        title=notification_data['title'],
+                        message=notification_data['message'],
+                        notification_type='APPOINTMENT',
                     )
-                messages.info(
-                    request, f'Follow-up scheduled from {date_str}.')
 
-        messages.success(
-            request, f'Appointment for {appointment.pet_name} updated.')
-        return redirect('appointments:admin_list')
+            # Handle follow-up creation
+            follow_up_enabled = request.POST.get('follow_up_enabled')
+            if follow_up_enabled == 'on':
+                follow_up_date = request.POST.get('follow_up_date')
+                follow_up_end_date = request.POST.get('follow_up_end_date')
+                follow_up_reason = request.POST.get('follow_up_reason', '')
+                if follow_up_date:
+                    followup = FollowUp.objects.create(
+                        appointment=updated_appointment,
+                        pet_name=updated_appointment.pet_name,
+                        follow_up_date=follow_up_date,
+                        follow_up_end_date=follow_up_end_date if follow_up_end_date else None,
+                        reason=follow_up_reason,
+                        created_by=request.user,
+                    )
+
+                    # Format date string for notification
+                    date_str = str(follow_up_date)
+                    if follow_up_end_date and follow_up_end_date != follow_up_date:
+                        date_str = f"{follow_up_date} to {follow_up_end_date}"
+
+                    # Create notification for the appointment owner
+                    if updated_appointment.user:
+                        Notification.objects.create(
+                            user=updated_appointment.user,
+                            title=f'Follow-up Scheduled for {updated_appointment.pet_name}',
+                            message=(
+                                f'A follow-up visit has been scheduled for {updated_appointment.pet_name} '
+                                f'from {date_str}. Reason: {follow_up_reason or "Routine follow-up"}'
+                            ),
+                            notification_type='FOLLOW_UP',
+                            related_follow_up=followup,
+                        )
+                    messages.info(
+                        request, f'Follow-up scheduled from {date_str}.')
+
+            messages.success(
+                request, f'Appointment for {updated_appointment.pet_name} updated.')
+            return redirect('appointments:admin_list')
+    else:
+        form = AppointmentEditForm(instance=appointment)
 
     # Get existing follow-ups for this appointment
     follow_ups = FollowUp.objects.filter(
         appointment=appointment).order_by('-created_at')
+    
+    # Get user's pets if appointment has a linked user
+    user_pets = []
+    if appointment.user:
+        user_pets = Pet.objects.filter(owner=appointment.user)
 
     return render(request, 'appointments/admin_edit.html', {
         'appointment': appointment,
+        'form': form,
         'statuses': Appointment.Status.choices,
         'follow_ups': follow_ups,
+        'user_pets': user_pets,
     })
 
 
@@ -521,3 +627,58 @@ def admin_delete(request, pk):
     appointment.delete()
     messages.success(request, f'Appointment for {name} has been deleted.')
     return redirect('appointments:admin_list')
+
+
+@login_required
+@role_required(User.Role.STAFF, User.Role.VETERINARIAN, User.Role.BRANCH_ADMIN, User.Role.ADMIN)
+def api_pet_owners(request):
+    """API: return list of registered pet owners for admin dropdown."""
+    from patients.models import Pet
+    # Only return users who have at least one pet
+    owners = User.objects.filter(
+        role=User.Role.PET_OWNER,
+        pets__isnull=False
+    ).distinct().order_by('first_name', 'last_name', 'username')
+
+    data = []
+    for owner in owners:
+        full_name = owner.get_full_name() or owner.username
+        data.append({
+            'id': owner.id,
+            'name': full_name,
+            'email': owner.email or '',
+            'phone': owner.phone_number or '',
+            'address': owner.address or '',
+        })
+    return JsonResponse({'owners': data})
+
+
+@login_required
+@role_required(User.Role.STAFF, User.Role.VETERINARIAN, User.Role.BRANCH_ADMIN, User.Role.ADMIN)
+def api_owner_pets(request):
+    """API: return list of pets for a specific owner."""
+    from patients.models import Pet
+    owner_id = request.GET.get('owner_id')
+    if not owner_id:
+        return JsonResponse({'pets': []})
+
+    try:
+        owner = User.objects.get(pk=owner_id)
+    except User.DoesNotExist:
+        return JsonResponse({'pets': []})
+
+    pets = Pet.objects.filter(owner=owner).order_by('name')
+    data = []
+    for pet in pets:
+        # Return age as text string
+        dob_text = f'{pet.age} years' if pet.age else ''
+        data.append({
+            'id': pet.id,
+            'name': pet.name,
+            'species': pet.species or '',
+            'breed': pet.breed or '',
+            'dob': dob_text,
+            'sex': pet.sex or '',
+            'color': pet.color or '',
+        })
+    return JsonResponse({'pets': data})

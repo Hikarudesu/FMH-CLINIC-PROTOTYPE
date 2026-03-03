@@ -75,8 +75,9 @@ class PublicAppointmentForm(forms.ModelForm):
         """Form metadata."""
         model = Appointment
         fields = [
-            'owner_name', 'owner_email', 'owner_phone',
-            'pet_name', 'pet_breed', 'pet_symptoms',
+            'owner_name', 'owner_email', 'owner_phone', 'owner_address',
+            'pet_name', 'pet_species', 'pet_breed', 'pet_dob', 'pet_sex', 'pet_color',
+            'pet_symptoms',
             'reason', 'branch', 'preferred_vet',
             'appointment_date', 'appointment_time',
         ]
@@ -90,11 +91,29 @@ class PublicAppointmentForm(forms.ModelForm):
             'owner_phone': forms.TextInput(attrs={
                 'class': 'form-control', 'placeholder': '09XX XXX XXXX',
             }),
+            'owner_address': forms.Textarea(attrs={
+                'class': 'form-control', 'rows': 2,
+                'placeholder': 'Your full address',
+            }),
             'pet_name': forms.TextInput(attrs={
                 'class': 'form-control', 'placeholder': "Your pet's name",
             }),
+            'pet_species': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'e.g. Dog, Cat, Bird',
+            }),
             'pet_breed': forms.TextInput(attrs={
                 'class': 'form-control', 'placeholder': 'e.g. Golden Retriever',
+            }),
+            'pet_dob': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'e.g. 2020-01-15 or 3 years',
+            }),
+            'pet_sex': forms.Select(attrs={'class': 'form-control'}, choices=[
+                ('', '---'),
+                ('MALE', 'Male'),
+                ('FEMALE', 'Female'),
+            ]),
+            'pet_color': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'e.g. Brown, White',
             }),
             'pet_symptoms': forms.Textarea(attrs={
                 'class': 'form-control', 'rows': 3,
@@ -116,9 +135,15 @@ class PublicAppointmentForm(forms.ModelForm):
         self.fields['branch'].queryset = Branch.objects.filter(is_active=True)
         self.fields['preferred_vet'].queryset = StaffMember.objects.none()
         self.fields['preferred_vet'].required = False
+        self.fields['pet_species'].required = False
+        self.fields['pet_breed'].required = False
+        self.fields['pet_dob'].required = False
+        self.fields['pet_sex'].required = False
+        self.fields['pet_color'].required = False
         self.fields['pet_symptoms'].required = False
         self.fields['owner_email'].required = False
         self.fields['owner_phone'].required = False
+        self.fields['owner_address'].required = False
 
         if 'branch' in self.data:
             try:
@@ -151,12 +176,16 @@ class PublicAppointmentForm(forms.ModelForm):
 class PortalAppointmentForm(forms.ModelForm):
     """Booking form for logged-in portal users."""
 
+    # Hidden field for selected pet ID
+    selected_pet_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
+
     class Meta:
         """Form metadata."""
         model = Appointment
         fields = [
             'owner_name', 'owner_phone',
-            'pet_name', 'pet_breed', 'pet_symptoms',
+            'pet_name', 'pet_species', 'pet_breed', 'pet_dob', 'pet_sex', 'pet_color',
+            'pet_symptoms',
             'reason', 'branch', 'preferred_vet',
             'appointment_date', 'appointment_time',
             'notes',
@@ -171,8 +200,21 @@ class PortalAppointmentForm(forms.ModelForm):
             'pet_name': forms.TextInput(attrs={
                 'class': 'form-control book-input', 'placeholder': ' ', 'list': 'petNames',
             }),
-
+            'pet_species': forms.TextInput(attrs={
+                'class': 'form-control book-input', 'placeholder': ' ',
+            }),
             'pet_breed': forms.TextInput(attrs={
+                'class': 'form-control book-input', 'placeholder': ' ',
+            }),
+            'pet_dob': forms.TextInput(attrs={
+                'class': 'form-control book-input', 'placeholder': ' ',
+            }),
+            'pet_sex': forms.Select(attrs={'class': 'form-control book-input'}, choices=[
+                ('', '---'),
+                ('MALE', 'Male'),
+                ('FEMALE', 'Female'),
+            ]),
+            'pet_color': forms.TextInput(attrs={
                 'class': 'form-control book-input', 'placeholder': ' ',
             }),
             'pet_symptoms': forms.Textarea(attrs={
@@ -200,6 +242,11 @@ class PortalAppointmentForm(forms.ModelForm):
         self.fields['branch'].queryset = Branch.objects.filter(is_active=True)
         self.fields['preferred_vet'].queryset = StaffMember.objects.none()
         self.fields['preferred_vet'].required = False
+        self.fields['pet_species'].required = False
+        self.fields['pet_breed'].required = False
+        self.fields['pet_dob'].required = False
+        self.fields['pet_sex'].required = False
+        self.fields['pet_color'].required = False
         self.fields['pet_symptoms'].required = False
         self.fields['owner_phone'].required = False
         self.fields['notes'].required = False
@@ -235,14 +282,26 @@ class PortalAppointmentForm(forms.ModelForm):
             if instance.pet_name:
                 from patients.models import Pet
                 pet_name_clean = instance.pet_name.strip()
-                if not Pet.objects.filter(owner=self.user, name__iexact=pet_name_clean).exists():
+                existing_pet = Pet.objects.filter(
+                    owner=self.user, name__iexact=pet_name_clean).first()
+                if not existing_pet:
+                    # Try to parse age from pet_dob text
+                    pet_age = 0
+                    if instance.pet_dob:
+                        dob_text = instance.pet_dob.strip()
+                        # Try to extract numeric age
+                        import re
+                        age_match = re.search(r'(\d+)', dob_text)
+                        if age_match:
+                            pet_age = int(age_match.group(1))
                     Pet.objects.create(
                         owner=self.user,
                         name=pet_name_clean,
+                        species=instance.pet_species.strip() if instance.pet_species else 'Unknown',
                         breed=instance.pet_breed.strip() if instance.pet_breed else '',
-                        species='Unknown',
-                        age=0,
-                        sex=Pet.Sex.MALE,
+                        age=pet_age,
+                        sex=instance.pet_sex or Pet.Sex.MALE,
+                        color=instance.pet_color.strip() if instance.pet_color else '',
                     )
 
         if commit:
@@ -253,15 +312,19 @@ class PortalAppointmentForm(forms.ModelForm):
 class AdminQuickCreateForm(forms.ModelForm):
     """Quick create form for admins — bypasses user restrictions."""
 
+    # Hidden field for selected user ID (for portal bookings)
+    selected_user_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
+    selected_pet_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
+
     class Meta:
         """Form metadata."""
         model = Appointment
         fields = [
-            'owner_name', 'owner_email', 'owner_phone',
-            'pet_name', 'pet_breed',
+            'owner_name', 'owner_email', 'owner_phone', 'owner_address',
+            'pet_name', 'pet_species', 'pet_breed', 'pet_dob', 'pet_sex', 'pet_color',
             'reason', 'branch', 'preferred_vet',
             'appointment_date', 'appointment_time',
-            'status', 'notes',
+            'status', 'source', 'notes',
         ]
         widgets = {
             'owner_name': forms.TextInput(attrs={
@@ -273,11 +336,29 @@ class AdminQuickCreateForm(forms.ModelForm):
             'owner_phone': forms.TextInput(attrs={
                 'class': 'form-control', 'placeholder': '09XX XXX XXXX',
             }),
+            'owner_address': forms.Textarea(attrs={
+                'class': 'form-control', 'rows': 2,
+                'placeholder': 'Full address',
+            }),
             'pet_name': forms.TextInput(attrs={
                 'class': 'form-control', 'placeholder': "Pet's name",
             }),
+            'pet_species': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'e.g. Dog, Cat',
+            }),
             'pet_breed': forms.TextInput(attrs={
                 'class': 'form-control', 'placeholder': 'e.g. Poodle',
+            }),
+            'pet_dob': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'e.g. 2020-05-10 or 2 years',
+            }),
+            'pet_sex': forms.Select(attrs={'class': 'form-control'}, choices=[
+                ('', '---'),
+                ('MALE', 'Male'),
+                ('FEMALE', 'Female'),
+            ]),
+            'pet_color': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'e.g. Brown',
             }),
             'reason': forms.Select(attrs={'class': 'form-control'}),
             'branch': forms.Select(attrs={'class': 'form-control'}),
@@ -289,6 +370,7 @@ class AdminQuickCreateForm(forms.ModelForm):
                 'class': 'form-control', 'type': 'time',
             }),
             'status': forms.Select(attrs={'class': 'form-control'}),
+            'source': forms.Select(attrs={'class': 'form-control'}),
             'notes': forms.Textarea(attrs={
                 'class': 'form-control', 'rows': 2,
                 'placeholder': 'Walk-in / phone call notes...',
@@ -305,7 +387,12 @@ class AdminQuickCreateForm(forms.ModelForm):
         self.fields['preferred_vet'].required = False
         self.fields['owner_email'].required = False
         self.fields['owner_phone'].required = False
+        self.fields['owner_address'].required = False
+        self.fields['pet_species'].required = False
         self.fields['pet_breed'].required = False
+        self.fields['pet_dob'].required = False
+        self.fields['pet_sex'].required = False
+        self.fields['pet_color'].required = False
         self.fields['notes'].required = False
 
     def clean(self):
@@ -315,7 +402,103 @@ class AdminQuickCreateForm(forms.ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        instance.source = Appointment.Source.WALKIN
+        # Link user if portal source and user_id provided
+        user_id = self.cleaned_data.get('selected_user_id')
+        if user_id:
+            from accounts.models import User
+            try:
+                instance.user = User.objects.get(pk=user_id)
+            except User.DoesNotExist:
+                pass
         if commit:
             instance.save()
         return instance
+
+
+class AppointmentEditForm(forms.ModelForm):
+    """Form for editing existing appointments in admin portal."""
+
+    class Meta:
+        """Form metadata."""
+        model = Appointment
+        fields = [
+            'owner_name', 'owner_email', 'owner_phone', 'owner_address',
+            'pet_name', 'pet_species', 'pet_breed', 'pet_dob', 'pet_sex', 'pet_color',
+            'pet_symptoms',
+            'reason', 'branch', 'preferred_vet',
+            'appointment_date', 'appointment_time',
+            'status', 'source', 'notes',
+        ]
+        widgets = {
+            'owner_name': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'Owner name',
+            }),
+            'owner_email': forms.EmailInput(attrs={
+                'class': 'form-control', 'placeholder': 'email@example.com',
+            }),
+            'owner_phone': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': '09XX XXX XXXX',
+            }),
+            'owner_address': forms.Textarea(attrs={
+                'class': 'form-control', 'rows': 2,
+                'placeholder': 'Full address',
+            }),
+            'pet_name': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': "Pet's name",
+            }),
+            'pet_species': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'e.g. Dog, Cat',
+            }),
+            'pet_breed': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'e.g. Poodle',
+            }),
+            'pet_dob': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'e.g. 2020-05-10 or 2 years',
+            }),
+            'pet_sex': forms.Select(attrs={'class': 'form-control'}, choices=[
+                ('', '---'),
+                ('MALE', 'Male'),
+                ('FEMALE', 'Female'),
+            ]),
+            'pet_color': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'e.g. Brown',
+            }),
+            'pet_symptoms': forms.Textarea(attrs={
+                'class': 'form-control', 'rows': 2,
+                'placeholder': 'Current symptoms',
+            }),
+            'reason': forms.Select(attrs={'class': 'form-control'}),
+            'branch': forms.Select(attrs={'class': 'form-control'}),
+            'preferred_vet': forms.Select(attrs={'class': 'form-control'}),
+            'appointment_date': forms.DateInput(attrs={
+                'class': 'form-control', 'type': 'date',
+            }),
+            'appointment_time': forms.TimeInput(attrs={
+                'class': 'form-control', 'type': 'time',
+            }),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'source': forms.Select(attrs={'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control', 'rows': 2,
+                'placeholder': 'Additional notes...',
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['branch'].queryset = Branch.objects.filter(is_active=True)
+        self.fields['preferred_vet'].queryset = StaffMember.objects.filter(
+            position=StaffMember.Position.VETERINARIAN,
+            is_active=True,
+        )
+        self.fields['preferred_vet'].required = False
+        self.fields['owner_email'].required = False
+        self.fields['owner_phone'].required = False
+        self.fields['owner_address'].required = False
+        self.fields['pet_species'].required = False
+        self.fields['pet_breed'].required = False
+        self.fields['pet_dob'].required = False
+        self.fields['pet_sex'].required = False
+        self.fields['pet_color'].required = False
+        self.fields['pet_symptoms'].required = False
+        self.fields['notes'].required = False

@@ -20,16 +20,16 @@
       <h1><i class='bx bx-calendar-event'></i> Appointments</h1>
       <p>Manage all appointment bookings across branches</p>
     </div>
-    <button id="quickCreateBtn" class="appt-hero-book-btn" style="cursor: pointer;">
+    <button class="appt-hero-book-btn" id="quickCreateBtn" style="border: none; cursor: pointer; font-family: inherit;">
       <i class='bx bx-plus-circle'></i> Quick Create
     </button>
   </div>
 </div>
 
 <!-- ══════ TAB BAR ══════ -->
-<div class="appt-tabs" id="viewTabs" style="margin-bottom: 24px;">
+<div class="appt-tabs" id="viewTabs" style="margin-bottom: 20px;">
   <button class="appt-tab active" data-view="table">
-    <i class='bx bx-list-ul'></i> <span>List View</span>
+    <i class='bx bx-table'></i> <span>Table</span>
   </button>
   <button class="appt-tab" data-view="daily">
     <i class='bx bx-calendar-event'></i> <span>Daily</span>
@@ -43,93 +43,166 @@
 </div>
 
 <!-- Search & Filter Bar -->
-<div class="filter-bar">
-  <form method="GET" style="display:contents;" id="apptFilterForm">
-    <div class="admin-search-box">
-      <i class='bx bx-search'></i>
-      <input type="text" name="q" placeholder="Search by owner, pet, or email..." value="{{ q }}" id="apptSearch" class="admin-search-input">
+<div class="appt-filter-bar">
+  <form method="GET" id="apptFilterForm" class="appt-filter-form">
+    <input type="hidden" name="view" id="currentViewInput" value="{{ current_view }}">
+    <div class="appt-search-wrap">
+      <i class='bx bx-search appt-search-icon'></i>
+      <input type="text" name="q" placeholder="Search by owner, pet, or email..." value="{{ q }}" id="apptSearch" class="appt-search-input">
     </div>
-    <select class="filter-select" name="status" onchange="document.getElementById('apptFilterForm').submit()">
-      <option value="">All Statuses</option>
-      {% for value, label in statuses %}
-      <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
-    <select class="filter-select" name="branch" onchange="document.getElementById('apptFilterForm').submit()">
-      <option value="">All Branches</option>
-      {% for branch in branches %}
-      <option value="{{ branch.id }}" {% if selected_branch == branch.id|stringformat:"d" %}selected{% endif %}>{{ branch.name }}</option>
-      {% endfor %}
-    </select>
-    <select class="filter-select" name="vet" onchange="document.getElementById('apptFilterForm').submit()">
-      <option value="">All Vets</option>
-      {% for vet in vets %}
-      <option value="{{ vet.id }}" {% if selected_vet == vet.id|stringformat:"d" %}selected{% endif %}>{{ vet.full_name }}</option>
-      {% endfor %}
-    </select>
-    <select class="filter-select" name="source" onchange="document.getElementById('apptFilterForm').submit()">
-      <option value="">All Sources</option>
-      {% for value, label in sources %}
-      <option value="{{ value }}" {% if selected_source == value %}selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
-    <div class="filter-actions">
-      <a href="{% url 'appointments:admin_list' %}" class="admin-btn outline sm"><i class='bx bx-x'></i> Clear</a>
+    <div class="appt-filter-divider"></div>
+    <div class="appt-filter-group">
+      <select class="appt-filter-select" name="status" onchange="document.getElementById('apptFilterForm').submit()">
+        <option value="">All Statuses</option>
+        {% for value, label in statuses %}
+        <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <select class="appt-filter-select" name="branch" onchange="document.getElementById('apptFilterForm').submit()">
+        <option value="">All Branches</option>
+        {% for branch in branches %}
+        <option value="{{ branch.id }}" {% if selected_branch == branch.id|stringformat:"d" %}selected{% endif %}>{{ branch.name }}</option>
+        {% endfor %}
+      </select>
+      <select class="appt-filter-select" name="vet" onchange="document.getElementById('apptFilterForm').submit()">
+        <option value="">All Vets</option>
+        {% for vet in vets %}
+        <option value="{{ vet.id }}" {% if selected_vet == vet.id|stringformat:"d" %}selected{% endif %}>{{ vet.full_name }}</option>
+        {% endfor %}
+      </select>
+      <select class="appt-filter-select" name="source" onchange="document.getElementById('apptFilterForm').submit()">
+        <option value="">All Sources</option>
+        {% for value, label in sources %}
+        <option value="{{ value }}" {% if selected_source == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
     </div>
+    <div class="appt-filter-divider"></div>
+    <a href="{% url 'appointments:admin_list' %}" class="appt-clear-btn"><i class='bx bx-x'></i> Clear</a>
   </form>
 </div>
 
 <!-- TABLE / ACCORDION VIEW -->
 <div id="tableView">
 {% if appointments %}
-  <div class="appt-card-list">
-  {% for appt in appointments %}
-    <div class="appt-card">
-      <div class="appt-card-accent {{ appt.status|lower }}"></div>
-      <div class="appt-card-inner">
-        <div class="appt-card-icon {{ appt.status|lower }}" style="font-weight: 800;">
-          {{ appt.owner_name|make_list|first|upper }}
-        </div>
-        <div class="appt-card-body">
-          <div class="appt-card-top">
-            <h3>{{ appt.pet_name }} {% if appt.pet_breed %}<span class="appt-card-breed">· {{ appt.pet_breed }}</span>{% endif %}</h3>
-            <span class="appt-status-pill {{ appt.status|lower }}">{{ appt.get_status_display }}</span>
+<div class="admin-table-card">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Owner / Pet</th>
+        <th>Branch</th>
+        <th>Vet</th>
+        <th>Date & Time</th>
+        <th>Source</th>
+        <th>Status</th>
+        <th style="text-align: right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for appt in appointments %}
+      <tr class="accordion-row" data-id="{{ appt.pk }}">
+        <td>
+          <div class="avatar-cell">
+            <div class="avatar-sm">{{ appt.owner_name|make_list|first|upper }}</div>
+            <div class="cell-stack">
+              <span class="cell-primary">{{ appt.owner_name }}</span>
+              <span class="cell-secondary">{{ appt.pet_name }}{% if appt.pet_breed %} ({{ appt.pet_breed }}){% endif %}</span>
+            </div>
           </div>
-          <div class="appt-card-meta">
-            <span><i class='bx bx-user'></i> {{ appt.owner_name }} {% if appt.owner_phone %}({{ appt.owner_phone }}){% endif %}</span>
-            <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
-            <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
-            <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
-            <span><i class='bx bx-user-pin'></i> {{ appt.preferred_vet.full_name|default:"Any Vet" }}</span>
+        </td>
+        <td>{{ appt.branch.name }}</td>
+        <td>{{ appt.preferred_vet.full_name|default:"Any available" }}</td>
+        <td>
+          <div class="cell-stack">
+            <span class="cell-primary">{{ appt.appointment_date|date:"M d, Y" }}</span>
+            <span class="cell-secondary">{{ appt.appointment_time|time:"g:i A" }}</span>
           </div>
-          {% if appt.reason or appt.notes %}
-          <div class="appt-card-notes">
-            {% if appt.reason %}
-            <div style="margin-bottom: 4px;"><i class='bx bx-info-circle'></i> <strong>Reason:</strong> {{ appt.reason }}</div>
-            {% endif %}
-            {% if appt.notes %}
-            <div><i class='bx bx-note'></i> <strong>Vet Notes:</strong> {{ appt.notes }}</div>
-            {% endif %}
+        </td>
+        <td><span class="admin-badge source-{{ appt.source|lower }}">{{ appt.get_source_display }}</span></td>
+        <td><span class="admin-badge {{ appt.status|lower }}">{{ appt.get_status_display }}</span></td>
+        <td>
+          <div class="actions-cell">
+            <a href="{% url 'appointments:admin_edit' appt.pk %}" class="action-btn" title="Edit"><i class='bx bx-edit-alt'></i></a>
+            <form method="POST" action="{% url 'appointments:admin_delete' appt.pk %}" style="display:inline;" onsubmit="return confirm('Delete this appointment?');">
+              {% csrf_token %}
+              <button type="submit" class="action-btn danger" title="Delete"><i class='bx bx-trash'></i></button>
+            </form>
           </div>
-          {% endif %}
-          <div style="margin-top: 15px; display: flex; gap: 10px; border-top: 1px solid var(--border); padding-top: 15px;">
-             <a href="{% url 'appointments:admin_edit' appt.pk %}" class="admin-btn outline sm"><i class='bx bx-edit-alt'></i> Edit</a>
-             <form method="POST" action="{% url 'appointments:admin_delete' appt.pk %}" style="display:inline;" onsubmit="return confirm('Delete this appointment?');">
-               {% csrf_token %}
-               <button type="submit" class="admin-btn danger sm"><i class='bx bx-trash'></i> Delete</button>
-             </form>
+        </td>
+      </tr>
+      <!-- Expandable Details Row -->
+      <tr class="accordion-details" id="details-{{ appt.pk }}" style="display: none;">
+        <td colspan="7" style="padding: 0; background: var(--bg);">
+          <div style="padding: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px;">
+            <div>
+              <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-2); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;"><i class='bx bx-id-card'></i> Contact Information</h4>
+              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>Name:</strong> {{ appt.owner_name }}</p>
+              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>Phone:</strong> {{ appt.owner_phone|default:"-" }}</p>
+              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>Email:</strong> {{ appt.owner_email|default:"-" }}</p>
+              <p style="margin-bottom: 0; font-size: 0.875rem;"><strong>Address:</strong> {{ appt.owner_address|default:"-" }}</p>
+            </div>
+            <div>
+              <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-2); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;"><i class='bx bxs-dog'></i> Pet Information</h4>
+              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>Name:</strong> {{ appt.pet_name }}</p>
+              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>Species:</strong> {{ appt.pet_species|default:"-" }}</p>
+              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>Breed:</strong> {{ appt.pet_breed|default:"-" }}</p>
+              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>D.O.B / Age:</strong> {{ appt.pet_dob|default:"-" }}</p>
+              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>Sex:</strong> {{ appt.pet_sex|default:"-" }}</p>
+              <p style="margin-bottom: 0; font-size: 0.875rem;"><strong>Color:</strong> {{ appt.pet_color|default:"-" }}</p>
+            </div>
+            <div>
+              <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-2); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;"><i class='bx bx-file'></i> Appointment Details</h4>
+              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>Created:</strong> {{ appt.created_at|date:"M d, Y, g:i A" }}</p>
+              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>Reason:</strong> {{ appt.get_reason_display|default:"-" }}</p>
+              <p style="margin-bottom: 0; font-size: 0.875rem;"><strong>Returning Client:</strong> {% if appt.is_returning_customer %}Yes{% else %}No{% endif %}</p>
+              {% if appt.pet_symptoms %}
+              <div style="margin-top: 12px; background: var(--surface); padding: 12px; border-radius: 8px; border-left: 3px solid var(--accent);">
+                <strong style="font-size: 0.8rem;">Symptoms:</strong>
+                <p style="margin: 6px 0 0; color: var(--text-2); font-size: 0.875rem;">{{ appt.pet_symptoms|linebreaksbr }}</p>
+              </div>
+              {% endif %}
+              {% if appt.notes %}
+              <div style="margin-top: 12px; background: var(--surface); padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary);">
+                <strong style="font-size: 0.8rem;">Notes:</strong>
+                <p style="margin: 6px 0 0; color: var(--text-2); font-size: 0.875rem;">{{ appt.notes|linebreaksbr }}</p>
+              </div>
+              {% endif %}
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-  {% endfor %}
-  </div>
+          <div style="padding: 0 24px 16px; text-align: right;">
+            <a href="{% url 'appointments:admin_edit' appt.pk %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--primary); color: #fff; font-size: 0.82rem; font-weight: 500; border-radius: 8px; text-decoration: none; transition: all 0.2s ease;">
+              <i class='bx bx-edit-alt'></i> View / Edit Full Details
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+document.querySelectorAll('.accordion-row').forEach(row => {
+  row.style.cursor = 'pointer';
+  row.addEventListener('click', function(e) {
+    if (e.target.closest('.actions-cell')) return;
+    const id = this.dataset.id;
+    const details = document.getElementById('details-' + id);
+    document.querySelectorAll('.accordion-details').forEach(d => {
+      if (d !== details) d.style.display = 'none';
+    });
+    details.style.display = details.style.display === 'none' ? 'table-row' : 'none';
+  });
+});
+</script>
 {% else %}
-  <div class="appt-empty">
-    <div class="appt-empty-icon"><i class='bx bx-calendar-x'></i></div>
+<div class="admin-table-card">
+  <div class="admin-empty-state">
+    <i class='bx bx-calendar-x'></i>
     <h3>No appointments found</h3>
     <p>Appointments will appear here when clients book through the website or portal. Use "Quick Create" to add walk-ins.</p>
   </div>
+</div>
 {% endif %}
 </div>
 
@@ -157,70 +230,153 @@
 
 <!-- QUICK CREATE MODAL -->
 <div class="schedule-modal-overlay" id="quickCreateModal">
-  <div class="schedule-modal" style="max-width: 600px;">
-    <div class="schedule-modal-header">
-      <h3><i class='bx bx-plus-circle'></i> Quick Create Appointment</h3>
-      <button class="schedule-modal-close" id="closeQuickCreate"><i class='bx bx-x'></i></button>
+  <div class="qc-modal">
+    <div class="qc-header">
+      <div class="qc-header-title">
+        <div class="qc-icon"><i class='bx bx-calendar-plus'></i></div>
+        <div>
+          <h3>Quick Appointment</h3>
+          <p>Manual booking for walk-ins or calls</p>
+        </div>
+      </div>
+      <button class="qc-close" id="closeQuickCreate"><i class='bx bx-x'></i></button>
     </div>
-    <form method="POST" action="{% url 'appointments:admin_quick_create' %}" class="pet-form">
+    
+    <form method="POST" action="{% url 'appointments:admin_quick_create' %}">
       {% csrf_token %}
-      <div class="schedule-modal-body">
-        <p style="font-size: 0.82rem; color: var(--text-2); margin-bottom: 14px;">
-          <i class='bx bx-info-circle'></i> Create an appointment for walk-ins or phone calls — bypasses user restrictions.
-        </p>
-        <div class="form-grid">
-          <div class="form-group">
+      {{ quick_form.selected_user_id }}
+      {{ quick_form.selected_pet_id }}
+      <div class="qc-body">
+        <div class="qc-section-title">Source</div>
+        <div class="qc-grid">
+          <div class="qc-group qc-full">
+            <label>Booking Source *</label>
+            {{ quick_form.source }}
+          </div>
+        </div>
+
+        <div class="qc-section-title mt-3">Client Details</div>
+        <div class="qc-grid">
+          <div class="qc-group qc-full">
+            <label>Select Registered Owner</label>
+            <select id="ownerSelect" class="qc-input">
+              <option value="">-- Walk-in (type manually) --</option>
+            </select>
+          </div>
+          <div class="qc-group qc-full">
             <label>Owner Name *</label>
             {{ quick_form.owner_name }}
           </div>
-          <div class="form-group">
+          <div class="qc-group">
             <label>Phone</label>
             {{ quick_form.owner_phone }}
           </div>
-          <div class="form-group">
+          <div class="qc-group">
             <label>Email</label>
             {{ quick_form.owner_email }}
           </div>
-          <div class="form-group">
+          <div class="qc-group qc-full">
+            <label>Address</label>
+            {{ quick_form.owner_address }}
+          </div>
+        </div>
+
+        <div class="qc-section-title mt-3">Pet Details</div>
+        <div class="qc-grid">
+          <div class="qc-group qc-full">
+            <label>Select Pet</label>
+            <select id="petSelect" class="qc-input" disabled>
+              <option value="">-- Select owner first --</option>
+            </select>
+          </div>
+          <div class="qc-group">
             <label>Pet Name *</label>
             {{ quick_form.pet_name }}
           </div>
-          <div class="form-group">
-            <label>Pet Breed</label>
+          <div class="qc-group">
+            <label>Species</label>
+            {{ quick_form.pet_species }}
+          </div>
+          <div class="qc-group">
+            <label>Breed</label>
             {{ quick_form.pet_breed }}
           </div>
-          <div class="form-group">
+          <div class="qc-group">
+            <label>D.O.B / Age</label>
+            {{ quick_form.pet_dob }}
+          </div>
+          <div class="qc-group">
+            <label>Sex</label>
+            {{ quick_form.pet_sex }}
+          </div>
+          <div class="qc-group">
+            <label>Color</label>
+            {{ quick_form.pet_color }}
+          </div>
+          <div class="qc-group qc-full">
+            <label>Reason for Visit *</label>
+            {{ quick_form.reason }}
+          </div>
+        </div>
+
+        <div class="qc-section-title mt-3">Schedule</div>
+        <div class="qc-grid">
+          <div class="qc-group">
             <label>Branch *</label>
             {{ quick_form.branch }}
           </div>
-          <div class="form-group">
-            <label>Preferred Vet</label>
+          <div class="qc-group">
+            <label>Veterinarian</label>
             {{ quick_form.preferred_vet }}
           </div>
-          <div class="form-group">
+          <div class="qc-group">
             <label>Date *</label>
             {{ quick_form.appointment_date }}
           </div>
-          <div class="form-group">
+          <div class="qc-group">
             <label>Time *</label>
-            <select name="appointment_time" id="id_quick_appointment_time" class="form-control" required>
+            <select name="appointment_time" id="id_quick_appointment_time" class="qc-input" required>
               <option value="">-- Select date/vet first --</option>
             </select>
-            <span class="form-hint" id="quickTimeHint" style="font-size: 0.8rem; color: #666; display: block; margin-top: 4px;"></span>
           </div>
-          <div class="form-group">
+          <div class="qc-group qc-full">
             <label>Status</label>
             {{ quick_form.status }}
           </div>
+          <div class="qc-group qc-full">
+            <label>Notes</label>
+            {{ quick_form.notes }}
+          </div>
         </div>
-        <div class="form-group" style="margin-top: 8px;">
-          <label>Notes</label>
-          {{ quick_form.notes }}
+
+        <div class="qc-section-title mt-3">Follow-up (Optional)</div>
+        <div class="qc-grid">
+          <div class="qc-group qc-full">
+            <label class="qc-checkbox">
+              <input type="checkbox" name="follow_up_enabled" id="quickFollowUpEnabled">
+              <span>Schedule a follow-up visit</span>
+            </label>
+          </div>
+          <div id="quickFollowUpFields" style="display: none;">
+            <div class="qc-group">
+              <label>Follow-up Start Date</label>
+              <input type="date" name="follow_up_date" class="qc-input" id="quickFollowUpDate">
+            </div>
+            <div class="qc-group">
+              <label>Follow-up End Date (Optional)</label>
+              <input type="date" name="follow_up_end_date" class="qc-input" id="quickFollowUpEndDate">
+            </div>
+            <div class="qc-group qc-full">
+              <label>Reason for Follow-up</label>
+              <textarea name="follow_up_reason" class="qc-input" rows="2" placeholder="e.g., Post-surgery checkup"></textarea>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="schedule-modal-footer">
-        <button type="submit" class="btn-action primary"><i class='bx bx-check'></i> Create Appointment</button>
-        <button type="button" class="btn-action outline" id="cancelQuickCreate">Cancel</button>
+      
+      <div class="qc-footer">
+        <button type="button" class="qc-btn-cancel" id="cancelQuickCreate">Cancel</button>
+        <button type="submit" class="qc-btn-save">Book Appointment</button>
       </div>
     </form>
   </div>
@@ -228,88 +384,84 @@
 
 <!-- APPOINTMENT DETAIL MODAL (AJAX CALENDAR) -->
 <div class="schedule-modal-overlay" id="appointmentDetailModal">
-  <div class="schedule-modal" style="max-width: 600px;">
+  <div class="dm-modal">
+    <button class="dm-close" id="closeDetailModal"><i class='bx bx-x'></i></button>
     
-    <!-- Header with Dynamic Vet Color Border -->
-    <div class="schedule-modal-header" id="detailModalHeader" style="border-left: 5px solid var(--primary); padding-left: 20px;">
-      <div style="flex: 1;">
-        <h3 style="margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-          <span id="detailOwnerName">Owner Name</span>
-          <span class="status-badge" id="detailStatusBadge" style="font-size: 0.75rem; padding: 2px 8px;">Status</span>
-        </h3>
-        <p style="color: var(--text-2); font-size: 0.9rem; margin: 0;" id="detailPetInfo">Pet Name (Breed)</p>
+    <!-- Header -->
+    <div class="dm-header">
+      <div class="dm-avatar" id="detailOwnerAvatar">C</div>
+      <div class="dm-title">
+        <h2 id="detailOwnerName">Owner Name</h2>
+        <p id="detailPetInfo">Pet Name</p>
       </div>
-      <button class="schedule-modal-close" id="closeDetailModal" style="align-self: flex-start;"><i class='bx bx-x'></i></button>
+      <span class="dm-status" id="detailStatusBadge">Status</span>
     </div>
 
-    <!-- Body Content -->
-    <div class="schedule-modal-body" style="padding: 24px;">
-      
-      <!-- Top info bar -->
-      <div style="display: flex; gap: 16px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
-        <div style="flex: 1;">
-          <small style="color: var(--text-2); text-transform: uppercase; font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 4px;">Time</small>
-          <div style="font-weight: 600; font-size: 1.05rem;" id="detailTime">Time Label</div>
-          <div style="font-size: 0.85rem; color: var(--text-2);" id="detailDate">Date Label</div>
-        </div>
-        <div style="flex: 1;">
-          <small style="color: var(--text-2); text-transform: uppercase; font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 4px;">Assigned Vet</small>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <div class="staff-avatar appt-avatar" id="detailVetAvatar" style="width: 28px; height: 28px; font-size: 0.8rem;">V</div>
-            <strong id="detailVetName" style="font-size: 0.95rem;">Vet Name</strong>
-          </div>
-        </div>
-      </div>
-
-      <!-- Details Grid -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        
-        <!-- Left Column -->
+    <!-- Info Bar -->
+    <div class="dm-bar">
+      <div class="dm-bar-item">
+        <i class='bx bx-time-five'></i>
         <div>
-          <div style="margin-bottom: 16px;">
-            <strong style="display: block; font-size: 0.85rem; color: var(--text-2); margin-bottom: 4px;"><i class='bx bx-building'></i> Branch</strong>
-            <span id="detailBranch" style="font-size: 0.95rem;">Branch Name</span>
-          </div>
-          <div style="margin-bottom: 16px;">
-            <strong style="display: block; font-size: 0.85rem; color: var(--text-2); margin-bottom: 4px;"><i class='bx bx-info-circle'></i> Reason</strong>
-            <span id="detailReason" style="font-size: 0.95rem;">Reason</span>
-          </div>
-          <div style="margin-bottom: 16px;">
-            <strong style="display: block; font-size: 0.85rem; color: var(--text-2); margin-bottom: 4px;"><i class='bx bx-laptop'></i> Source</strong>
-            <span class="source-badge" id="detailSourceBadge">Source</span>
-          </div>
+          <span class="dm-bar-label">Time</span>
+          <strong id="detailTime">—</strong>
         </div>
-
-        <!-- Right Column (Contact) -->
+      </div>
+      <div class="dm-bar-item">
+        <i class='bx bx-calendar'></i>
         <div>
-          <div style="margin-bottom: 16px;">
-            <strong style="display: block; font-size: 0.85rem; color: var(--text-2); margin-bottom: 4px;"><i class='bx bx-phone'></i> Phone</strong>
-            <span id="detailPhone" style="font-size: 0.95rem;">-</span>
-          </div>
-          <div style="margin-bottom: 16px;">
-            <strong style="display: block; font-size: 0.85rem; color: var(--text-2); margin-bottom: 4px;"><i class='bx bx-envelope'></i> Email</strong>
-            <span id="detailEmail" style="font-size: 0.95rem; word-break: break-all;">-</span>
-          </div>
-          <div style="margin-bottom: 16px;">
-            <strong style="display: block; font-size: 0.85rem; color: var(--text-2); margin-bottom: 4px;"><i class='bx bx-time'></i> Booked On</strong>
-            <span id="detailCreatedAt" style="font-size: 0.9rem;">-</span>
-          </div>
+          <span class="dm-bar-label">Date</span>
+          <strong id="detailDate">—</strong>
         </div>
       </div>
-
-      <!-- Notes Section -->
-      <div style="margin-top: 8px; border-top: 1px solid var(--border); padding-top: 16px;" id="detailNotesContainer">
-        <strong style="display: block; font-size: 0.85rem; color: var(--text-2); margin-bottom: 6px;"><i class='bx bx-note'></i> Notes / Symptoms</strong>
-        <div id="detailNotes" style="font-size: 0.95rem; background: #fafafa; padding: 12px; border-radius: 6px; border-left: 3px solid var(--gray-300);"></div>
+      <div class="dm-bar-item">
+        <i class='bx bx-user-check'></i>
+        <div>
+          <span class="dm-bar-label">Vet</span>
+          <strong id="detailVetName">—</strong>
+        </div>
       </div>
-
     </div>
 
-    <!-- Footer Actions -->
-    <div class="schedule-modal-footer" style="justify-content: flex-end;">
-      <a href="#" class="btn-action outline" id="detailEditBtn"><i class='bx bx-edit'></i> Edit Appointment</a>
+    <!-- Details List -->
+    <div class="dm-details">
+      <div class="dm-row">
+        <span class="dm-label">Branch</span>
+        <span class="dm-value" id="detailBranch">—</span>
+      </div>
+      <div class="dm-row">
+        <span class="dm-label">Phone</span>
+        <span class="dm-value" id="detailPhone">—</span>
+      </div>
+      <div class="dm-row">
+        <span class="dm-label">Email</span>
+        <span class="dm-value" id="detailEmail">—</span>
+      </div>
+      <div class="dm-row">
+        <span class="dm-label">Reason</span>
+        <span class="dm-value" id="detailReason">—</span>
+      </div>
+      <div class="dm-row">
+        <span class="dm-label">Source</span>
+        <span class="dm-value"><span class="dm-source" id="detailSourceBadge">—</span></span>
+      </div>
+      <div class="dm-row">
+        <span class="dm-label">Booked On</span>
+        <span class="dm-value" id="detailCreatedAt">—</span>
+      </div>
     </div>
 
+    <!-- Notes -->
+    <div class="dm-notes" id="detailNotesContainer">
+      <span class="dm-notes-label">Notes</span>
+      <p id="detailNotes"></p>
+    </div>
+
+    <!-- Footer -->
+    <div class="dm-footer">
+      <a href="#" class="dm-edit-btn" id="detailEditBtn">
+        <i class='bx bx-show'></i> View Full Details
+      </a>
+    </div>
   </div>
 </div>
 

@@ -16,6 +16,8 @@ urlpatterns = [
     path('api/vets/', views.api_available_vets, name='api_vets'),
     path('api/times/', views.api_vet_times, name='api_times'),
     path('api/dates/', views.api_available_dates, name='api_dates'),
+    path('api/owners/', views.api_pet_owners, name='api_owners'),
+    path('api/pets/', views.api_owner_pets, name='api_pets'),
 
     # Admin management
     path('admin/', views.admin_list, name='admin_list'),

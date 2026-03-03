@@ -103,6 +103,10 @@
               <label for="{{ form.owner_phone.id_for_label }}">Phone Number</label>
               {{ form.owner_phone }}
             </div>
+            <div class="form-group-book full-width">
+              <label for="{{ form.owner_address.id_for_label }}">Address</label>
+              {{ form.owner_address }}
+            </div>
           </div>
         </div>
 
@@ -116,8 +120,24 @@
               {% if form.pet_name.errors %}<span class="form-error">{{ form.pet_name.errors.0 }}</span>{% endif %}
             </div>
             <div class="form-group-book">
-              <label for="{{ form.pet_breed.id_for_label }}">Pet Breed</label>
+              <label for="{{ form.pet_species.id_for_label }}">Species</label>
+              {{ form.pet_species }}
+            </div>
+            <div class="form-group-book">
+              <label for="{{ form.pet_breed.id_for_label }}">Breed</label>
               {{ form.pet_breed }}
+            </div>
+            <div class="form-group-book">
+              <label for="{{ form.pet_dob.id_for_label }}">D.O.B / Age</label>
+              {{ form.pet_dob }}
+            </div>
+            <div class="form-group-book">
+              <label for="{{ form.pet_sex.id_for_label }}">Sex</label>
+              {{ form.pet_sex }}
+            </div>
+            <div class="form-group-book">
+              <label for="{{ form.pet_color.id_for_label }}">Color</label>
+              {{ form.pet_color }}
             </div>
             <div class="form-group-book">
               <label for="{{ form.reason.id_for_label }}">Reason for Appointment *</label>

@@ -1,187 +1,303 @@
 {% extends 'base/portal_admin.html' %}
+{% load static %}
 
-{% block title %}Edit Appointment{% endblock %}
+{% block title %}Edit Appointment — {{ appointment.pet_name }}{% endblock %}
 
 {% block content %}
 
-<!-- Page Header -->
-<div class="page-header">
-  <div>
-    <h1>Edit Appointment</h1>
-    <p class="page-subtitle">Update Status for {{ appointment.pet_name }}'s appointment</p>
-  </div>
-  <div class="page-header-actions">
-    <a href="{% url 'appointments:admin_list' %}" class="btn-action outline"><i class='bx bx-arrow-back'></i> Back to Appointments</a>
-  </div>
-</div>
+<!-- Back Button -->
+<a href="{% url 'appointments:admin_list' %}" class="back-pill">
+  <i class='bx bx-chevron-left'></i>
+  <span>Appointments</span>
+</a>
 
-<!-- Appointment Details Card -->
-<div class="dashboard-card full-width">
-  <div class="card-header">
-    <h3><i class='bx bx-info-circle'></i> Appointment Details</h3>
-    <span class="status-badge {{ appointment.status|lower }}">{{ appointment.get_status_display }}</span>
-  </div>
-  <div class="card-body">
-    <div class="appt-detail-grid">
-      <div class="appt-detail-item">
-        <span class="appt-detail-label">Owner</span>
-        <span class="appt-detail-value">{{ appointment.owner_name }}</span>
-      </div>
-      <div class="appt-detail-item">
-        <span class="appt-detail-label">Email</span>
-        <span class="appt-detail-value">{{ appointment.owner_email|default:"N/A" }}</span>
-      </div>
-      <div class="appt-detail-item">
-        <span class="appt-detail-label">Phone</span>
-        <span class="appt-detail-value">{{ appointment.owner_phone|default:"N/A" }}</span>
-      </div>
-      <div class="appt-detail-item">
-        <span class="appt-detail-label">Pet Name</span>
-        <span class="appt-detail-value">{{ appointment.pet_name }}</span>
-      </div>
-      <div class="appt-detail-item">
-        <span class="appt-detail-label">Breed</span>
-        <span class="appt-detail-value">{{ appointment.pet_breed|default:"Not specified" }}</span>
-      </div>
-      <div class="appt-detail-item">
-        <span class="appt-detail-label">Branch</span>
-        <span class="appt-detail-value">{{ appointment.branch.name }}</span>
-      </div>
-      <div class="appt-detail-item">
-        <span class="appt-detail-label">Vet</span>
-        <span class="appt-detail-value">{{ appointment.preferred_vet.full_name|default:"Any available" }}</span>
-      </div>
-      <div class="appt-detail-item">
-        <span class="appt-detail-label">Date & Time</span>
-        <span class="appt-detail-value">{{ appointment.appointment_date|date:"M d, Y" }} at {{ appointment.appointment_time|time:"g:i A" }}</span>
-      </div>
-      <div class="appt-detail-item">
-        <span class="appt-detail-label">Source</span>
-        <span class="appt-detail-value"><span class="source-badge source-{{ appointment.source|lower }}">{{ appointment.get_source_display }}</span></span>
-      </div>
-      <div class="appt-detail-item">
-        <span class="appt-detail-label">Returning?</span>
-        <span class="appt-detail-value">{% if appointment.is_returning_customer %}Yes{% else %}No / First time{% endif %}</span>
-      </div>
-      {% if appointment.pet_history %}
-      <div class="appt-detail-item full-span">
-        <span class="appt-detail-label">Pet History</span>
-        <span class="appt-detail-value">{{ appointment.pet_history }}</span>
-      </div>
-      {% endif %}
-      {% if appointment.pet_symptoms %}
-      <div class="appt-detail-item full-span">
-        <span class="appt-detail-label">Symptom History</span>
-        <span class="appt-detail-value">{{ appointment.pet_symptoms }}</span>
-      </div>
-      {% endif %}
-      <div class="appt-detail-item">
-        <span class="appt-detail-label">Booked</span>
-        <span class="appt-detail-value">{{ appointment.created_at|date:"M d, Y g:i A" }}</span>
-      </div>
+<!-- Edit Form Card -->
+<div class="ae-card">
+  <div class="ae-header">
+    <div class="ae-avatar">{{ appointment.owner_name|make_list|first|upper }}</div>
+    <div class="ae-header-info">
+      <h1>Edit Appointment</h1>
+      <p>{{ appointment.pet_name }} — {{ appointment.owner_name }}</p>
     </div>
+    <span class="ae-status ae-status--{{ appointment.status|lower }}">{{ appointment.get_status_display }}</span>
   </div>
-</div>
 
-<!-- Update Status Card -->
-<div class="dashboard-card full-width">
-  <div class="card-header">
-    <h3><i class='bx bx-edit'></i> Update Appointment</h3>
-  </div>
-  <div class="card-body">
-    <form method="POST" class="pet-form">
-      {% csrf_token %}
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="status">Status</label>
-          <select name="status" id="status" class="form-control">
-            {% for value, label in statuses %}
-            <option value="{{ value }}" {% if appointment.status == value %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="form-group" style="grid-column: 1 / -1;">
-          <label for="notes">Vet Notes (Visible to Client)</label>
-          <textarea name="notes" id="notes" class="form-control" rows="4" placeholder="Notes from the veterinarian regarding the visit, treatment, or aftercare...">{{ appointment.notes }}</textarea>
-        </div>
-      </div>
+  <form method="POST" class="ae-form">
+    {% csrf_token %}
 
-      <!-- Follow-up Toggle -->
-      <div class="follow-up-section" style="border-top: 1px solid var(--border); padding-top: 16px; margin-top: 12px;">
-        <div class="form-group">
-          <label class="form-checkbox-label" style="cursor: pointer;">
-            <input type="checkbox" name="follow_up_enabled" id="followUpToggle" style="width: auto; margin-right: 8px;">
-            <span><i class='bx bx-calendar-plus' style="margin-right: 4px;"></i> Set Follow-up Visit</span>
-          </label>
-        </div>
-
-        <div id="followUpFields" style="display: none;">
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="follow_up_date">Follow-up Start Date *</label>
-              <input type="date" name="follow_up_date" id="follow_up_date" class="form-control">
-            </div>
-            <div class="form-group">
-              <label for="follow_up_end_date">Follow-up End Date (Optional)</label>
-              <input type="date" name="follow_up_end_date" id="follow_up_end_date" class="form-control" title="Leave blank for a single-day follow-up">
-            </div>
-            <div class="form-group">
-              <label for="follow_up_reason">Reason for Return Visit</label>
-              <textarea name="follow_up_reason" id="follow_up_reason" class="form-control" rows="2" placeholder="e.g. Post-surgery checkup, Vaccination booster..."></textarea>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-actions">
-        <button type="submit" class="btn-action primary"><i class='bx bx-check'></i> Save Changes</button>
-        <a href="{% url 'appointments:admin_list' %}" class="btn-action outline">Cancel</a>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Existing Follow-ups -->
-{% if follow_ups %}
-<div class="dashboard-card full-width">
-  <div class="card-header">
-    <h3><i class='bx bx-calendar-check'></i> Follow-up History</h3>
-  </div>
-  <div class="card-body">
-    <div class="schedule-entries">
-      {% for fu in follow_ups %}
-      <div class="schedule-entry" style="border-left: 4px solid {% if fu.is_completed %}#2e7d32{% else %}#f57c00{% endif %};">
-        <div class="schedule-entry-left">
-          <div class="schedule-entry-avatar" style="background: {% if fu.is_completed %}#2e7d32{% else %}#f57c00{% endif %};">
-            <i class='bx {% if fu.is_completed %}bx-check{% else %}bx-calendar{% endif %}'></i>
-          </div>
-          <div class="schedule-entry-info">
-            <strong>
-              {{ fu.follow_up_date|date:"M d, Y" }}
-              {% if fu.follow_up_end_date and fu.follow_up_end_date != fu.follow_up_date %}
-                - {{ fu.follow_up_end_date|date:"M d, Y" }}
-              {% endif %}
-            </strong>
-            <span>{{ fu.reason|default:"Routine follow-up" }}</span>
-          </div>
-        </div>
-        <div class="schedule-entry-details">
-          <span class="status-badge {% if fu.is_completed %}confirmed{% else %}pending{% endif %}">
-            {% if fu.is_completed %}Completed{% else %}Scheduled{% endif %}
-          </span>
-          <span class="text-muted" style="font-size: 0.75rem;">Set by {{ fu.created_by.username|default:"Admin" }}</span>
-        </div>
-      </div>
+    {% if form.non_field_errors %}
+    <div class="ae-errors">
+      {% for error in form.non_field_errors %}
+      <p><i class='bx bx-error-circle'></i> {{ error }}</p>
       {% endfor %}
     </div>
-  </div>
+    {% endif %}
+
+    <!-- Owner Information -->
+    <div class="ae-section">
+      <h2 class="ae-section-title"><i class='bx bx-user'></i> Owner Information</h2>
+      <div class="ae-grid">
+        <div class="ae-group">
+          <label>Owner Name *</label>
+          {{ form.owner_name }}
+        </div>
+        <div class="ae-group">
+          <label>Email</label>
+          {{ form.owner_email }}
+        </div>
+        <div class="ae-group">
+          <label>Phone</label>
+          {{ form.owner_phone }}
+        </div>
+        <div class="ae-group ae-full">
+          <label>Address</label>
+          {{ form.owner_address }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Pet Information -->
+    <div class="ae-section">
+      <h2 class="ae-section-title"><i class='bx bx-paw'></i> Pet Information</h2>
+      
+      <!-- Pet Selector (if user has multiple pets) -->
+      {% if user_pets %}
+      <div class="ae-group ae-full" style="margin-bottom: 1rem;">
+        <label>Select Existing Pet (Optional)</label>
+        <select id="petSelector" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem;">
+          <option value="">-- Keep Current / Manual Entry --</option>
+          {% for pet in user_pets %}
+          <option value="{{ pet.id }}" 
+                  data-name="{{ pet.name }}" 
+                  data-species="{{ pet.species }}"
+                  data-breed="{{ pet.breed }}"
+                  data-dob="{% if pet.age %}{{ pet.age }} years{% endif %}"
+                  data-sex="{{ pet.sex }}"
+                  data-color="{{ pet.color }}">
+            {{ pet.name }} ({{ pet.species }}{% if pet.breed %} - {{ pet.breed }}{% endif %})
+          </option>
+          {% endfor %}
+        </select>
+        <small style="color: #666; display: block; margin-top: 0.5rem;">
+          <i class='bx bx-info-circle'></i> Select a pet from the owner's account to auto-fill the fields below
+        </small>
+      </div>
+      {% endif %}
+      
+      <div class="ae-grid">
+        <div class="ae-group">
+          <label>Pet Name *</label>
+          {{ form.pet_name }}
+        </div>
+        <div class="ae-group">
+          <label>Species</label>
+          {{ form.pet_species }}
+        </div>
+        <div class="ae-group">
+          <label>Breed</label>
+          {{ form.pet_breed }}
+        </div>
+        <div class="ae-group">
+          <label>D.O.B / Age</label>
+          {{ form.pet_dob }}
+        </div>
+        <div class="ae-group">
+          <label>Sex</label>
+          {{ form.pet_sex }}
+        </div>
+        <div class="ae-group">
+          <label>Color</label>
+          {{ form.pet_color }}
+        </div>
+        <div class="ae-group ae-full">
+          <label>Symptoms</label>
+          {{ form.pet_symptoms }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Appointment Details -->
+    <div class="ae-section">
+      <h2 class="ae-section-title"><i class='bx bx-calendar'></i> Appointment Details</h2>
+      <div class="ae-grid">
+        <div class="ae-group">
+          <label>Reason *</label>
+          {{ form.reason }}
+        </div>
+        <div class="ae-group">
+          <label>Branch *</label>
+          {{ form.branch }}
+        </div>
+        <div class="ae-group">
+          <label>Veterinarian</label>
+          {{ form.preferred_vet }}
+        </div>
+        <div class="ae-group">
+          <label>Date *</label>
+          {{ form.appointment_date }}
+        </div>
+        <div class="ae-group">
+          <label>Time *</label>
+          {{ form.appointment_time }}
+        </div>
+        <div class="ae-group">
+          <label>Status *</label>
+          {{ form.status }}
+        </div>
+        <div class="ae-group">
+          <label>Source</label>
+          {{ form.source }}
+        </div>
+        <div class="ae-group ae-full">
+          <label>Notes</label>
+          {{ form.notes }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Follow-up Schedule (Optional) -->
+    <div class="ae-section">
+      <h2 class="ae-section-title"><i class='bx bx-revision'></i> Follow-up Visit (Optional)</h2>
+      <div class="ae-followup-toggle">
+        <label class="ae-checkbox">
+          <input type="checkbox" name="follow_up_enabled" id="followUpEnabled">
+          <span>Schedule a follow-up visit for this pet</span>
+        </label>
+      </div>
+      <div id="followUpFields" style="display: none; margin-top: 1rem;">
+        <div class="ae-grid">
+          <div class="ae-group">
+            <label>Follow-up Start Date *</label>
+            <input type="date" name="follow_up_date" class="form-control" id="followUpDate">
+          </div>
+          <div class="ae-group">
+            <label>Follow-up End Date (Optional)</label>
+            <input type="date" name="follow_up_end_date" class="form-control" id="followUpEndDate">
+            <small style="color: #666; display: block; margin-top: 0.25rem;">Leave blank for single-day follow-up</small>
+          </div>
+          <div class="ae-group ae-full">
+            <label>Reason for Follow-up</label>
+            <textarea name="follow_up_reason" class="form-control" rows="2" placeholder="e.g., Post-surgery checkup, medication review"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Existing Follow-ups -->
+    {% if follow_ups %}
+    <div class="ae-section">
+      <h2 class="ae-section-title"><i class='bx bx-history'></i> Existing Follow-ups</h2>
+      <div class="ae-followup-list">
+        {% for followup in follow_ups %}
+        <div class="ae-followup-item {% if followup.is_completed %}completed{% endif %}">
+          <div class="ae-followup-icon">
+            <i class='bx {% if followup.is_completed %}bx-check-circle{% else %}bx-time-five{% endif %}'></i>
+          </div>
+          <div class="ae-followup-content">
+            <div class="ae-followup-date">
+              <strong>{{ followup.follow_up_date|date:"M d, Y" }}</strong>
+              {% if followup.follow_up_end_date and followup.follow_up_end_date != followup.follow_up_date %}
+                <span>to {{ followup.follow_up_end_date|date:"M d, Y" }}</span>
+              {% endif %}
+            </div>
+            {% if followup.reason %}
+            <div class="ae-followup-reason">{{ followup.reason }}</div>
+            {% endif %}
+            <div class="ae-followup-meta">
+              Created by {{ followup.created_by.get_full_name|default:followup.created_by.username }} 
+              on {{ followup.created_at|date:"M d, Y" }}
+            </div>
+          </div>
+          <div class="ae-followup-status">
+            {% if followup.is_completed %}
+              <span class="ae-badge ae-badge-success">Completed</span>
+            {% else %}
+              <span class="ae-badge ae-badge-warning">Pending</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Metadata (Read-only) -->
+    <div class="ae-section ae-meta">
+      <div class="ae-meta-item">
+        <span class="ae-meta-label">Booked On</span>
+        <span class="ae-meta-value">{{ appointment.created_at|date:"M d, Y · g:i A" }}</span>
+      </div>
+      <div class="ae-meta-item">
+        <span class="ae-meta-label">Returning Client</span>
+        <span class="ae-meta-value">{% if appointment.is_returning_customer %}Yes{% else %}No{% endif %}</span>
+      </div>
+      {% if appointment.user %}
+      <div class="ae-meta-item">
+        <span class="ae-meta-label">Linked Account</span>
+        <span class="ae-meta-value">{{ appointment.user.username }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Actions -->
+    <div class="ae-footer">
+      <button type="submit" class="ae-btn-save">
+        <i class='bx bx-check'></i> Save Changes
+      </button>
+      <a href="{% url 'appointments:admin_list' %}" class="ae-btn-cancel">Cancel</a>
+    </div>
+  </form>
 </div>
+
+<!-- Pet Selector Auto-fill Script -->
+{% if user_pets %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const petSelector = document.getElementById('petSelector');
+  const petNameField = document.querySelector('[name="pet_name"]');
+  const petSpeciesField = document.querySelector('[name="pet_species"]');
+  const petBreedField = document.querySelector('[name="pet_breed"]');
+  const petDobField = document.querySelector('[name="pet_dob"]');
+  const petSexField = document.querySelector('[name="pet_sex"]');
+  const petColorField = document.querySelector('[name="pet_color"]');
+
+  if (petSelector) {
+    petSelector.addEventListener('change', function() {
+      const opt = this.options[this.selectedIndex];
+      if (this.value) {
+        // Fill from selected pet
+        if (petNameField) petNameField.value = opt.dataset.name || '';
+        if (petSpeciesField) petSpeciesField.value = opt.dataset.species || '';
+        if (petBreedField) petBreedField.value = opt.dataset.breed || '';
+        if (petDobField) petDobField.value = opt.dataset.dob || '';
+        if (petSexField) petSexField.value = opt.dataset.sex || '';
+        if (petColorField) petColorField.value = opt.dataset.color || '';
+      }
+      // Note: we don't clear fields if "Keep Current" is selected
+    });
+  }
+});
+</script>
 {% endif %}
 
+<!-- Follow-up Toggle Script -->
 <script>
-// Follow-up toggle
-document.getElementById('followUpToggle').addEventListener('change', function() {
-  document.getElementById('followUpFields').style.display = this.checked ? 'block' : 'none';
+document.addEventListener("DOMContentLoaded", function() {
+  const followUpEnabled = document.getElementById('followUpEnabled');
+  const followUpFields = document.getElementById('followUpFields');
+  const followUpDate = document.getElementById('followUpDate');
+
+  if (followUpEnabled && followUpFields) {
+    followUpEnabled.addEventListener('change', function() {
+      if (this.checked) {
+        followUpFields.style.display = 'block';
+        if (followUpDate) followUpDate.required = true;
+      } else {
+        followUpFields.style.display = 'none';
+        if (followUpDate) followUpDate.required = false;
+      }
+    });
+  }
 });
 </script>
 
