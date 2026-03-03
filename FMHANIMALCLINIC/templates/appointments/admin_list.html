@@ -5,23 +5,41 @@
 
 {% block content %}
 
-<!-- Page Header -->
-<div class="admin-page-header">
-  <div>
-    <h1>Appointments</h1>
-    <p class="subtitle">Manage all appointment bookings across branches</p>
+<!-- ══════ APPOINTMENTS HERO ══════ -->
+<div class="appt-hero">
+  <div class="appt-hero-bg">
+    <i class='bx bxs-dog hero-scatter sc-1'></i>
+    <i class='bx bx-bone hero-scatter sc-2'></i>
+    <i class='bx bx-paw hero-scatter sc-3'></i>
+    <i class='bx bxs-bone hero-scatter sc-4'></i>
+    <i class='bx bx-paw hero-scatter sc-5'></i>
+    <i class='bx bxs-dog hero-scatter sc-6'></i>
   </div>
-  <div class="admin-header-actions">
-    <button class="admin-btn primary" id="quickCreateBtn"><i class='bx bx-plus-circle'></i> Quick Create</button>
+  <div class="appt-hero-inner">
+    <div class="appt-hero-text">
+      <h1><i class='bx bx-calendar-event'></i> Appointments</h1>
+      <p>Manage all appointment bookings across branches</p>
+    </div>
+    <button id="quickCreateBtn" class="appt-hero-book-btn" style="cursor: pointer;">
+      <i class='bx bx-plus-circle'></i> Quick Create
+    </button>
   </div>
 </div>
 
-<!-- View Toggle Tabs -->
-<div class="tab-bar" id="viewTabs">
-  <button class="tab-item active" data-view="table"><i class='bx bx-table'></i> Table</button>
-  <button class="tab-item" data-view="daily"><i class='bx bx-calendar-event'></i> Daily</button>
-  <button class="tab-item" data-view="weekly"><i class='bx bx-calendar-week'></i> Weekly</button>
-  <button class="tab-item" data-view="monthly"><i class='bx bx-calendar'></i> Monthly</button>
+<!-- ══════ TAB BAR ══════ -->
+<div class="appt-tabs" id="viewTabs" style="margin-bottom: 24px;">
+  <button class="appt-tab active" data-view="table">
+    <i class='bx bx-list-ul'></i> <span>List View</span>
+  </button>
+  <button class="appt-tab" data-view="daily">
+    <i class='bx bx-calendar-event'></i> <span>Daily</span>
+  </button>
+  <button class="appt-tab" data-view="weekly">
+    <i class='bx bx-calendar-week'></i> <span>Weekly</span>
+  </button>
+  <button class="appt-tab" data-view="monthly">
+    <i class='bx bx-calendar'></i> <span>Monthly</span>
+  </button>
 </div>
 
 <!-- Search & Filter Bar -->
@@ -64,108 +82,54 @@
 <!-- TABLE / ACCORDION VIEW -->
 <div id="tableView">
 {% if appointments %}
-<div class="admin-table-card">
-  <table class="admin-table">
-    <thead>
-      <tr>
-        <th>Owner / Pet</th>
-        <th>Branch</th>
-        <th>Vet</th>
-        <th>Date & Time</th>
-        <th>Source</th>
-        <th>Status</th>
-        <th style="text-align: right;">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for appt in appointments %}
-      <tr class="accordion-row" data-id="{{ appt.pk }}">
-        <td>
-          <div class="avatar-cell">
-            <div class="avatar-sm">{{ appt.owner_name|make_list|first|upper }}</div>
-            <div class="cell-stack">
-              <span class="cell-primary">{{ appt.owner_name }}</span>
-              <span class="cell-secondary">{{ appt.pet_name }}{% if appt.pet_breed %} ({{ appt.pet_breed }}){% endif %}</span>
-            </div>
+  <div class="appt-card-list">
+  {% for appt in appointments %}
+    <div class="appt-card">
+      <div class="appt-card-accent {{ appt.status|lower }}"></div>
+      <div class="appt-card-inner">
+        <div class="appt-card-icon {{ appt.status|lower }}" style="font-weight: 800;">
+          {{ appt.owner_name|make_list|first|upper }}
+        </div>
+        <div class="appt-card-body">
+          <div class="appt-card-top">
+            <h3>{{ appt.pet_name }} {% if appt.pet_breed %}<span class="appt-card-breed">· {{ appt.pet_breed }}</span>{% endif %}</h3>
+            <span class="appt-status-pill {{ appt.status|lower }}">{{ appt.get_status_display }}</span>
           </div>
-        </td>
-        <td>{{ appt.branch.name }}</td>
-        <td>{{ appt.preferred_vet.full_name|default:"Any available" }}</td>
-        <td>
-          <div class="cell-stack">
-            <span class="cell-primary">{{ appt.appointment_date|date:"M d, Y" }}</span>
-            <span class="cell-secondary">{{ appt.appointment_time|time:"g:i A" }}</span>
+          <div class="appt-card-meta">
+            <span><i class='bx bx-user'></i> {{ appt.owner_name }} {% if appt.owner_phone %}({{ appt.owner_phone }}){% endif %}</span>
+            <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
+            <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
+            <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
+            <span><i class='bx bx-user-pin'></i> {{ appt.preferred_vet.full_name|default:"Any Vet" }}</span>
           </div>
-        </td>
-        <td><span class="admin-badge source-{{ appt.source|lower }}">{{ appt.get_source_display }}</span></td>
-        <td><span class="admin-badge {{ appt.status|lower }}">{{ appt.get_status_display }}</span></td>
-        <td>
-          <div class="actions-cell">
-            <a href="{% url 'appointments:admin_edit' appt.pk %}" class="action-btn" title="Edit"><i class='bx bx-edit-alt'></i></a>
-            <form method="POST" action="{% url 'appointments:admin_delete' appt.pk %}" style="display:inline;" onsubmit="return confirm('Delete this appointment?');">
-              {% csrf_token %}
-              <button type="submit" class="action-btn danger" title="Delete"><i class='bx bx-trash'></i></button>
-            </form>
+          {% if appt.reason or appt.notes %}
+          <div class="appt-card-notes">
+            {% if appt.reason %}
+            <div style="margin-bottom: 4px;"><i class='bx bx-info-circle'></i> <strong>Reason:</strong> {{ appt.reason }}</div>
+            {% endif %}
+            {% if appt.notes %}
+            <div><i class='bx bx-note'></i> <strong>Vet Notes:</strong> {{ appt.notes }}</div>
+            {% endif %}
           </div>
-        </td>
-      </tr>
-      <!-- Expandable Details Row -->
-      <tr class="accordion-details" id="details-{{ appt.pk }}" style="display: none;">
-        <td colspan="7" style="padding: 0; background: var(--bg);">
-          <div style="padding: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px;">
-            <div>
-              <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-2); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;"><i class='bx bx-id-card'></i> Contact Information</h4>
-              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>Name:</strong> {{ appt.owner_name }}</p>
-              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>Phone:</strong> {{ appt.owner_phone|default:"-" }}</p>
-              <p style="margin-bottom: 0; font-size: 0.875rem;"><strong>Email:</strong> {{ appt.owner_email|default:"-" }}</p>
-            </div>
-            <div>
-              <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-2); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;"><i class='bx bxs-dog'></i> Pet Information</h4>
-              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>Name:</strong> {{ appt.pet_name }}</p>
-              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>Breed:</strong> {{ appt.pet_breed|default:"-" }}</p>
-              <p style="margin-bottom: 0; font-size: 0.875rem;"><strong>Species:</strong> {{ appt.pet_species|default:"-" }}</p>
-            </div>
-            <div>
-              <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-2); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;"><i class='bx bx-file'></i> Appointment Details</h4>
-              <p style="margin-bottom: 8px; font-size: 0.875rem;"><strong>Created:</strong> {{ appt.created_at|date:"M d, Y, g:i A" }}</p>
-              <p style="margin-bottom: 0; font-size: 0.875rem;"><strong>Reason:</strong> {{ appt.reason|default:"-" }}</p>
-              {% if appt.notes %}
-              <div style="margin-top: 12px; background: var(--surface); padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary);">
-                <strong style="font-size: 0.8rem;">Notes:</strong>
-                <p style="margin: 6px 0 0; color: var(--text-2); font-size: 0.875rem;">{{ appt.notes|linebreaksbr }}</p>
-              </div>
-              {% endif %}
-            </div>
+          {% endif %}
+          <div style="margin-top: 15px; display: flex; gap: 10px; border-top: 1px solid var(--border); padding-top: 15px;">
+             <a href="{% url 'appointments:admin_edit' appt.pk %}" class="admin-btn outline sm"><i class='bx bx-edit-alt'></i> Edit</a>
+             <form method="POST" action="{% url 'appointments:admin_delete' appt.pk %}" style="display:inline;" onsubmit="return confirm('Delete this appointment?');">
+               {% csrf_token %}
+               <button type="submit" class="admin-btn danger sm"><i class='bx bx-trash'></i> Delete</button>
+             </form>
           </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-
-<script>
-document.querySelectorAll('.accordion-row').forEach(row => {
-  row.style.cursor = 'pointer';
-  row.addEventListener('click', function(e) {
-    if (e.target.closest('.actions-cell')) return;
-    const id = this.dataset.id;
-    const details = document.getElementById('details-' + id);
-    document.querySelectorAll('.accordion-details').forEach(d => {
-      if (d !== details) d.style.display = 'none';
-    });
-    details.style.display = details.style.display === 'none' ? 'table-row' : 'none';
-  });
-});
-</script>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+  </div>
 {% else %}
-<div class="admin-table-card">
-  <div class="admin-empty-state">
-    <i class='bx bx-calendar-x'></i>
+  <div class="appt-empty">
+    <div class="appt-empty-icon"><i class='bx bx-calendar-x'></i></div>
     <h3>No appointments found</h3>
     <p>Appointments will appear here when clients book through the website or portal. Use "Quick Create" to add walk-ins.</p>
   </div>
-</div>
 {% endif %}
 </div>
 

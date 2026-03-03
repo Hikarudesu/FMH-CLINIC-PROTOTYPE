@@ -2638,3 +2638,365 @@
     font-size: 0.8rem;
   }
 }
+/* ══════════════════════════════════════════════════════
+   APPOINTMENTS — MODERN REDESIGN
+   ══════════════════════════════════════════════════════ */
+
+/* ── Hero ── */
+.appt-hero {
+  position: relative;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-lg);
+  padding: 32px 32px 28px;
+  margin-bottom: 22px;
+  overflow: hidden;
+  animation: fadeUp 0.4s var(--ease) both;
+}
+.appt-hero-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.appt-hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.appt-hero-text h1 {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 4px;
+}
+.appt-hero-text h1 i { font-size: 1.6rem; }
+.appt-hero-text p {
+  color: rgba(255,255,255,0.75);
+  font-size: 0.85rem;
+  margin: 0;
+}
+.appt-hero-book-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.3s var(--ease);
+}
+.appt-hero-book-btn:hover {
+  background: rgba(255,255,255,0.28);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  color: #fff;
+}
+.appt-hero-book-btn i { font-size: 1.1rem; }
+
+/* ── Tabs ── */
+.appt-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 5px;
+  margin-bottom: 22px;
+  overflow-x: auto;
+  animation: fadeUp 0.4s var(--ease) 0.05s both;
+}
+.appt-tabs::-webkit-scrollbar { display: none; }
+.appt-tabs { -ms-overflow-style: none; scrollbar-width: none; }
+.appt-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-3);
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all 0.25s var(--ease);
+  font-family: inherit;
+  text-align: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.appt-tab i {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.appt-tab:hover {
+  color: var(--text-1);
+  background: var(--bg);
+}
+.appt-tab.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0,150,136,0.25);
+}
+.appt-tab-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.06);
+  color: inherit;
+  transition: all 0.25s var(--ease);
+}
+.appt-tab.active .appt-tab-badge {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+}
+
+/* ── Tab Content ── */
+.appt-tab-content {
+  display: none;
+  animation: fadeUp 0.35s var(--ease) both;
+}
+.appt-tab-content.active {
+  display: block;
+}
+
+/* ── Card List ── */
+.appt-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Appointment Card ── */
+.appt-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all 0.3s var(--ease);
+  animation: fadeUp 0.5s var(--ease) both;
+}
+.appt-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.06);
+  transform: translateY(-2px);
+}
+
+/* Left accent strip */
+.appt-card-accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+}
+.appt-card-accent.pending { background: #f59e0b; }
+.appt-card-accent.confirmed { background: var(--primary); }
+.appt-card-accent.followup { background: #8b5cf6; }
+.appt-card-accent.completed { background: #10b981; }
+.appt-card-accent.cancelled { background: #ef4444; }
+
+.appt-card-inner {
+  display: flex;
+  gap: 16px;
+  padding: 18px 20px 18px 24px;
+  align-items: flex-start;
+}
+
+/* Card icon */
+.appt-card-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  transition: transform 0.3s var(--ease);
+}
+.appt-card:hover .appt-card-icon {
+  transform: scale(1.08);
+}
+.appt-card-icon.pending {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #d97706;
+}
+.appt-card-icon.confirmed {
+  background: linear-gradient(135deg, #e0f2f1, #b2dfdb);
+  color: var(--primary);
+}
+.appt-card-icon.followup {
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  color: #7c3aed;
+}
+.appt-card-icon.completed {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #059669;
+}
+.appt-card-icon.cancelled {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #dc2626;
+}
+
+/* Card body */
+.appt-card-body {
+  flex: 1;
+  min-width: 0;
+}
+.appt-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.appt-card-top h3 {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text-1);
+  line-height: 1.3;
+}
+.appt-card-breed {
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: var(--text-3);
+}
+
+/* Status pills */
+.appt-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.appt-status-pill.pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+.appt-status-pill.confirmed {
+  background: #e0f2f1;
+  color: var(--primary);
+}
+.appt-status-pill.followup {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+.appt-status-pill.completed {
+  background: #d1fae5;
+  color: #059669;
+}
+.appt-status-pill.cancelled {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Meta row */
+.appt-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 6px;
+}
+.appt-card-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  color: var(--text-2);
+  font-weight: 500;
+}
+.appt-card-meta i {
+  font-size: 0.95rem;
+  color: var(--text-3);
+}
+
+/* Notes box */
+.appt-card-notes {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border-radius: 10px;
+  border-left: 3px solid var(--primary);
+  font-size: 0.84rem;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.appt-card-notes.followup {
+  border-left-color: #8b5cf6;
+}
+.appt-card-notes i {
+  color: var(--text-3);
+  margin-right: 2px;
+}
+
+/* ── Empty State ── */
+.appt-empty {
+  text-align: center;
+  padding: 60px 24px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  animation: fadeUp 0.5s var(--ease) both;
+}
+.appt-empty-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e0f2f1, #b2dfdb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: var(--primary);
+}
+.appt-empty h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-1);
+  margin: 0 0 6px;
+}
+.appt-empty p {
+  font-size: 0.85rem;
+  color: var(--text-3);
+  margin: 0;
+}
+
+/* ── Responsive (Appointments) ── */
+@media (max-width: 640px) {
+  .appt-hero { padding: 24px 20px 20px; }
+  .appt-hero-text h1 { font-size: 1.2rem; }
+  .appt-hero-inner { flex-direction: column; align-items: flex-start; }
+  .appt-tabs { gap: 2px; padding: 4px; }
+  .appt-tab { padding: 8px 10px; font-size: 0.75rem; }
+  .appt-tab i { display: none; }
+  .appt-card-inner { flex-direction: column; gap: 10px; }
+  .appt-card-top { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+
+

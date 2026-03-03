@@ -4,7 +4,7 @@
  */
 
 document.addEventListener("DOMContentLoaded", function () {
-  const viewTabs = document.querySelectorAll("#viewTabs .tab-item");
+  const viewTabs = document.querySelectorAll("#viewTabs .appt-tab");
   const tableView = document.getElementById("tableView");
   const calendarView = document.getElementById("calendarView");
   const calContent = document.getElementById("calendarContent");
