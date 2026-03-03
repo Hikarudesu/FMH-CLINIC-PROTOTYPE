@@ -4,6 +4,7 @@ Models for managing Patient Medical Records.
 from django.db import models
 from patients.models import Pet
 from employees.models import StaffMember
+from branches.models import Branch
 
 
 class MedicalRecord(models.Model):
@@ -14,6 +15,9 @@ class MedicalRecord(models.Model):
                             related_name='medical_records')
     vet = models.ForeignKey(StaffMember, on_delete=models.SET_NULL,
                             null=True, related_name='medical_records')
+    branch = models.ForeignKey(Branch, on_delete=models.SET_NULL,
+                               null=True, blank=True,
+                               related_name='medical_records')
     weight = models.DecimalField(
         max_digits=5, decimal_places=2, help_text="Weight in kg", null=True, blank=True)
     temperature = models.DecimalField(

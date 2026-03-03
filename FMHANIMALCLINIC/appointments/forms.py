@@ -1,6 +1,8 @@
 """
 Forms for the appointments app.
 """
+# pylint: disable=no-member
+
 
 from datetime import time
 from django import forms
@@ -10,6 +12,7 @@ from branches.models import Branch
 from employees.models import StaffMember, VetSchedule
 
 from .models import Appointment
+from .forms_pylint import *  # pylint: disable=wildcard-import,unused-wildcard-import
 
 
 def _check_double_booking(cleaned_data):
@@ -166,8 +169,9 @@ class PortalAppointmentForm(forms.ModelForm):
                 'class': 'form-control book-input', 'placeholder': ' ',
             }),
             'pet_name': forms.TextInput(attrs={
-                'class': 'form-control book-input', 'placeholder': ' ',
+                'class': 'form-control book-input', 'placeholder': ' ', 'list': 'petNames',
             }),
+
             'pet_breed': forms.TextInput(attrs={
                 'class': 'form-control book-input', 'placeholder': ' ',
             }),
@@ -227,6 +231,20 @@ class PortalAppointmentForm(forms.ModelForm):
         if self.user:
             instance.user = self.user
             instance.owner_email = self.user.email
+
+            if instance.pet_name:
+                from patients.models import Pet
+                pet_name_clean = instance.pet_name.strip()
+                if not Pet.objects.filter(owner=self.user, name__iexact=pet_name_clean).exists():
+                    Pet.objects.create(
+                        owner=self.user,
+                        name=pet_name_clean,
+                        breed=instance.pet_breed.strip() if instance.pet_breed else '',
+                        species='Unknown',
+                        age=0,
+                        sex=Pet.Sex.MALE,
+                    )
+
         if commit:
             instance.save()
         return instance

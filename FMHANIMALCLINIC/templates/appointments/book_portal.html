@@ -56,7 +56,13 @@
       </div>
 
       <div class="book-grid">
+        <datalist id="petNames">
+          {% for pet in user_pets %}
+          <option value="{{ pet.name }}">
+          {% endfor %}
+        </datalist>
         <div class="book-field {% if form.owner_name.errors %}has-error{% endif %}">
+
           <div class="book-field-icon"><i class='bx bx-user'></i></div>
           {{ form.owner_name }}
           <label for="{{ form.owner_name.id_for_label }}">Owner Name *</label>
@@ -168,7 +174,31 @@
 const API_VETS = "{% url 'appointments:api_vets' %}";
 const API_TIMES = "{% url 'appointments:api_times' %}";
 const API_DATES = "{% url 'appointments:api_dates' %}";
+
+// Data for auto-fill
+const USER_PETS = {
+  {% for pet in user_pets %}
+  "{{ pet.name|escapejs }}": "{{ pet.breed|escapejs }}",
+  {% endfor %}
+};
+
+document.addEventListener("DOMContentLoaded", function() {
+  const petNameInput = document.querySelector('[name="pet_name"]');
+  const petBreedInput = document.querySelector('[name="pet_breed"]');
+  
+  if (petNameInput && petBreedInput) {
+    petNameInput.addEventListener('input', function() {
+      const name = this.value.trim();
+      if (USER_PETS[name]) {
+        petBreedInput.value = USER_PETS[name];
+        // Trigger style update if any
+        petBreedInput.dispatchEvent(new Event('input'));
+      }
+    });
+  }
+});
 </script>
+
 <script src="{% static 'js/appointments/booking.js' %}"></script>
 
 {% endblock %}

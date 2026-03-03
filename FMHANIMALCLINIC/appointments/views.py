@@ -163,9 +163,12 @@ def portal_book(request):
         form = PortalAppointmentForm(user=request.user)
 
     branches = Branch.objects.filter(is_active=True)
+    user_pets = request.user.pets.all() if hasattr(request.user, 'pets') else []
+
     return render(request, 'appointments/book_portal.html', {
         'form': form,
         'branches': branches,
+        'user_pets': user_pets,
     })
 
 

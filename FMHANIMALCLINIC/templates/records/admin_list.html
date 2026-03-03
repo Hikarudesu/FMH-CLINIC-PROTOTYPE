@@ -11,11 +11,17 @@
     <p class="subtitle">Manage and track all medical records</p>
   </div>
   <div class="admin-header-actions">
-    <form method="get" action="{% url 'records:admin_list' %}" style="margin: 0;">
+    <form method="get" action="{% url 'records:admin_list' %}" style="margin: 0; display: flex; align-items: center; gap: 8px;">
       <div class="admin-search-box">
         <i class='bx bx-search'></i>
         <input type="text" name="q" value="{{ search_query }}" placeholder="Search records..." class="admin-search-input">
       </div>
+      <select name="branch" onchange="this.form.submit()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-primary); font-size: 14px; font-family: inherit; cursor: pointer; min-width: 160px;">
+        <option value="">All Branches</option>
+        {% for branch in branches %}
+          <option value="{{ branch.id }}" {% if selected_branch == branch.id|stringformat:"d" %}selected{% endif %}>{{ branch.name }}</option>
+        {% endfor %}
+      </select>
     </form>
     <a href="{% url 'records:admin_create' %}" class="admin-btn primary">
       <i class='bx bx-plus'></i> Create New
@@ -30,6 +36,7 @@
       <tr>
         <th>Date</th>
         <th>Pet</th>
+        <th>Branch</th>
         <th>Wt / Temp</th>
         <th>History / Signs</th>
         <th>Tx / Rx</th>
@@ -49,6 +56,9 @@
             <span class="cell-primary">{{ record.pet.name }}</span>
             <span class="cell-secondary">{{ record.pet.owner.get_full_name|default:record.pet.owner.username }}</span>
           </div>
+        </td>
+        <td>
+          <span class="cell-secondary">{{ record.branch.name|default:"—" }}</span>
         </td>
         <td>
           <span class="cell-secondary">{{ record.weight|default:"--" }} kg / {{ record.temperature|default:"--" }} °C</span>
@@ -81,7 +91,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="8">
+        <td colspan="9">
           <div class="admin-empty-state">
             <i class='bx bx-file'></i>
             <h3>No medical records found</h3>
