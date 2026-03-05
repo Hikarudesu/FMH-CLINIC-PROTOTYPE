@@ -10,11 +10,17 @@ class Product(models.Model):
 
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
+
+    # Financial fields
+    unit_cost = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+
     branch = models.ForeignKey(
         Branch, on_delete=models.CASCADE, related_name='products')
     is_available = models.BooleanField(default=True)
     stock_quantity = models.PositiveIntegerField(default=0)
+    min_stock_level = models.PositiveIntegerField(default=5)
 
     # Audit fields
     created_at = models.DateTimeField(auto_now_add=True)
@@ -26,6 +32,20 @@ class Product(models.Model):
 
     def __str__(self):
         return str(self.name)
+
+    @property
+    def status(self):
+        """Returns the current stock status."""
+        if self.stock_quantity <= 0:
+            return 'Out of Stock'
+        if self.stock_quantity <= self.min_stock_level:
+            return 'Low Stock'
+        return 'In Stock'
+
+    @property
+    def inventory_value(self):
+        """Total valuation of this item in stock based on cost."""
+        return self.stock_quantity * self.unit_cost
 
     def save(self, *args, **kwargs):
         if self.stock_quantity == 0:
@@ -43,7 +63,8 @@ class StockAdjustment(models.Model):
         ('Return', 'Return'),
         ('Damage', 'Damaged Stock'),
         ('Expiration', 'Expired'),
-        ('Correction', 'Inventory Correction')
+        ('Correction', 'Inventory Correction'),
+        ('Sale', 'Sale')
     ]
 
     branch = models.ForeignKey(
@@ -67,6 +88,7 @@ class StockAdjustment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        """Meta options for StockAdjustment."""
         ordering = ['-date', '-created_at']
 
     def __str__(self):
@@ -83,9 +105,11 @@ class StockAdjustment(models.Model):
         # But we will blindly add the signed quantity to stock here for simplicity if it's new.
         if is_new:
             # Re-fetch product to avoid race conditions slightly
+            # pylint: disable=no-member
             product = Product.objects.get(pk=self.product.pk)
 
-            # Subtractions: Damage, Expiration. (Returns could be customer returns (add) or return to vendor (sub)).
+            # Subtractions: Damage, Expiration.
+            # (Returns could be customer returns (add) or return to vendor (sub)).
             # Let's rely on the form to provide a negative number if it's a deduction,
             # or handle it strictly here based on type.
             if self.adjustment_type in ['Damage', 'Expiration']:

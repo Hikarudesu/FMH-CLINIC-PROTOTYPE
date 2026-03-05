@@ -7,7 +7,8 @@ from django.contrib import messages
 
 from branches.models import Branch
 from .models import Product, StockAdjustment
-from .forms import StockAdjustmentForm
+from .forms import StockAdjustmentForm, ProductForm
+from django.shortcuts import get_object_or_404
 
 
 @login_required
@@ -56,14 +57,67 @@ def inventory_management_view(request):
     # Filter by branch if needed
     branches = Branch.objects.filter(is_active=True)
     selected_branch_id = request.GET.get('branch')
+
+    # pylint: disable=no-member
+    products = Product.objects.all().select_related('branch')
+
     if selected_branch_id:
         adjustments = adjustments.filter(branch_id=selected_branch_id)
+        products = products.filter(branch_id=selected_branch_id)
+
+    # Health Metrics
+    total_value = sum(p.inventory_value for p in products)
+    low_stock_count = sum(1 for p in products if p.status == 'LOW_STOCK')
+    out_of_stock_count = sum(1 for p in products if p.status == 'OUT_OF_STOCK')
 
     return render(request, 'inventory/management.html', {
         'adjustments': adjustments,
+        'products': products,
         'branches': branches,
-        'selected_branch_id': selected_branch_id
+        'selected_branch_id': selected_branch_id,
+        'total_value': total_value,
+        'low_stock_count': low_stock_count,
+        'out_of_stock_count': out_of_stock_count,
     })
+
+
+@login_required
+def product_create_view(request):
+    """View to create a new inventory item."""
+    if not request.user.is_admin_role() and not request.user.is_superuser:
+        messages.error(request, "Permission denied.")
+        return redirect('patients:my_pets')
+
+    if request.method == 'POST':
+        form = ProductForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Item created successfully.")
+            return redirect('inventory:management')
+    else:
+        form = ProductForm()
+
+    return render(request, 'inventory/product_form.html', {'form': form})
+
+
+@login_required
+def product_edit_view(request, pk):
+    """View to edit an existing inventory item."""
+    product = get_object_or_404(Product, pk=pk)
+    if not request.user.is_admin_role() and not request.user.is_superuser:
+        messages.error(request, "Permission denied.")
+        return redirect('patients:my_pets')
+
+    if request.method == 'POST':
+        form = ProductForm(request.POST, instance=product)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Item updated successfully.")
+            return redirect('inventory:management')
+    else:
+        form = ProductForm(instance=product)
+
+    return render(request, 'inventory/product_form.html', {'form': form, 'product': product})
 
 
 @login_required
