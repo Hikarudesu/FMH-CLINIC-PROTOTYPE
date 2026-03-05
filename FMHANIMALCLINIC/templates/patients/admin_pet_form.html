@@ -157,12 +157,12 @@
         {% if form.color.errors %}<div class="error-text">{{ form.color.errors.0 }}</div>{% endif %}
       </div>
 
-      <!-- Age -->
+      <!-- D.O.B / Age -->
       <div class="admin-field">
-        <label for="{{ form.age.id_for_label }}">Age (Years) *</label>
-        {{ form.age }}
-        <script>document.getElementById('{{ form.age.id_for_label }}').classList.add('admin-input');</script>
-        {% if form.age.errors %}<div class="error-text">{{ form.age.errors.0 }}</div>{% endif %}
+        <label for="{{ form.dob_or_age.id_for_label }}">D.O.B / Age</label>
+        {{ form.dob_or_age }}
+        <script>document.getElementById('{{ form.dob_or_age.id_for_label }}').classList.add('admin-input');</script>
+        {% if form.dob_or_age.errors %}<div class="error-text">{{ form.dob_or_age.errors.0 }}</div>{% endif %}
       </div>
 
       <!-- Sex -->

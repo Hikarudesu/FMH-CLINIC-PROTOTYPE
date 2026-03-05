@@ -68,12 +68,12 @@
           {% if form.breed.errors %}<span class="pf-field-error">{{ form.breed.errors.0 }}</span>{% endif %}
         </div>
 
-        <!-- Age -->
-        <div class="pf-field {% if form.age.errors %}has-error{% endif %}">
-          <div class="pf-field-icon"><i class='bx bx-time-five'></i></div>
-          {{ form.age }}
-          <label for="{{ form.age.id_for_label }}">Age (years)</label>
-          {% if form.age.errors %}<span class="pf-field-error">{{ form.age.errors.0 }}</span>{% endif %}
+        <!-- D.O.B / Age -->
+        <div class="pf-field {% if form.dob_or_age.errors %}has-error{% endif %}">
+          <div class="pf-field-icon"><i class='bx bx-calendar'></i></div>
+          {{ form.dob_or_age }}
+          <label for="{{ form.dob_or_age.id_for_label }}">D.O.B / Age</label>
+          {% if form.dob_or_age.errors %}<span class="pf-field-error">{{ form.dob_or_age.errors.0 }}</span>{% endif %}
         </div>
 
         <!-- Sex -->

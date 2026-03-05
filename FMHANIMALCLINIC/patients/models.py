@@ -17,7 +17,12 @@ class Pet(models.Model):
     name = models.CharField(max_length=100)
     species = models.CharField(max_length=60, help_text='e.g. Dog, Cat, Bird, Rabbit')
     breed = models.CharField(max_length=100, blank=True)
-    age = models.PositiveIntegerField(help_text='Age in years')
+    dob_or_age = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text='Date of birth or age (e.g., "2020-01-15" or "3 years")',
+        verbose_name='D.O.B / Age'
+    )
     sex = models.CharField(max_length=10, choices=Sex.choices)
     color = models.CharField(max_length=60, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

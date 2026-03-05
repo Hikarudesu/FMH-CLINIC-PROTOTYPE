@@ -13,7 +13,10 @@
         </p>
     </div>
     
-    <div class="page-header-actions">
+    <div class="page-header-actions" style="display: flex; gap: 8px;">
+        <a href="{% url 'records:download_pdf' record.pk %}" class="btn btn-outline" style="display: flex; align-items: center; gap: 8px; border: 1px solid var(--primary); background: var(--surface); color: var(--primary); padding: 8px 16px; border-radius: var(--radius-sm); font-weight: 500; text-decoration: none;">
+            <i class='bx bx-download'></i> Download PDF
+        </a>
         <a href="{% url 'records:admin_list' %}" class="btn btn-outline" style="display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-sm); font-weight: 500; text-decoration: none;">
             <i class='bx bx-arrow-back'></i> Back to List
         </a>

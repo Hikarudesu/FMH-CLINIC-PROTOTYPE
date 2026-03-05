@@ -47,7 +47,7 @@
     </thead>
     <tbody>
       {% for record in records %}
-      <tr>
+      <tr style="cursor: pointer;" onclick="window.location='{% url 'records:admin_detail' record.pk %}';">
         <td>
           <span class="cell-primary">{{ record.date_recorded|date:"M j, Y" }}</span>
         </td>
@@ -83,7 +83,8 @@
           {% endif %}
         </td>
         <td>
-          <div class="actions-cell">
+          <div class="actions-cell" onclick="event.stopPropagation();">
+            <a href="{% url 'records:download_pdf' record.pk %}" class="action-btn" title="Download PDF"><i class='bx bx-download'></i></a>
             <a href="{% url 'records:admin_edit' record.pk %}" class="action-btn" title="Edit"><i class='bx bx-edit-alt'></i></a>
             <a href="{% url 'records:admin_delete' record.pk %}" class="action-btn danger" title="Delete"><i class='bx bx-trash'></i></a>
           </div>

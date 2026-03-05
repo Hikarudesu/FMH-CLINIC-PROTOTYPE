@@ -59,57 +59,71 @@
       <div class="appt-card" style="animation-delay: {{ forloop.counter0 }}s;">
         <div class="appt-card-accent pending"></div>
         <div class="appt-card-inner">
-          <div class="appt-card-icon pending">
-            <i class='bx bx-time-five'></i>
+          <div class="appt-card-header">
+            <div class="appt-card-icon pending">
+              <i class='bx bx-time-five'></i>
+            </div>
+            <div class="appt-card-summary">
+              <div class="appt-card-top">
+                <h3>{{ appt.pet_name }} {% if appt.pet_breed %}<span class="appt-card-breed">· {{ appt.pet_breed }}</span>{% endif %}</h3>
+                <span class="appt-status-pill pending">{{ appt.get_status_display }}</span>
+              </div>
+              <div class="appt-card-meta">
+                <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
+                <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
+                <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
+              </div>
+            </div>
+            <i class='bx bx-chevron-down appt-toggle-icon'></i>
           </div>
-          <div class="appt-card-body">
-            <div class="appt-card-top">
-              <h3>{{ appt.pet_name }} {% if appt.pet_breed %}<span class="appt-card-breed">· {{ appt.pet_breed }}</span>{% endif %}</h3>
-              <span class="appt-status-pill pending">{{ appt.get_status_display }}</span>
+          <div class="appt-card-collapse">
+            <div class="appt-card-collapse-inner">
+              <div class="appt-grid-container">
+                <!-- Column 1: Owner Information -->
+                <div class="appt-grid-column">
+                  <div class="appt-section-title"><i class='bx bx-id-card'></i> Contact Information</div>
+                  <p class="appt-detail-row"><strong>Name:</strong> {{ appt.owner_name|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Phone:</strong> {{ appt.owner_phone|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Email:</strong> {{ appt.owner_email|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Address:</strong> {{ appt.owner_address|default:"-" }}</p>
+                </div>
+                
+                <!-- Column 2: Pet Information -->
+                <div class="appt-grid-column">
+                  <div class="appt-section-title"><i class='bx bxs-dog'></i> Pet Information</div>
+                  <p class="appt-detail-row"><strong>Name:</strong> {{ appt.pet_name }}</p>
+                  <p class="appt-detail-row"><strong>Species:</strong> {{ appt.pet_species|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Breed:</strong> {{ appt.pet_breed|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>D.O.B / Age:</strong> {{ appt.pet_dob|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Sex:</strong> {{ appt.pet_sex|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Color:</strong> {{ appt.pet_color|default:"-" }}</p>
+                </div>
+
+                <!-- Column 3: Appointment Details -->
+                <div class="appt-grid-column">
+                  <div class="appt-section-title"><i class='bx bx-file'></i> Appointment Details</div>
+                  <p class="appt-detail-row"><strong>Schedule:</strong> {{ appt.appointment_date|date:"M d, Y" }}</p>
+                  <p class="appt-detail-row"><strong>Time:</strong> {{ appt.appointment_time|time:"g:i A" }}</p>
+                  <p class="appt-detail-row"><strong>Branch:</strong> {{ appt.branch.name|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Reason:</strong> {{ appt.get_reason_display|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Pref. Vet:</strong> {% if appt.preferred_vet %}{{ appt.preferred_vet.full_name }}{% else %}Any available{% endif %}</p>
+                  
+                  {% if appt.pet_symptoms %}
+                  <div class="appt-card-notes symptoms">
+                    <strong>Symptoms:</strong>
+                    <p>{{ appt.pet_symptoms|linebreaksbr }}</p>
+                  </div>
+                  {% endif %}
+                  
+                  {% if appt.notes %}
+                  <div class="appt-card-notes">
+                    <strong>Vet Notes:</strong>
+                    <p>{{ appt.notes|linebreaksbr }}</p>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
             </div>
-            <div class="appt-card-meta">
-              <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
-              <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
-              <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
-            </div>
-            <div class="appt-card-details">
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Species:</span>
-                <span class="appt-detail-value">{{ appt.pet_species|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">D.O.B / Age:</span>
-                <span class="appt-detail-value">{{ appt.pet_dob|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Sex:</span>
-                <span class="appt-detail-value">{{ appt.pet_sex|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Color:</span>
-                <span class="appt-detail-value">{{ appt.pet_color|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Reason:</span>
-                <span class="appt-detail-value">{{ appt.get_reason_display|default:"-" }}</span>
-              </div>
-              {% if appt.preferred_vet %}
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Vet:</span>
-                <span class="appt-detail-value">{{ appt.preferred_vet.full_name }}</span>
-              </div>
-              {% endif %}
-            </div>
-            {% if appt.pet_symptoms %}
-            <div class="appt-card-notes symptoms">
-              <i class='bx bx-first-aid'></i> <strong>Symptoms:</strong> {{ appt.pet_symptoms }}
-            </div>
-            {% endif %}
-            {% if appt.notes %}
-            <div class="appt-card-notes">
-              <i class='bx bx-note'></i> <strong>Vet Notes:</strong> {{ appt.notes }}
-            </div>
-            {% endif %}
           </div>
         </div>
       </div>
@@ -132,57 +146,71 @@
       <div class="appt-card">
         <div class="appt-card-accent confirmed"></div>
         <div class="appt-card-inner">
-          <div class="appt-card-icon confirmed">
-            <i class='bx bx-check-circle'></i>
+          <div class="appt-card-header">
+            <div class="appt-card-icon confirmed">
+              <i class='bx bx-check-circle'></i>
+            </div>
+            <div class="appt-card-summary">
+              <div class="appt-card-top">
+                <h3>{{ appt.pet_name }} {% if appt.pet_breed %}<span class="appt-card-breed">· {{ appt.pet_breed }}</span>{% endif %}</h3>
+                <span class="appt-status-pill confirmed">{{ appt.get_status_display }}</span>
+              </div>
+              <div class="appt-card-meta">
+                <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
+                <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
+                <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
+              </div>
+            </div>
+            <i class='bx bx-chevron-down appt-toggle-icon'></i>
           </div>
-          <div class="appt-card-body">
-            <div class="appt-card-top">
-              <h3>{{ appt.pet_name }} {% if appt.pet_breed %}<span class="appt-card-breed">· {{ appt.pet_breed }}</span>{% endif %}</h3>
-              <span class="appt-status-pill confirmed">{{ appt.get_status_display }}</span>
+          <div class="appt-card-collapse">
+            <div class="appt-card-collapse-inner">
+              <div class="appt-grid-container">
+                <!-- Column 1: Owner Information -->
+                <div class="appt-grid-column">
+                  <div class="appt-section-title"><i class='bx bx-id-card'></i> Contact Information</div>
+                  <p class="appt-detail-row"><strong>Name:</strong> {{ appt.owner_name|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Phone:</strong> {{ appt.owner_phone|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Email:</strong> {{ appt.owner_email|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Address:</strong> {{ appt.owner_address|default:"-" }}</p>
+                </div>
+                
+                <!-- Column 2: Pet Information -->
+                <div class="appt-grid-column">
+                  <div class="appt-section-title"><i class='bx bxs-dog'></i> Pet Information</div>
+                  <p class="appt-detail-row"><strong>Name:</strong> {{ appt.pet_name }}</p>
+                  <p class="appt-detail-row"><strong>Species:</strong> {{ appt.pet_species|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Breed:</strong> {{ appt.pet_breed|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>D.O.B / Age:</strong> {{ appt.pet_dob|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Sex:</strong> {{ appt.pet_sex|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Color:</strong> {{ appt.pet_color|default:"-" }}</p>
+                </div>
+
+                <!-- Column 3: Appointment Details -->
+                <div class="appt-grid-column">
+                  <div class="appt-section-title"><i class='bx bx-file'></i> Appointment Details</div>
+                  <p class="appt-detail-row"><strong>Schedule:</strong> {{ appt.appointment_date|date:"M d, Y" }}</p>
+                  <p class="appt-detail-row"><strong>Time:</strong> {{ appt.appointment_time|time:"g:i A" }}</p>
+                  <p class="appt-detail-row"><strong>Branch:</strong> {{ appt.branch.name|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Reason:</strong> {{ appt.get_reason_display|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Pref. Vet:</strong> {% if appt.preferred_vet %}{{ appt.preferred_vet.full_name }}{% else %}Any available{% endif %}</p>
+                  
+                  {% if appt.pet_symptoms %}
+                  <div class="appt-card-notes symptoms">
+                    <strong>Symptoms:</strong>
+                    <p>{{ appt.pet_symptoms|linebreaksbr }}</p>
+                  </div>
+                  {% endif %}
+                  
+                  {% if appt.notes %}
+                  <div class="appt-card-notes">
+                    <strong>Vet Notes:</strong>
+                    <p>{{ appt.notes|linebreaksbr }}</p>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
             </div>
-            <div class="appt-card-meta">
-              <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
-              <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
-              <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
-            </div>
-            <div class="appt-card-details">
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Species:</span>
-                <span class="appt-detail-value">{{ appt.pet_species|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">D.O.B / Age:</span>
-                <span class="appt-detail-value">{{ appt.pet_dob|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Sex:</span>
-                <span class="appt-detail-value">{{ appt.pet_sex|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Color:</span>
-                <span class="appt-detail-value">{{ appt.pet_color|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Reason:</span>
-                <span class="appt-detail-value">{{ appt.get_reason_display|default:"-" }}</span>
-              </div>
-              {% if appt.preferred_vet %}
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Vet:</span>
-                <span class="appt-detail-value">{{ appt.preferred_vet.full_name }}</span>
-              </div>
-              {% endif %}
-            </div>
-            {% if appt.pet_symptoms %}
-            <div class="appt-card-notes symptoms">
-              <i class='bx bx-first-aid'></i> <strong>Symptoms:</strong> {{ appt.pet_symptoms }}
-            </div>
-            {% endif %}
-            {% if appt.notes %}
-            <div class="appt-card-notes">
-              <i class='bx bx-note'></i> <strong>Vet Notes:</strong> {{ appt.notes }}
-            </div>
-            {% endif %}
           </div>
         </div>
       </div>
@@ -247,57 +275,71 @@
       <div class="appt-card">
         <div class="appt-card-accent completed"></div>
         <div class="appt-card-inner">
-          <div class="appt-card-icon completed">
-            <i class='bx bx-check'></i>
+          <div class="appt-card-header">
+            <div class="appt-card-icon completed">
+              <i class='bx bx-check'></i>
+            </div>
+            <div class="appt-card-summary">
+              <div class="appt-card-top">
+                <h3>{{ appt.pet_name }} {% if appt.pet_breed %}<span class="appt-card-breed">· {{ appt.pet_breed }}</span>{% endif %}</h3>
+                <span class="appt-status-pill completed">{{ appt.get_status_display }}</span>
+              </div>
+              <div class="appt-card-meta">
+                <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
+                <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
+                <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
+              </div>
+            </div>
+            <i class='bx bx-chevron-down appt-toggle-icon'></i>
           </div>
-          <div class="appt-card-body">
-            <div class="appt-card-top">
-              <h3>{{ appt.pet_name }} {% if appt.pet_breed %}<span class="appt-card-breed">· {{ appt.pet_breed }}</span>{% endif %}</h3>
-              <span class="appt-status-pill completed">{{ appt.get_status_display }}</span>
+          <div class="appt-card-collapse">
+            <div class="appt-card-collapse-inner">
+              <div class="appt-grid-container">
+                <!-- Column 1: Owner Information -->
+                <div class="appt-grid-column">
+                  <div class="appt-section-title"><i class='bx bx-id-card'></i> Contact Information</div>
+                  <p class="appt-detail-row"><strong>Name:</strong> {{ appt.owner_name|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Phone:</strong> {{ appt.owner_phone|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Email:</strong> {{ appt.owner_email|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Address:</strong> {{ appt.owner_address|default:"-" }}</p>
+                </div>
+                
+                <!-- Column 2: Pet Information -->
+                <div class="appt-grid-column">
+                  <div class="appt-section-title"><i class='bx bxs-dog'></i> Pet Information</div>
+                  <p class="appt-detail-row"><strong>Name:</strong> {{ appt.pet_name }}</p>
+                  <p class="appt-detail-row"><strong>Species:</strong> {{ appt.pet_species|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Breed:</strong> {{ appt.pet_breed|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>D.O.B / Age:</strong> {{ appt.pet_dob|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Sex:</strong> {{ appt.pet_sex|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Color:</strong> {{ appt.pet_color|default:"-" }}</p>
+                </div>
+
+                <!-- Column 3: Appointment Details -->
+                <div class="appt-grid-column">
+                  <div class="appt-section-title"><i class='bx bx-file'></i> Appointment Details</div>
+                  <p class="appt-detail-row"><strong>Schedule:</strong> {{ appt.appointment_date|date:"M d, Y" }}</p>
+                  <p class="appt-detail-row"><strong>Time:</strong> {{ appt.appointment_time|time:"g:i A" }}</p>
+                  <p class="appt-detail-row"><strong>Branch:</strong> {{ appt.branch.name|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Reason:</strong> {{ appt.get_reason_display|default:"-" }}</p>
+                  <p class="appt-detail-row"><strong>Pref. Vet:</strong> {% if appt.preferred_vet %}{{ appt.preferred_vet.full_name }}{% else %}Any available{% endif %}</p>
+                  
+                  {% if appt.pet_symptoms %}
+                  <div class="appt-card-notes symptoms">
+                    <strong>Symptoms:</strong>
+                    <p>{{ appt.pet_symptoms|linebreaksbr }}</p>
+                  </div>
+                  {% endif %}
+                  
+                  {% if appt.notes %}
+                  <div class="appt-card-notes">
+                    <strong>Vet Notes:</strong>
+                    <p>{{ appt.notes|linebreaksbr }}</p>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
             </div>
-            <div class="appt-card-meta">
-              <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
-              <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
-              <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
-            </div>
-            <div class="appt-card-details">
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Species:</span>
-                <span class="appt-detail-value">{{ appt.pet_species|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">D.O.B / Age:</span>
-                <span class="appt-detail-value">{{ appt.pet_dob|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Sex:</span>
-                <span class="appt-detail-value">{{ appt.pet_sex|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Color:</span>
-                <span class="appt-detail-value">{{ appt.pet_color|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Reason:</span>
-                <span class="appt-detail-value">{{ appt.get_reason_display|default:"-" }}</span>
-              </div>
-              {% if appt.preferred_vet %}
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Vet:</span>
-                <span class="appt-detail-value">{{ appt.preferred_vet.full_name }}</span>
-              </div>
-              {% endif %}
-            </div>
-            {% if appt.pet_symptoms %}
-            <div class="appt-card-notes symptoms">
-              <i class='bx bx-first-aid'></i> <strong>Symptoms:</strong> {{ appt.pet_symptoms }}
-            </div>
-            {% endif %}
-            {% if appt.notes %}
-            <div class="appt-card-notes">
-              <i class='bx bx-note'></i> <strong>Vet Notes:</strong> {{ appt.notes }}
-            </div>
-            {% endif %}
           </div>
         </div>
       </div>
@@ -320,46 +362,79 @@
       <div class="appt-card">
         <div class="appt-card-accent cancelled"></div>
         <div class="appt-card-inner">
-          <div class="appt-card-icon cancelled">
-            <i class='bx bx-x-circle'></i>
+          <div class="appt-card-header">
+            <div class="appt-card-icon cancelled">
+              <i class='bx bx-x-circle'></i>
+            </div>
+            <div class="appt-card-summary">
+              <div class="appt-card-top">
+                <h3>{{ appt.pet_name }} {% if appt.pet_breed %}<span class="appt-card-breed">· {{ appt.pet_breed }}</span>{% endif %}</h3>
+                <span class="appt-status-pill cancelled">{{ appt.get_status_display }}</span>
+              </div>
+              <div class="appt-card-meta">
+                <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
+                <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
+                <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
+              </div>
+            </div>
+            <i class='bx bx-chevron-down appt-toggle-icon'></i>
           </div>
-          <div class="appt-card-body">
-            <div class="appt-card-top">
-              <h3>{{ appt.pet_name }} {% if appt.pet_breed %}<span class="appt-card-breed">· {{ appt.pet_breed }}</span>{% endif %}</h3>
-              <span class="appt-status-pill cancelled">{{ appt.get_status_display }}</span>
+          <div class="appt-card-collapse">
+            <div class="appt-card-collapse-inner">
+              <!-- Owner Details -->
+              <div class="appt-owner-section">
+                <span class="appt-section-title"><i class='bx bx-user'></i> Owner Details</span>
+                <div class="appt-card-details">
+                  <div class="appt-detail-row">
+                    <span class="appt-detail-label">Name:</span>
+                    <span class="appt-detail-value">{{ appt.owner_name|default:"-" }}</span>
+                  </div>
+                  <div class="appt-detail-row">
+                    <span class="appt-detail-label">Email:</span>
+                    <span class="appt-detail-value">{{ appt.owner_email|default:"-" }}</span>
+                  </div>
+                  <div class="appt-detail-row">
+                    <span class="appt-detail-label">Phone:</span>
+                    <span class="appt-detail-value">{{ appt.owner_phone|default:"-" }}</span>
+                  </div>
+                  <div class="appt-detail-row">
+                    <span class="appt-detail-label">Address:</span>
+                    <span class="appt-detail-value">{{ appt.owner_address|default:"-" }}</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Pet Details -->
+              <div class="appt-pet-section">
+                <span class="appt-section-title"><i class='bx bx-paw'></i> Pet Details</span>
+                <div class="appt-card-details">
+                  <div class="appt-detail-row">
+                    <span class="appt-detail-label">Species:</span>
+                    <span class="appt-detail-value">{{ appt.pet_species|default:"-" }}</span>
+                  </div>
+                  <div class="appt-detail-row">
+                    <span class="appt-detail-label">D.O.B / Age:</span>
+                    <span class="appt-detail-value">{{ appt.pet_dob|default:"-" }}</span>
+                  </div>
+                  <div class="appt-detail-row">
+                    <span class="appt-detail-label">Sex:</span>
+                    <span class="appt-detail-value">{{ appt.pet_sex|default:"-" }}</span>
+                  </div>
+                  <div class="appt-detail-row">
+                    <span class="appt-detail-label">Color:</span>
+                    <span class="appt-detail-value">{{ appt.pet_color|default:"-" }}</span>
+                  </div>
+                  <div class="appt-detail-row">
+                    <span class="appt-detail-label">Reason:</span>
+                    <span class="appt-detail-value">{{ appt.get_reason_display|default:"-" }}</span>
+                  </div>
+                </div>
+              </div>
+              {% if appt.notes %}
+              <div class="appt-card-notes">
+                <i class='bx bx-note'></i> <strong>Vet Notes:</strong> {{ appt.notes }}
+              </div>
+              {% endif %}
             </div>
-            <div class="appt-card-meta">
-              <span><i class='bx bx-building-house'></i> {{ appt.branch.name }}</span>
-              <span><i class='bx bx-calendar'></i> {{ appt.appointment_date|date:"M j, Y" }}</span>
-              <span><i class='bx bx-time'></i> {{ appt.appointment_time|time:"g:i A" }}</span>
-            </div>
-            <div class="appt-card-details">
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Species:</span>
-                <span class="appt-detail-value">{{ appt.pet_species|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">D.O.B / Age:</span>
-                <span class="appt-detail-value">{{ appt.pet_dob|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Sex:</span>
-                <span class="appt-detail-value">{{ appt.pet_sex|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Color:</span>
-                <span class="appt-detail-value">{{ appt.pet_color|default:"-" }}</span>
-              </div>
-              <div class="appt-detail-row">
-                <span class="appt-detail-label">Reason:</span>
-                <span class="appt-detail-value">{{ appt.get_reason_display|default:"-" }}</span>
-              </div>
-            </div>
-            {% if appt.notes %}
-            <div class="appt-card-notes">
-              <i class='bx bx-note'></i> <strong>Vet Notes:</strong> {{ appt.notes }}
-            </div>
-            {% endif %}
           </div>
         </div>
       </div>
@@ -403,6 +478,14 @@
     /* Stagger card reveal */
     document.querySelectorAll('.appt-card').forEach(function (card, i) {
       card.style.animationDelay = (i * 0.06) + 's';
+    });
+
+    /* Accordion toggle */
+    document.querySelectorAll('.appt-card-header').forEach(function (header) {
+      header.addEventListener('click', function () {
+        var card = this.closest('.appt-card');
+        card.classList.toggle('open');
+      });
     });
   });
 </script>
