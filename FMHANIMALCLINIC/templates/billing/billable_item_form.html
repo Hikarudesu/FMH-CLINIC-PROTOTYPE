@@ -1,14 +1,15 @@
 {% extends 'base/portal_admin.html' %}
 {% load static %}
 
-{% block title %}Add New Item{% endblock %}
+{% block title %}{% if object %}Edit Service{% else %}Add New Service{% endif %}{% endblock %}
 
 {% block content %}
 <div class="page-header" style="margin-bottom: 30px;">
-  <h1 style="color: #272742; font-size: 1.5rem; margin-bottom: 4px; font-weight: 600;">Add New Item</h1>
+  <h1 style="color: #272742; font-size: 1.5rem; margin-bottom: 4px; font-weight: 600;">{% if object %}Edit Service{% else %}Add New Service{% endif %}</h1>
+  <p class="page-subtitle">Define a clinic service with pricing and duration details</p>
 </div>
 
-<div class="dashboard-card" style="max-width: 1000px; padding: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);">
+<div class="dashboard-card" style="max-width: 900px; padding: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);">
   <form method="POST">
     {% csrf_token %}
     
@@ -18,172 +19,99 @@
       </div>
     {% endif %}
 
+    <!-- Service Identity -->
+    <h3 style="font-size: 1rem; color: var(--text-1); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+        <i class='bx bx-briefcase' style="vertical-align: middle;"></i> Service Details
+    </h3>
     <div class="pd-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-      
-      <!-- Name -->
       <div class="form-group" style="margin:0;">
-        <label for="{{ form.name.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Name*</label>
+        <label for="{{ form.name.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Service Name*</label>
         {{ form.name }}
         {% if form.name.errors %}<small style="color: var(--danger);">{{ form.name.errors.as_text }}</small>{% endif %}
       </div>
-
-      <!-- Type -->
-      <div class="form-group" style="margin:0;">
-        <label for="{{ form.type.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Type*</label>
-        {{ form.type }}
-        {% if form.type.errors %}<small style="color: var(--danger);">{{ form.type.errors.as_text }}</small>{% endif %}
-      </div>
-
-    </div>
-
-    <div class="pd-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-top: 24px;">
-      <!-- Cost -->
-      <div class="form-group" style="margin:0;">
-        <label for="{{ form.cost.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Cost</label>
-        {{ form.cost }}
-        {% if form.cost.errors %}<small style="color: var(--danger);">{{ form.cost.errors.as_text }}</small>{% endif %}
-      </div>
-
-      <!-- Profit Margin (Readonly placeholder for UI match) -->
-      <div class="form-group" style="margin:0;">
-        <label style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Profit Margin (%)</label>
-        <input type="text" class="form-control" value="Auto-calculated" readonly style="background: var(--bg); color: var(--text-3); cursor: not-allowed;">
-      </div>
-
-      <!-- Price -->
-      <div class="form-group" style="margin:0;">
-        <label for="{{ form.price.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Price*</label>
-        {{ form.price }}
-        {% if form.price.errors %}<small style="color: var(--danger);">{{ form.price.errors.as_text }}</small>{% endif %}
-      </div>
-    </div>
-
-    <div class="pd-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
-      <!-- Branch -->
-      <div class="form-group" style="margin:0;">
-        <label for="{{ form.branch.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Branch</label>
-        {{ form.branch }}
-        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Select if this item is specific to one branch.</span>
-        {% if form.branch.errors %}<small style="color: var(--danger);">{{ form.branch.errors.as_text }}</small>{% endif %}
-      </div>
-
-      <!-- Category -->
       <div class="form-group" style="margin:0;">
         <label for="{{ form.category.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Category</label>
         {{ form.category }}
         {% if form.category.errors %}<small style="color: var(--danger);">{{ form.category.errors.as_text }}</small>{% endif %}
       </div>
+    </div>
 
-      <!-- Tax Rate -->
+    <!-- Pricing -->
+    <h3 style="font-size: 1rem; color: var(--text-1); margin: 30px 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+        <i class='bx bx-dollar-circle' style="vertical-align: middle;"></i> Pricing
+    </h3>
+    <div class="pd-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
+      <div class="form-group" style="margin:0;">
+        <label for="{{ form.cost.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Cost ($)</label>
+        {{ form.cost }}
+        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Internal cost of providing this service</span>
+        {% if form.cost.errors %}<small style="color: var(--danger);">{{ form.cost.errors.as_text }}</small>{% endif %}
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label for="{{ form.price.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Selling Price ($)*</label>
+        {{ form.price }}
+        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Price charged to the client</span>
+        {% if form.price.errors %}<small style="color: var(--danger);">{{ form.price.errors.as_text }}</small>{% endif %}
+      </div>
       <div class="form-group" style="margin:0;">
         <label for="{{ form.tax_rate.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Tax Rate</label>
         {{ form.tax_rate }}
         {% if form.tax_rate.errors %}<small style="color: var(--danger);">{{ form.tax_rate.errors.as_text }}</small>{% endif %}
       </div>
-
-      <!-- Tags -->
-      <div class="form-group" style="margin:0;">
-        <label for="{{ form.tags.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Tags</label>
-        {{ form.tags }}
-        {% if form.tags.errors %}<small style="color: var(--danger);">{{ form.tags.errors.as_text }}</small>{% endif %}
-      </div>
     </div>
 
-    <div class="pd-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-top: 24px;">
-      <!-- Track Stock -->
+    <!-- Scheduling & Branch -->
+    <h3 style="font-size: 1rem; color: var(--text-1); margin: 30px 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+        <i class='bx bx-time-five' style="vertical-align: middle;"></i> Scheduling & Location
+    </h3>
+    <div class="pd-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
       <div class="form-group" style="margin:0;">
-        <label for="{{ form.track_stock.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Track Stock</label>
-        <div>
-           {{ form.track_stock }}
-        </div>
-        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Enable to manage inventory levels.</span>
-        {% if form.track_stock.errors %}<small style="color: var(--danger);">{{ form.track_stock.errors.as_text }}</small>{% endif %}
-      </div>
-
-      <!-- Initial Stock -->
-      <div class="form-group" style="margin:0;">
-        <label for="{{ form.initial_stock.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Initial Stock</label>
-        {{ form.initial_stock }}
-        {% if form.initial_stock.errors %}<small style="color: var(--danger);">{{ form.initial_stock.errors.as_text }}</small>{% endif %}
-      </div>
-
-      <!-- Reorder Level -->
-      <div class="form-group" style="margin:0;">
-        <label for="{{ form.reorder_level.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Reorder Level</label>
-        {{ form.reorder_level }}
-        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Stock level at which to reorder.</span>
-        {% if form.reorder_level.errors %}<small style="color: var(--danger);">{{ form.reorder_level.errors.as_text }}</small>{% endif %}
-      </div>
-    </div>
-
-    <div class="pd-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
-      <!-- SKU -->
-      <div class="form-group" style="margin:0;">
-        <label for="{{ form.sku.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">SKU</label>
-        {{ form.sku }}
-        {% if form.sku.errors %}<small style="color: var(--danger);">{{ form.sku.errors.as_text }}</small>{% endif %}
-      </div>
-
-      <!-- Barcode -->
-      <div class="form-group" style="margin:0;">
-        <label for="{{ form.barcode.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Barcode</label>
-        {{ form.barcode }}
-        {% if form.barcode.errors %}<small style="color: var(--danger);">{{ form.barcode.errors.as_text }}</small>{% endif %}
-      </div>
-
-      <!-- Manufacturer -->
-      <div class="form-group" style="margin:0;">
-        <label for="{{ form.manufacturer.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Manufacturer</label>
-        {{ form.manufacturer }}
-        {% if form.manufacturer.errors %}<small style="color: var(--danger);">{{ form.manufacturer.errors.as_text }}</small>{% endif %}
-      </div>
-
-      <!-- Duration -->
-      <div class="form-group" style="margin:0;">
-        <label for="{{ form.duration.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Duration (min)</label>
+        <label for="{{ form.duration.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Duration (minutes)</label>
         {{ form.duration }}
-        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">For services or time-limited products.</span>
+        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Estimated time for this service</span>
         {% if form.duration.errors %}<small style="color: var(--danger);">{{ form.duration.errors.as_text }}</small>{% endif %}
       </div>
-      
-      <!-- Description -->
-      <div class="form-group" style="margin:0; grid-column: span 2;">
+      <div class="form-group" style="margin:0;">
+        <label for="{{ form.branch.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Branch</label>
+        {{ form.branch }}
+        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Leave blank for all branches</span>
+        {% if form.branch.errors %}<small style="color: var(--danger);">{{ form.branch.errors.as_text }}</small>{% endif %}
+      </div>
+    </div>
+
+    <!-- Description & Content -->
+    <h3 style="font-size: 1rem; color: var(--text-1); margin: 30px 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+        <i class='bx bx-edit' style="vertical-align: middle;"></i> Description & Notes
+    </h3>
+    <div class="pd-grid" style="display: grid; grid-template-columns: 1fr; gap: 24px;">
+      <div class="form-group" style="margin:0;">
         <label for="{{ form.description.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Description</label>
         {{ form.description }}
         {% if form.description.errors %}<small style="color: var(--danger);">{{ form.description.errors.as_text }}</small>{% endif %}
       </div>
-
-      <!-- Active -->
       <div class="form-group" style="margin:0;">
-        <label for="{{ form.active.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Active</label>
-        <div>
-           {{ form.active }}
-        </div>
-        {% if form.active.errors %}<small style="color: var(--danger);">{{ form.active.errors.as_text }}</small>{% endif %}
-      </div>
-
-    </div>
-
-    <!-- CONTENT SECTION (NEW APP REQUIREMENT) -->
-    <div style="margin-top: 30px; padding-top: 24px; border-top: 1px solid var(--border);">
-      <h3 style="font-size: 1.1rem; color: var(--text-1); margin-bottom: 16px;">Content <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-3);">(Optional info associated with this billable item)</span></h3>
-      <div class="form-group" style="margin:0;">
+        <label for="{{ form.content.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Content / Instructions</label>
         {{ form.content }}
-        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Markdown supported. Use this field for receipts, instruction printouts, or internal notes.</span>
+        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Optional instructions, printable notes, or internal documentation.</span>
         {% if form.content.errors %}<small style="color: var(--danger);">{{ form.content.errors.as_text }}</small>{% endif %}
       </div>
+    </div>
+
+    <!-- Active Toggle -->
+    <div style="margin-top: 24px; display: flex; align-items: center; gap: 12px;">
+      {{ form.active }}
+      <label for="{{ form.active.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin: 0;">Active</label>
     </div>
 
     <!-- Actions -->
     <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 12px; padding-top: 24px; border-top: 1px solid var(--border);">
         <a href="{% url 'billing:billable_items' %}" class="btn-action outline" style="text-decoration: none; padding: 10px 20px; font-weight: 500;">Cancel</a>
-        <button type="submit" class="btn-action primary" style="padding: 10px 20px; font-weight: 600;"><i class="bx bx-save"></i> Save Item</button>
+        <button type="submit" class="btn-action primary" style="padding: 10px 20px; font-weight: 600;"><i class="bx bx-save"></i> Save Service</button>
     </div>
   </form>
 </div>
 
 <style>
-/* Consistent Design System Inputs */
 .form-control, .form-select, textarea.form-control {
     width: 100%;
     padding: 10px 14px;

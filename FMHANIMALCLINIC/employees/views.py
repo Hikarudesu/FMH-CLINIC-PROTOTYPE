@@ -398,3 +398,51 @@ def recurring_delete(request, pk):
         entry.delete()
         messages.success(request, 'Recurring schedule template removed.')
     return redirect('employees:schedule')
+
+
+# ──────────────────────── PAYSLIP GENERATION ────────────────────────
+
+@login_required
+@role_required(User.Role.ADMIN)
+def payslip_list_view(request):
+    """Admin view: list all staff members to generate payslips."""
+    # Default to current month/year
+    today = date.today()
+    month = int(request.GET.get('month', today.month))
+    year = int(request.GET.get('year', today.year))
+
+    # Generate list of months for the dropdown
+    months = [{'num': i, 'name': date(2000, i, 1).strftime('%B')}
+              for i in range(1, 13)]
+
+    staff = StaffMember.objects.filter(
+        is_active=True).order_by('last_name', 'first_name')
+
+    return render(request, 'employees/payslip_list.html', {
+        'staff_list': staff,
+        'selected_month': month,
+        'selected_year': year,
+        'months': months,
+    })
+
+
+@login_required
+@role_required(User.Role.ADMIN)
+def payslip_detail_view(request, pk):
+    """Admin view: generate and display a specific payslip."""
+    from .payslip_utils import compute_payslip
+
+    staff_member = get_object_or_404(StaffMember, pk=pk)
+
+    today = date.today()
+    month = int(request.GET.get('month', today.month))
+    year = int(request.GET.get('year', today.year))
+
+    # Compute the payslip data
+    payslip_data = compute_payslip(staff_member, month, year)
+
+    return render(request, 'employees/payslip.html', {
+        'payslip': payslip_data,
+        'month': month,
+        'year': year,
+    })

@@ -59,6 +59,10 @@
 <div class="tab-bar">
     <button class="tab-item active" id="tab-items" onclick="switchInvMode('items')"><i class='bx bx-package'></i> Stock Items</button>
     <button class="tab-item" id="tab-movements" onclick="switchInvMode('movements')"><i class='bx bx-history'></i> Stock Movements</button>
+    <button class="tab-item" id="tab-reservations" onclick="switchInvMode('reservations')">
+        <i class='bx bx-cart'></i> Reservations
+        {% if pending_reservations %}<span class="tab-badge">{{ pending_reservations|length }}</span>{% endif %}
+    </button>
 </div>
 
 <!-- Items Section -->
@@ -70,9 +74,11 @@
             <thead>
               <tr>
                 <th>Item Name</th>
-                <th>Branch</th>
+                <th>SKU</th>
+                <th>Type</th>
                 <th>Cost</th>
                 <th>Price</th>
+                <th>Margin</th>
                 <th>Stock</th>
                 <th>Status</th>
                 <th style="text-align: right;">Actions</th>
@@ -82,9 +88,18 @@
               {% for item in products %}
               <tr>
                 <td style="font-weight: 600; color: var(--text-1);">{{ item.name }}</td>
-                <td>{{ item.branch.name|default:"-" }}</td>
+                <td style="font-size: 0.8rem; color: var(--text-3);">{{ item.sku }}</td>
+                <td>
+                    <span style="
+                        {% if item.item_type == 'Medication' %}background: #e8eaf6; color: #3949ab;
+                        {% else %}background: #e0f2f1; color: #00897b;
+                        {% endif %}
+                        padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
+                    ">{{ item.item_type }}</span>
+                </td>
                 <td>${{ item.unit_cost }}</td>
                 <td>${{ item.price }}</td>
+                <td style="font-weight: 500;">{{ item.profit_margin }}%</td>
                 <td><strong>{{ item.stock_quantity }}</strong> / {{ item.min_stock_level }}</td>
                 <td>
                     <span class="status-badge" style="
@@ -104,7 +119,7 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-3);">No stock items found.</td>
+                <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-3);">No stock items found.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -122,33 +137,116 @@
           <table class="portal-table">
             <thead>
               <tr>
-                <th>Reference</th>
-                <th>Item Name</th>
-                <th>Type</th>
-                <th>Quantity</th>
                 <th>Date</th>
+                <th>Product</th>
+                <th>Type</th>
+                <th>Reference</th>
+                <th>Qty</th>
+                <th>Cost / Unit</th>
                 <th>Reason</th>
-                <th>Cost</th>
               </tr>
             </thead>
             <tbody>
               {% for adj in adjustments %}
               <tr>
-                <td style="font-weight: 600; color: var(--text-1);">{{ adj.reference }}</td>
-                <td>{{ adj.product.name }}</td>
-                <td>{{ adj.adjustment_type }}</td>
+                <td style="white-space: nowrap;">{{ adj.date|date:"M j, Y" }}</td>
+                <td style="font-weight: 600; color: var(--text-1);">{{ adj.product.name }}</td>
                 <td>
-                  <span style="color: {% if adj.quantity < 0 %}var(--accent){% else %}var(--primary){% endif %}; font-weight: 700;">
-                    {{ adj.quantity }}
-                  </span>
+                    <span style="
+                        padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
+                        {% if adj.adjustment_type == 'Purchase' %}background: #e8f5e9; color: #2e7d32;
+                        {% elif adj.adjustment_type == 'Sale' %}background: #e3f2fd; color: #1565c0;
+                        {% elif adj.adjustment_type == 'Return' %}background: #fff3e0; color: #e65100;
+                        {% elif adj.adjustment_type == 'Damage' %}background: #ffebee; color: #c62828;
+                        {% elif adj.adjustment_type == 'Expiration' %}background: #fce4ec; color: #ad1457;
+                        {% else %}background: var(--bg); color: var(--text-2);
+                        {% endif %}
+                    ">{{ adj.get_adjustment_type_display }}</span>
                 </td>
-                <td>{{ adj.date|date:"M j, Y" }}</td>
-                <td>{{ adj.reason|default:"N/A" }}</td>
+                <td style="font-size: 0.85rem; color: var(--text-2);">{{ adj.reference }}</td>
+                <td>
+                  {% if adj.quantity > 0 %}
+                    <span style="color: #2e7d32; font-weight: 700;">+{{ adj.quantity }}</span>
+                  {% else %}
+                    <span style="color: #c62828; font-weight: 700;">{{ adj.quantity }}</span>
+                  {% endif %}
+                </td>
                 <td>${{ adj.cost_per_unit }}</td>
+                <td style="font-size: 0.85rem; color: var(--text-2);">{{ adj.reason|default:"-" }}</td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-3);">No recent movements.</td>
+                <td colspan="7" style="text-align: center; padding: 50px; color: var(--text-3);">
+                    <i class='bx bx-history' style="font-size: 2.5rem; display: block; margin-bottom: 10px; opacity: 0.5;"></i>
+                    No stock movements recorded yet.<br>
+                    <span style="font-size: 0.8rem;">Movements are logged automatically from purchases, sales, and manual adjustments.</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+</div>
+
+<!-- Reservations Section (Hidden by default) -->
+<div id="inv-reservations-section" class="inv-section" style="display: none;">
+    <div class="dashboard-grid" style="grid-template-columns: 1fr;">
+      <div class="dashboard-card" style="padding: 0;">
+        <div class="table-responsive">
+          <table class="portal-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Date</th>
+                <th>Notes</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rsv in pending_reservations %}
+              <tr>
+                <td style="font-weight: 600; color: var(--text-1);">RSV-{{ rsv.pk }}</td>
+                <td>
+                    <div style="font-weight: 600; color: var(--text-1);">{{ rsv.user.get_full_name|default:rsv.user.username }}</div>
+                    <div style="font-size: 0.78rem; color: var(--text-3);">{{ rsv.user.email }}</div>
+                </td>
+                <td>{{ rsv.product.name }}</td>
+                <td style="font-weight: 700;">{{ rsv.quantity }}</td>
+                <td style="white-space: nowrap;">{{ rsv.created_at|date:"M j, Y g:i A" }}</td>
+                <td style="font-size: 0.85rem; color: var(--text-2); max-width: 200px;">{{ rsv.notes|default:"-" }}</td>
+                <td>
+                    <span style="
+                        padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
+                        {% if rsv.status == 'Pending' %}background: #fff3e0; color: #e65100;
+                        {% elif rsv.status == 'Confirmed' %}background: #e8f5e9; color: #2e7d32;
+                        {% else %}background: #ffebee; color: #c62828;
+                        {% endif %}
+                    ">{{ rsv.status }}</span>
+                </td>
+                <td>
+                    {% if rsv.status == 'Pending' %}
+                    <a href="{% url 'inventory:confirm_reservation' rsv.pk %}"
+                       class="btn-action primary" style="padding: 5px 14px; font-size: 0.78rem;"
+                       onclick="return confirm('Confirm reservation RSV-{{ rsv.pk }}?')">
+                        <i class='bx bx-check'></i> Confirm
+                    </a>
+                    {% else %}
+                    <span style="color: var(--text-3); font-size: 0.8rem;">—</span>
+                    {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="8" style="text-align: center; padding: 50px; color: var(--text-3);">
+                    <i class='bx bx-cart' style="font-size: 2.5rem; display: block; margin-bottom: 10px; opacity: 0.5;"></i>
+                    No reservations yet.
+                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -160,23 +258,13 @@
 
 <script>
 function switchInvMode(mode) {
-    const itemsSection = document.getElementById('inv-items-section');
-    const movementsSection = document.getElementById('inv-movements-section');
-    const tabItems = document.getElementById('tab-items');
-    const tabMovements = document.getElementById('tab-movements');
-    
-    tabItems.classList.remove('active');
-    tabMovements.classList.remove('active');
-    
-    if (mode === 'items') {
-        itemsSection.style.display = 'block';
-        movementsSection.style.display = 'none';
-        tabItems.classList.add('active');
-    } else {
-        itemsSection.style.display = 'none';
-        movementsSection.style.display = 'block';
-        tabMovements.classList.add('active');
-    }
+    const sections = ['items', 'movements', 'reservations'];
+    sections.forEach(function(s) {
+        const section = document.getElementById('inv-' + s + '-section');
+        const tab = document.getElementById('tab-' + s);
+        if (section) section.style.display = (s === mode) ? 'block' : 'none';
+        if (tab) tab.classList.toggle('active', s === mode);
+    });
 }
 </script>
 
@@ -216,6 +304,16 @@ function switchInvMode(mode) {
     height: 3px;
     background: var(--primary);
     border-radius: 3px 3px 0 0;
+}
+.tab-badge {
+    background: var(--accent, #ff5722);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
 }
 </style>
 {% endblock %}

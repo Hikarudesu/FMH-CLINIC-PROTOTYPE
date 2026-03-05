@@ -176,11 +176,8 @@
       <a href="{% url 'notifications:notification_list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'notifications' %}active{% endif %}">
         <i class='bx bx-bell'></i><span>Notifications</span>
       </a>
-      <a href="{% url 'billing:statement_list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'billing' %}active{% endif %}">
-        <i class='bx bx-receipt'></i><span>Statement of Account</span>
-      </a>
 
-      <a href="{% url 'inventory:catalog' %}" class="sidebar-link {% if request.resolver_match.url_name == 'catalog' %}active{% endif %}">
+      <a href="{% url 'inventory:catalog' %}" class="sidebar-link {% if 'inventory' in request.path %}active{% endif %}">
         <i class='bx bx-cart'></i><span>Digital Catalog</span>
       </a>
       <a href="{% url 'profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">

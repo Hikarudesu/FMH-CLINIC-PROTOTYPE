@@ -17,6 +17,7 @@ from notifications.models import FollowUp, Notification
 from patients.models import Pet
 from .models import Appointment
 from .forms import PublicAppointmentForm, PortalAppointmentForm, AdminQuickCreateForm, AppointmentEditForm
+from notifications.email_utils import send_appointment_confirmation
 
 
 # ──────────────────────── AVAILABILITY ENGINE ────────────────────────
@@ -121,7 +122,8 @@ def public_book(request):
     if request.method == 'POST':
         form = PublicAppointmentForm(request.POST)
         if form.is_valid():
-            form.save()
+            appointment = form.save()
+            send_appointment_confirmation(appointment)
             messages.success(
                 request,
                 'Your appointment has been booked successfully! We will contact you to confirm.'
@@ -154,7 +156,8 @@ def portal_book(request):
     if request.method == 'POST':
         form = PortalAppointmentForm(request.POST, user=request.user)
         if form.is_valid():
-            form.save()
+            appointment = form.save()
+            send_appointment_confirmation(appointment)
             messages.success(
                 request, 'Your appointment has been booked successfully!')
             return redirect('appointments:my_appointments')
@@ -339,7 +342,7 @@ def admin_list(request):
     vet_id = request.GET.get('vet', '')
     if vet_id:
         appointments = appointments.filter(preferred_vet_id=vet_id)
-    
+
     # View parameter (table, daily, weekly, monthly)
     current_view = request.GET.get('view', 'table')
 
@@ -447,7 +450,10 @@ def admin_quick_create(request):
         form = AdminQuickCreateForm(request.POST)
         if form.is_valid():
             appointment = form.save()
-            
+
+            # Send email confirmation
+            send_appointment_confirmation(appointment)
+
             # Notify user if appointment is confirmed and has a linked user
             if appointment.status == 'CONFIRMED' and appointment.user:
                 Notification.objects.create(
@@ -461,7 +467,7 @@ def admin_quick_create(request):
                     ),
                     notification_type='APPOINTMENT',
                 )
-            
+
             # Handle follow-up creation
             follow_up_enabled = request.POST.get('follow_up_enabled')
             if follow_up_enabled == 'on':
@@ -495,7 +501,7 @@ def admin_quick_create(request):
                             notification_type='FOLLOW_UP',
                             related_follow_up=followup,
                         )
-            
+
             messages.success(request, 'Appointment created successfully.')
         else:
             messages.error(
@@ -512,11 +518,11 @@ def admin_edit(request, pk):
     if request.method == 'POST':
         # Capture original status before update
         original_status = appointment.status
-        
+
         form = AppointmentEditForm(request.POST, instance=appointment)
         if form.is_valid():
             updated_appointment = form.save()
-            
+
             # Check if status changed and notify user
             if updated_appointment.status != original_status and updated_appointment.user:
                 status_notifications = {
@@ -547,8 +553,9 @@ def admin_edit(request, pk):
                         ),
                     },
                 }
-                
-                notification_data = status_notifications.get(updated_appointment.status)
+
+                notification_data = status_notifications.get(
+                    updated_appointment.status)
                 if notification_data:
                     Notification.objects.create(
                         user=updated_appointment.user,
@@ -602,7 +609,7 @@ def admin_edit(request, pk):
     # Get existing follow-ups for this appointment
     follow_ups = FollowUp.objects.filter(
         appointment=appointment).order_by('-created_at')
-    
+
     # Get user's pets if appointment has a linked user
     user_pets = []
     if appointment.user:

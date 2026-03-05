@@ -47,6 +47,7 @@ class Notification(models.Model):
         APPOINTMENT = 'APPOINTMENT', 'Appointment'
         INVENTORY_RESTOCK = 'INVENTORY_RESTOCK', 'Inventory Restock'
         LOW_INVENTORY = 'LOW_INVENTORY', 'Low Inventory'
+        PRODUCT_RESERVATION = 'PRODUCT_RESERVATION', 'Product Reservation'
         GENERAL = 'GENERAL', 'General'
 
     user = models.ForeignKey(

@@ -649,7 +649,7 @@ p {
 
 .feature-list li {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   font-size: 1.05rem;
   color: var(--dark);

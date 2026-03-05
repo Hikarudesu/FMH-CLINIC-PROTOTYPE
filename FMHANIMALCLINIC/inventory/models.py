@@ -1,15 +1,34 @@
 """
 Models for the inventory application.
 """
+import uuid
+
 from django.db import models
+from django.conf import settings
 from branches.models import Branch
 
 
 class Product(models.Model):
-    """Represents a product in the clinic's inventory."""
+    """Represents a product or medication in the clinic's inventory."""
+
+    ITEM_TYPE_CHOICES = [
+        ('Product', 'Product'),
+        ('Medication', 'Medication'),
+    ]
 
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
+    item_type = models.CharField(
+        max_length=20, choices=ITEM_TYPE_CHOICES, default='Product')
+
+    # Identification
+    sku = models.CharField(
+        max_length=100, blank=True,
+        help_text="Stock Keeping Unit (auto-generated if blank)")
+    barcode = models.CharField(
+        max_length=100, blank=True,
+        help_text="Barcode / UPC number")
+    manufacturer = models.CharField(max_length=200, blank=True)
 
     # Financial fields
     unit_cost = models.DecimalField(
@@ -21,6 +40,11 @@ class Product(models.Model):
     is_available = models.BooleanField(default=True)
     stock_quantity = models.PositiveIntegerField(default=0)
     min_stock_level = models.PositiveIntegerField(default=5)
+
+    # Safety
+    expiration_date = models.DateField(
+        null=True, blank=True,
+        help_text="For medications or perishable items")
 
     # Audit fields
     created_at = models.DateTimeField(auto_now_add=True)
@@ -47,11 +71,27 @@ class Product(models.Model):
         """Total valuation of this item in stock based on cost."""
         return self.stock_quantity * self.unit_cost
 
+    @property
+    def profit_margin(self):
+        """Profit margin percentage per unit."""
+        if self.price and self.price > 0:
+            return round(
+                ((self.price - self.unit_cost) / self.price) * 100, 1
+            )
+        return 0
+
     def save(self, *args, **kwargs):
         if self.stock_quantity == 0:
             self.is_available = False
         else:
             self.is_available = True
+
+        # Auto-generate SKU if blank
+        if not self.sku:
+
+            prefix = 'MED' if self.item_type == 'Medication' else 'PRD'
+            self.sku = f"{prefix}-{str(uuid.uuid4())[:6].upper()}"
+
         super().save(*args, **kwargs)
 
 
@@ -64,7 +104,8 @@ class StockAdjustment(models.Model):
         ('Damage', 'Damaged Stock'),
         ('Expiration', 'Expired'),
         ('Correction', 'Inventory Correction'),
-        ('Sale', 'Sale')
+        ('Sale', 'Sale'),
+        ('Reservation', 'Reservation'),
     ]
 
     branch = models.ForeignKey(
@@ -98,24 +139,17 @@ class StockAdjustment(models.Model):
         is_new = self.pk is None
         super().save(*args, **kwargs)
 
-        # When a new adjustment is made, update the product's total stock
-        # Based on Waggyvet UI, quantity inputted might always be absolute in UI,
-        # but logic requires negative logic if it's a reduction.
-        # We will assume UI submits correct signed integer or we handle sign in view/form.
-        # But we will blindly add the signed quantity to stock here for simplicity if it's new.
         if is_new:
-            # Re-fetch product to avoid race conditions slightly
+            # Re-fetch product to avoid race conditions
             # pylint: disable=no-member
             product = Product.objects.get(pk=self.product.pk)
 
-            # Subtractions: Damage, Expiration.
-            # (Returns could be customer returns (add) or return to vendor (sub)).
-            # Let's rely on the form to provide a negative number if it's a deduction,
-            # or handle it strictly here based on type.
-            if self.adjustment_type in ['Damage', 'Expiration']:
+            # Enforce negative sign for deduction types
+            if self.adjustment_type in [
+                'Damage', 'Expiration', 'Sale', 'Reservation'
+            ]:
                 if self.quantity > 0:
-                    self.quantity = -self.quantity  # enforce negative
-                    # save the corrected sign silently
+                    self.quantity = -self.quantity
                     super().save(update_fields=['quantity'])
 
             product.stock_quantity += self.quantity
@@ -125,3 +159,38 @@ class StockAdjustment(models.Model):
                 product.stock_quantity = 0
 
             product.save()
+
+
+class Reservation(models.Model):
+    """A product reservation made by a user from the digital catalog."""
+
+    class Status(models.TextChoices):
+        PENDING = 'Pending', 'Pending'
+        CONFIRMED = 'Confirmed', 'Confirmed'
+        CANCELLED = 'Cancelled', 'Cancelled'
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='reservations',
+    )
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name='reservations')
+    quantity = models.PositiveIntegerField(default=1)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return (
+            f"Reservation #{self.pk} — {self.product.name} "
+            f"x{self.quantity} ({self.status})"
+        )

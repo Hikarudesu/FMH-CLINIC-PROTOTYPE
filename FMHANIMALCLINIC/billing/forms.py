@@ -1,62 +1,47 @@
 """
-Forms for the billing app including billable items, invoices, and invoice items.
+Forms for the billing app — clinic services only.
 """
 from django import forms
-from django.forms import inlineformset_factory
-from .models import BillableItem, Invoice, InvoiceItem
+from .models import BillableItem
 
 
 class BillableItemForm(forms.ModelForm):
-    """Form for creating and updating billable items."""
+    """Form for creating and updating clinic services."""
     class Meta:
         """Meta configuration for BillableItemForm."""
         model = BillableItem
-        fields = '__all__'
-        exclude = ('created_at', 'updated_at')
+        fields = [
+            'name', 'cost', 'price', 'branch', 'category',
+            'tax_rate', 'duration', 'description', 'active', 'content'
+        ]
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter item name'
+                'placeholder': 'e.g., General Consultation'
             }),
-            'type': forms.Select(attrs={'class': 'form-select'}),
-            'cost': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'cost': forms.NumberInput(attrs={
+                'class': 'form-control', 'step': '0.01'
+            }),
+            'price': forms.NumberInput(attrs={
+                'class': 'form-control', 'step': '0.01'
+            }),
             'branch': forms.Select(attrs={'class': 'form-select'}),
             'category': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Select category'
+                'placeholder': 'e.g., Consultation, Surgery, Grooming'
             }),
             'tax_rate': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Select tax rate'
+                'placeholder': 'e.g., VAT 12%'
             }),
-            'tags': forms.TextInput(attrs={
+            'duration': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Add tags (press Enter)'
+                'placeholder': 'Minutes'
             }),
-            'track_stock': forms.CheckboxInput(attrs={
-                'class': 'form-check-input',
-                'role': 'switch'
-            }),
-            'initial_stock': forms.NumberInput(attrs={'class': 'form-control'}),
-            'reorder_level': forms.NumberInput(attrs={'class': 'form-control'}),
-            'sku': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Auto-generated if blank'
-            }),
-            'barcode': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Enter barcode'
-            }),
-            'manufacturer': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Enter manufacturer'
-            }),
-            'duration': forms.NumberInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
-                'placeholder': 'Enter description'
+                'placeholder': 'Describe the service...'
             }),
             'active': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',
@@ -65,60 +50,6 @@ class BillableItemForm(forms.ModelForm):
             'content': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 5,
-                'placeholder': 'Enter rich content or instructions for this billable item...'
+                'placeholder': 'Instructions, notes, or content...'
             }),
         }
-
-
-class InvoiceForm(forms.ModelForm):
-    """Form for creating and updating invoices."""
-    class Meta:
-        """Meta configuration for InvoiceForm."""
-        model = Invoice
-        fields = ['pet', 'branch', 'due_date',
-                  'status', 'tax_amount', 'notes']
-        widgets = {
-            'pet': forms.Select(attrs={'class': 'form-select'}),
-            'branch': forms.Select(attrs={'class': 'form-select'}),
-            'due_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
-            'tax_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'notes': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Optional internal notes...'
-            }),
-        }
-
-
-class InvoiceItemForm(forms.ModelForm):
-    """Form for adding items to an invoice."""
-    class Meta:
-        """Meta configuration for InvoiceItemForm."""
-        model = InvoiceItem
-        fields = ['billable_item', 'quantity', 'unit_price', 'description']
-        widgets = {
-            'billable_item': forms.Select(attrs={
-                'class': 'form-select',
-                'required': 'required'
-            }),
-            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'unit_price': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'placeholder': 'Auto-filled if empty'
-            }),
-            'description': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Optional override'
-            }),
-        }
-
-
-InvoiceItemFormSet = inlineformset_factory(
-    Invoice,
-    InvoiceItem,
-    form=InvoiceItemForm,
-    extra=1,
-    can_delete=True
-)

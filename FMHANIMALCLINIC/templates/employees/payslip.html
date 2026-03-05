@@ -1,0 +1,252 @@
+{% extends 'base/portal_admin.html' %}
+
+{% block title %}Payslip - {{ payslip.staff.full_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header no-print">
+  <h1><i class='bx bx-file'></i> Payslip</h1>
+  <div class="page-header-actions">
+    <a href="{% url 'employees:payslip_list' %}?month={{ month }}&year={{ year }}" class="btn-action outline"><i class='bx bx-left-arrow-alt'></i> Back</a>
+    <button onclick="window.print()" class="btn-action primary"><i class='bx bx-printer'></i> Print Payslip</button>
+  </div>
+</div>
+
+<div class="payslip-container">
+  <div class="payslip-header">
+    <div class="payslip-brand">
+      <h2>FMH Animal Clinic</h2>
+      <p>123 Clinic Avenue, Veterinary District</p>
+    </div>
+    <div class="payslip-title">
+      <h3>PAYSLIP</h3>
+      <div class="period-badge">{{ payslip.period }}</div>
+    </div>
+  </div>
+
+  <div class="payslip-employee-details">
+    <div class="detail-row">
+      <span class="detail-label">Employee Name:</span>
+      <span class="detail-value"><strong>{{ payslip.staff.full_name }}</strong></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Position:</span>
+      <span class="detail-value">{{ payslip.staff.get_position_display }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Branch:</span>
+      <span class="detail-value">{{ payslip.staff.branch.name|default:"Head Office" }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Base Salary:</span>
+      <span class="detail-value">&#8369;{{ payslip.base_salary }}</span>
+    </div>
+  </div>
+
+  <div class="payslip-grid">
+    <!-- Earnings Section -->
+    <div class="payslip-section">
+      <h4>EARNINGS</h4>
+      <table class="payslip-table">
+        <tr>
+          <th>Description</th>
+          <th style="text-align: right;">Amount</th>
+        </tr>
+        <tr>
+          <td>
+            Basic Pay
+            <div class="sub-text">{{ payslip.days_worked }} days worked @ &#8369;{{ payslip.daily_rate }} / day</div>
+          </td>
+          <td style="text-align: right;">&#8369;{{ payslip.gross_pay }}</td>
+        </tr>
+        <tr class="total-row">
+          <td><strong>Gross Earnings</strong></td>
+          <td style="text-align: right;"><strong>&#8369;{{ payslip.gross_pay }}</strong></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Deductions Section -->
+    <div class="payslip-section">
+      <h4>DEDUCTIONS</h4>
+      <table class="payslip-table">
+        <tr>
+          <th>Description</th>
+          <th style="text-align: right;">Amount</th>
+        </tr>
+        <tr>
+          <td>SSS Contribution</td>
+          <td style="text-align: right; color: var(--danger-color);">- &#8369;{{ payslip.sss }}</td>
+        </tr>
+        <tr>
+          <td>PhilHealth Contribution</td>
+          <td style="text-align: right; color: var(--danger-color);">- &#8369;{{ payslip.philhealth }}</td>
+        </tr>
+        <tr>
+          <td>PAG-IBIG Contribution</td>
+          <td style="text-align: right; color: var(--danger-color);">- &#8369;{{ payslip.pagibig }}</td>
+        </tr>
+        <tr class="total-row">
+          <td><strong>Total Deductions</strong></td>
+          <td style="text-align: right; color: var(--danger-color);"><strong>- &#8369;{{ payslip.total_deductions }}</strong></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="payslip-summary-bottom">
+    <div class="net-pay-box">
+      <span>NET PAY</span>
+      <div class="amount">&#8369;{{ payslip.net_pay }}</div>
+    </div>
+  </div>
+
+  <div class="payslip-footer">
+    <p>This is a system-generated document. No signature is required.</p>
+  </div>
+</div>
+
+<style>
+.payslip-container {
+  background: white;
+  border-radius: var(--radius-md, 12px);
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  max-width: 900px;
+  margin: 0 auto;
+  color: #333;
+}
+.payslip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 20px;
+  margin-bottom: 25px;
+}
+.payslip-brand h2 {
+  color: var(--primary);
+  margin-bottom: 5px;
+  font-size: 1.5rem;
+}
+.payslip-brand p {
+  color: #666;
+  font-size: 0.85rem;
+}
+.payslip-title {
+  text-align: right;
+}
+.payslip-title h3 {
+  font-size: 1.8rem;
+  letter-spacing: 2px;
+  color: #333;
+  margin-bottom: 5px;
+}
+.period-badge {
+  display: inline-block;
+  background: var(--bg-1, #f8f9fa);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-2, #666);
+}
+.payslip-employee-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  background: var(--bg-3, #f0f4f8);
+  padding: 20px;
+  border-radius: var(--radius-sm, 8px);
+  margin-bottom: 30px;
+}
+.detail-row {
+  display: flex;
+}
+.detail-label {
+  width: 120px;
+  color: #666;
+  font-size: 0.9rem;
+}
+.detail-value {
+  color: #111;
+  font-size: 0.9rem;
+}
+.payslip-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+.payslip-section h4 {
+  font-size: 1rem;
+  color: #111;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+.payslip-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.payslip-table th {
+  text-align: left;
+  font-size: 0.8rem;
+  color: #666;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+.payslip-table td {
+  padding: 12px 0;
+  font-size: 0.95rem;
+  border-bottom: 1px dashed #eee;
+}
+.payslip-table .sub-text {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 4px;
+}
+.total-row td {
+  border-top: 2px solid #ddd;
+  border-bottom: none;
+  padding-top: 15px;
+}
+.payslip-summary-bottom {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 2px solid var(--primary);
+  padding-top: 25px;
+  margin-bottom: 30px;
+}
+.net-pay-box {
+  background: var(--primary);
+  color: white;
+  padding: 15px 30px;
+  border-radius: var(--radius-sm, 8px);
+  text-align: right;
+  min-width: 250px;
+}
+.net-pay-box span {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  display: block;
+  margin-bottom: 5px;
+}
+.net-pay-box .amount {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+.payslip-footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #999;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+@media print {
+  .no-print, .sidebar { display: none !important; }
+  .portal-content { margin-left: 0 !important; padding: 0 !important; }
+  .payslip-container { box-shadow: none; padding: 0; width: 100%; max-width: 100%; }
+}
+</style>
+{% endblock %}

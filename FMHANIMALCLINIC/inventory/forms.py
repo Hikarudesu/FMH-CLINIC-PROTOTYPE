@@ -10,17 +10,54 @@ class ProductForm(forms.ModelForm):
     class Meta:
         """Meta options for ProductForm."""
         model = Product
-        fields = ['branch', 'name', 'description', 'unit_cost',
-                  'price', 'stock_quantity', 'min_stock_level', 'is_available']
+        fields = [
+            'branch', 'item_type', 'name', 'description',
+            'sku', 'barcode', 'manufacturer', 'unit_cost', 'price',
+            'stock_quantity', 'min_stock_level',
+            'expiration_date', 'is_available'
+        ]
         widgets = {
             'branch': forms.Select(attrs={'class': 'form-control'}),
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Item name'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'unit_cost': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'stock_quantity': forms.NumberInput(attrs={'class': 'form-control'}),
-            'min_stock_level': forms.NumberInput(attrs={'class': 'form-control'}),
-            'is_available': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'item_type': forms.Select(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Item name'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control', 'rows': 3
+            }),
+            'sku': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Auto-generated if blank'
+            }),
+            'barcode': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Scan or enter barcode'
+            }),
+            'manufacturer': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., Zoetis, Pfizer'
+            }),
+            'unit_cost': forms.NumberInput(attrs={
+                'class': 'form-control', 'step': '0.01',
+                'id': 'id_unit_cost'
+            }),
+            'price': forms.NumberInput(attrs={
+                'class': 'form-control', 'step': '0.01',
+                'id': 'id_price'
+            }),
+            'stock_quantity': forms.NumberInput(attrs={
+                'class': 'form-control'
+            }),
+            'min_stock_level': forms.NumberInput(attrs={
+                'class': 'form-control'
+            }),
+            'expiration_date': forms.DateInput(attrs={
+                'class': 'form-control', 'type': 'date'
+            }),
+            'is_available': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
         }
 
 

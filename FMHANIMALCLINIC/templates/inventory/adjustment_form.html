@@ -30,7 +30,7 @@
 
       <!-- Item -->
       <div class="form-group" style="margin:0;">
-        <label for="{{ form.product.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Billable Item*</label>
+        <label for="{{ form.product.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Product*</label>
         {{ form.product }}
         <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Only items with stock tracking enabled</span>
         {% if form.product.errors %}<small style="color: var(--danger);">{{ form.product.errors.as_text }}</small>{% endif %}
