@@ -25,78 +25,198 @@
       </select>
     </form>
 
-    <a href="{% url 'inventory:adjustment_new' %}" class="btn-action" style="background: #fb3b66; color: white;">
-      <i class='bx bx-plus'></i> Create New
+    <a href="{% url 'inventory:product_new' %}" class="btn-action primary">
+      <i class='bx bx-plus'></i> Register Item
+    </a>
+    <a href="{% url 'inventory:adjustment_new' %}" class="btn-action outline">
+      <i class='bx bx-transfer'></i> Adjust Stock
     </a>
   </div>
 </div>
 
-<div class="dashboard-grid" style="grid-template-columns: 1fr;">
-  <div class="dashboard-card" style="padding: 0;">
-    <div class="table-responsive">
-      <table class="portal-table">
-        <thead>
-          <tr>
-            <th>Reference</th>
-            <th>Item Name</th>
-            <th>Type</th>
-            <th>Quantity</th>
-            <th>Date <i class='bx bx-up-arrow-alt'></i></th>
-            <th>Reason</th>
-            <th>Cost</th>
-            <th style="text-align: right;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for adj in adjustments %}
-          <tr>
-            <td style="font-weight: 600; color: var(--text-1);">{{ adj.reference }}</td>
-            <td>{{ adj.product.name }}</td>
-            <td>{{ adj.adjustment_type }}</td>
-            <td>
-              {% if adj.adjustment_type == 'Damage' or adj.adjustment_type == 'Expiration' %}
-                <span style="color: var(--danger);">{{ adj.quantity }}</span>
-              {% else %}
-                <span style="color: var(--success);">{{ adj.quantity|default:"-" }}</span>
-              {% endif %}
-            </td>
-            <td>{{ adj.date|date:"M j, Y" }}</td>
-            <td>{{ adj.reason|default:"N/A" }}</td>
-            <td>${{ adj.cost_per_unit }}</td>
-            <td style="text-align: right;">
-              <div style="display: flex; justify-content: flex-end; gap: 6px;">
-                <button class="btn-action outline" style="padding: 4px 10px; font-size: 0.8rem; border-color: var(--border);">Edit</button>
-                <button class="btn-action outline" style="padding: 4px 10px; font-size: 0.8rem; border-color: var(--border); color: var(--danger);">Delete</button>
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="8" style="text-align: center; padding: 40px 20px; color: var(--text-3);">
-              <i class='bx bx-folder-open' style="font-size: 2rem; margin-bottom: 10px;"></i>
-              <p>No inventory adjustments found.</p>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    
-    <!-- Rough Pagination Footer Stub -->
-    <div style="padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; color: var(--text-2); font-size: 0.85rem;">
-      <div>
-        Showing 1 to {{ adjustments|length }} entries
-        <select style="margin-left: 10px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg);">
-            <option>Show 10</option>
-        </select>
-      </div>
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <button class="btn-action outline" style="padding: 4px 8px; height: auto;" disabled><i class='bx bx-chevron-left'></i></button>
-        <span>Page 1 of 1</span>
-        <button class="btn-action outline" style="padding: 4px 8px; height: auto;" disabled><i class='bx bx-chevron-right'></i></button>
-      </div>
-    </div>
+<!-- Stats Grid -->
+<div class="stats-grid" style="margin-bottom: 30px;">
+  <div class="stat-card blue">
+    <div class="stat-icon-bg"><i class='bx bx-wallet'></i></div>
+    <div class="stat-label">Inventory Value</div>
+    <div class="stat-value">${{ total_value|floatformat:2 }}</div>
+    <div class="stat-sub">Total asset valuation</div>
+  </div>
+  <div class="stat-card orange">
+    <div class="stat-icon-bg"><i class='bx bx-error-alt'></i></div>
+    <div class="stat-label">Low Stock</div>
+    <div class="stat-value">{{ low_stock_count }}</div>
+    <div class="stat-sub">Items requiring reorder</div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-icon-bg"><i class='bx bx-package'></i></div>
+    <div class="stat-label">Out of Stock</div>
+    <div class="stat-value">{{ out_of_stock_count }}</div>
+    <div class="stat-sub">Immediate attention needed</div>
   </div>
 </div>
 
+<div class="tab-bar">
+    <button class="tab-item active" id="tab-items" onclick="switchInvMode('items')"><i class='bx bx-package'></i> Stock Items</button>
+    <button class="tab-item" id="tab-movements" onclick="switchInvMode('movements')"><i class='bx bx-history'></i> Stock Movements</button>
+</div>
+
+<!-- Items Section -->
+<div id="inv-items-section" class="inv-section active">
+    <div class="dashboard-grid" style="grid-template-columns: 1fr;">
+      <div class="dashboard-card" style="padding: 0;">
+        <div class="table-responsive">
+          <table class="portal-table">
+            <thead>
+              <tr>
+                <th>Item Name</th>
+                <th>Branch</th>
+                <th>Cost</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in products %}
+              <tr>
+                <td style="font-weight: 600; color: var(--text-1);">{{ item.name }}</td>
+                <td>{{ item.branch.name|default:"-" }}</td>
+                <td>${{ item.unit_cost }}</td>
+                <td>${{ item.price }}</td>
+                <td><strong>{{ item.stock_quantity }}</strong> / {{ item.min_stock_level }}</td>
+                <td>
+                    <span class="status-badge" style="
+                        {% if item.status == 'Out of Stock' %}background: #ffebee; color: #c62828;
+                        {% elif item.status == 'Low Stock' %}background: #fff3e0; color: #e65100;
+                        {% else %}background: #e8f5e9; color: #2e7d32;
+                        {% endif %}
+                    ">
+                        {{ item.status }}
+                    </span>
+                </td>
+                <td style="text-align: right;">
+                  <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                    <a href="{% url 'inventory:product_edit' item.pk %}" class="btn-action outline" style="padding: 4px 10px; font-size: 0.8rem; border-color: var(--border);">Edit</a>
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-3);">No stock items found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+</div>
+
+<!-- Movements Section (Hidden by default) -->
+<div id="inv-movements-section" class="inv-section" style="display: none;">
+    <div class="dashboard-grid" style="grid-template-columns: 1fr;">
+      <div class="dashboard-card" style="padding: 0;">
+        <div class="table-responsive">
+          <table class="portal-table">
+            <thead>
+              <tr>
+                <th>Reference</th>
+                <th>Item Name</th>
+                <th>Type</th>
+                <th>Quantity</th>
+                <th>Date</th>
+                <th>Reason</th>
+                <th>Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for adj in adjustments %}
+              <tr>
+                <td style="font-weight: 600; color: var(--text-1);">{{ adj.reference }}</td>
+                <td>{{ adj.product.name }}</td>
+                <td>{{ adj.adjustment_type }}</td>
+                <td>
+                  <span style="color: {% if adj.quantity < 0 %}var(--accent){% else %}var(--primary){% endif %}; font-weight: 700;">
+                    {{ adj.quantity }}
+                  </span>
+                </td>
+                <td>{{ adj.date|date:"M j, Y" }}</td>
+                <td>{{ adj.reason|default:"N/A" }}</td>
+                <td>${{ adj.cost_per_unit }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-3);">No recent movements.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+</div>
+
+<script>
+function switchInvMode(mode) {
+    const itemsSection = document.getElementById('inv-items-section');
+    const movementsSection = document.getElementById('inv-movements-section');
+    const tabItems = document.getElementById('tab-items');
+    const tabMovements = document.getElementById('tab-movements');
+    
+    tabItems.classList.remove('active');
+    tabMovements.classList.remove('active');
+    
+    if (mode === 'items') {
+        itemsSection.style.display = 'block';
+        movementsSection.style.display = 'none';
+        tabItems.classList.add('active');
+    } else {
+        itemsSection.style.display = 'none';
+        movementsSection.style.display = 'block';
+        tabMovements.classList.add('active');
+    }
+}
+</script>
+
+<style>
+.tab-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+}
+.tab-item {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-3);
+    cursor: pointer;
+    transition: all 0.2s var(--ease);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.tab-item i { font-size: 1.1rem; }
+.tab-item:hover { color: var(--text-1); }
+.tab-item.active {
+    color: var(--primary);
+    position: relative;
+}
+.tab-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: -11px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 3px 3px 0 0;
+}
+</style>
 {% endblock %}
+

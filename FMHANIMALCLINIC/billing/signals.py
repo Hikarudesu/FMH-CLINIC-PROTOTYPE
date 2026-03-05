@@ -1,12 +1,15 @@
+"""Signals for the billing application."""
+
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
-from .models import Invoice
-from inventory.models import StockAdjustment
 from django.utils import timezone
+
+from inventory.models import StockAdjustment
+from .models import Invoice
 
 
 @receiver(pre_save, sender=Invoice)
-def process_invoice_stock_reduction(sender, instance, **kwargs):
+def process_invoice_stock_reduction(sender, instance, **kwargs):  # pylint: disable=unused-argument
     """
     When an invoice status changes to PAID from any other state,
     we automatically trigger a StockAdjustment for each InvoiceItem
@@ -19,8 +22,9 @@ def process_invoice_stock_reduction(sender, instance, **kwargs):
         return
 
     try:
+        # pylint: disable=no-member
         old_instance = Invoice.objects.get(pk=instance.pk)
-    except Invoice.DoesNotExist:
+    except Invoice.DoesNotExist:  # pylint: disable=no-member
         return
 
     # Check if the status is transitioning to 'PAID'
@@ -43,16 +47,13 @@ def process_invoice_stock_reduction(sender, instance, **kwargs):
                     continue  # We need a branch for StockAdjustment
 
                 # Create a StockAdjustment to reduce the inventory
-                # The inventory StockAdjustment model saves the quantity negatively for 'Purchase' if we do it manually,
-                # Wait, looking at inventory/models.py, 'Purchase' normally ADDS stock.
-                # Let's use 'Correction' or 'Damage' or 'Sale' if available.
-                # StockAdjustment model types: 'Purchase', 'Return', 'Damage', 'Expiration', 'Correction'.
-                # Let's use 'Correction' with a negative quantity.
+                # The inventory StockAdjustment model saves the quantity negatively for
+                # reductions. Let's use 'Correction' with a negative quantity.
 
-                StockAdjustment.objects.create(
+                StockAdjustment.objects.create(  # pylint: disable=no-member
                     branch=branch,
                     product=product,
-                    adjustment_type='Correction',
+                    adjustment_type='Sale',
                     reference=instance.invoice_number,
                     date=timezone.now().date(),
                     quantity=-item.quantity,  # Negative for subtraction

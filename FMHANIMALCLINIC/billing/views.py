@@ -14,12 +14,14 @@ def statement_list(request):
 
 
 class BillableItemListView(ListView):
+    """View for listing all billable items."""
     model = BillableItem
     template_name = 'billing/billable_items.html'
     context_object_name = 'items'
 
 
 class BillableItemCreateView(CreateView):
+    """View for creating a new billable item."""
     model = BillableItem
     form_class = BillableItemForm
     template_name = 'billing/billable_item_form.html'
@@ -27,6 +29,7 @@ class BillableItemCreateView(CreateView):
 
 
 class BillableItemUpdateView(UpdateView):
+    """View for updating an existing billable item."""
     model = BillableItem
     form_class = BillableItemForm
     template_name = 'billing/billable_item_form.html'
@@ -34,6 +37,7 @@ class BillableItemUpdateView(UpdateView):
 
 
 def billable_item_delete(request, pk):
+    """View for deleting a billable item."""
     item = get_object_or_404(BillableItem, pk=pk)
     if request.method == 'POST':
         item.delete()
@@ -41,12 +45,14 @@ def billable_item_delete(request, pk):
 
 
 class InvoiceListView(ListView):
+    """View for listing all invoices."""
     model = Invoice
     template_name = 'billing/invoice_list.html'
     context_object_name = 'invoices'
 
 
 class InvoiceCreateView(CreateView):
+    """View for creating a new invoice with inline items."""
     model = Invoice
     form_class = InvoiceForm
     template_name = 'billing/invoice_form.html'
@@ -64,7 +70,10 @@ class InvoiceCreateView(CreateView):
         context = self.get_context_data()
         items = context['items']
         with transaction.atomic():
-            form.instance.created_by = self.request.user if self.request.user.is_authenticated else None
+            form.instance.created_by = (
+                self.request.user if self.request.user.is_authenticated else None
+            )
+            # pylint: disable=attribute-defined-outside-init
             self.object = form.save()
             if items.is_valid():
                 items.instance = self.object
@@ -73,6 +82,7 @@ class InvoiceCreateView(CreateView):
 
 
 class InvoiceUpdateView(UpdateView):
+    """View for updating an existing invoice."""
     model = Invoice
     form_class = InvoiceForm
     template_name = 'billing/invoice_form.html'
@@ -91,6 +101,7 @@ class InvoiceUpdateView(UpdateView):
         context = self.get_context_data()
         items = context['items']
         with transaction.atomic():
+            # pylint: disable=attribute-defined-outside-init
             self.object = form.save()
             if items.is_valid():
                 items.instance = self.object
@@ -99,6 +110,7 @@ class InvoiceUpdateView(UpdateView):
 
 
 def invoice_delete(request, pk):
+    """View for deleting an invoice."""
     invoice = get_object_or_404(Invoice, pk=pk)
     if request.method == 'POST':
         invoice.delete()

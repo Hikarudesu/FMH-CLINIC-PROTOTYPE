@@ -109,6 +109,16 @@ class Invoice(models.Model):
     def __str__(self):
         return str(f"Invoice {self.invoice_number} - {self.pet}")
 
+    @property
+    def total_cost(self):
+        """Total cost of all items in the invoice."""
+        return sum(item.total_cost for item in self.items.all())
+
+    @property
+    def gross_profit(self):
+        """Total gross profit (Total - Cost)."""
+        return self.subtotal - self.total_cost
+
     def save(self, *args, **kwargs):
         if not self.invoice_number:
             self.invoice_number = f"INV-{str(uuid.uuid4())[:8].upper()}"
@@ -136,19 +146,32 @@ class InvoiceItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     unit_price = models.DecimalField(
         max_digits=10, decimal_places=2, default=0.00)
+    unit_cost = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00)
     total_price = models.DecimalField(
         max_digits=10, decimal_places=2, default=0.00)
+    total_cost = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00)
+
+    @property
+    def profit(self):
+        """Gross profit for this line item."""
+        return self.total_price - self.total_cost
 
     def save(self, *args, **kwargs):
-        if self.billable_item and not self.unit_price:
-            self.unit_price = getattr(self.billable_item, 'price', 0.00)
-        if not self.description and self.billable_item:
-            self.description = getattr(self.billable_item, 'name', '')
+        if self.billable_item:
+            if not self.unit_price:
+                self.unit_price = self.billable_item.price
+            if not self.unit_cost:
+                # IMPORTANT: Snapshot the cost from the item (product/service)
+                self.unit_cost = self.billable_item.cost
+            if not self.description:
+                self.description = self.billable_item.name
 
         self.total_price = self.quantity * self.unit_price
+        self.total_cost = self.quantity * self.unit_cost
         super().save(*args, **kwargs)
+
         # Resave invoice to update totals
-        if getattr(self.invoice, 'pk', None):
-            invoice_save = getattr(self.invoice, 'save', None)
-            if invoice_save:
-                invoice_save()
+        if self.invoice and self.invoice.pk:
+            self.invoice.save()
