@@ -1,0 +1,307 @@
+{% extends 'base/portal_admin.html' %}
+{% load static %}
+{% load record_filters %}
+
+{% block title %}Record — {{ record.pet.name }}{% endblock %}
+
+{% block content %}
+
+<style>
+    .record-view {
+        max-width: 960px;
+        margin: 0 auto;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* ---- Top bar with title + QR ---- */
+    .rv-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 28px 16px;
+        border-bottom: 2px solid var(--primary);
+    }
+
+    .rv-header-title {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: 0.5px;
+    }
+
+    .rv-header-sub {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+
+    .rv-qr-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .rv-qr-wrap img {
+        width: 70px;
+        height: 70px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+    }
+
+    .rv-qr-label {
+        font-size: 10px;
+        color: var(--text-secondary);
+    }
+
+    /* ---- Action buttons ---- */
+    .rv-actions {
+        display: flex;
+        gap: 8px;
+        padding: 12px 28px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg);
+    }
+
+    /* ---- Section headers ---- */
+    .rv-section-hd {
+        background: #333;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        padding: 6px 12px;
+    }
+
+    /* ---- Info grids ---- */
+    .rv-info-grid {
+        display: grid;
+        grid-template-columns: 100px 1fr 100px 1fr;
+        border-left: 1px solid var(--border);
+        border-top: 1px solid var(--border);
+    }
+
+    .rv-info-grid.cols-6 {
+        grid-template-columns: 80px 1fr 80px 1fr 80px 1fr;
+    }
+
+    .rv-info-grid .lbl {
+        background: var(--bg);
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        padding: 6px 10px;
+        border-right: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+
+    .rv-info-grid .val {
+        font-size: 12px;
+        color: var(--text-primary);
+        padding: 6px 10px;
+        border-right: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        word-break: break-word;
+    }
+
+    /* ---- Vet banner ---- */
+    .rv-vet-banner {
+        background: #e8f4f8;
+        border-bottom: 1px solid #b8d4e3;
+        padding: 8px 12px;
+        font-size: 12px;
+        color: #2c5282;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .rv-vet-banner span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    /* ---- Records table ---- */
+    .rv-records-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .rv-records-table th {
+        background: #444;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        text-align: center;
+        padding: 8px 6px;
+        border: 1px solid #333;
+    }
+
+    .rv-records-table td {
+        border: 1px solid var(--border);
+        padding: 10px 8px;
+        font-size: 12px;
+        vertical-align: top;
+        color: var(--text-primary);
+        word-break: break-word;
+    }
+
+    .rv-records-table .col-date    { width: 11%; text-align: center; }
+    .rv-records-table .col-vitals  { width: 9%;  text-align: center; }
+    .rv-records-table .col-history { width: 22%; }
+    .rv-records-table .col-tx      { width: 24%; }
+    .rv-records-table .col-rx      { width: 24%; }
+    .rv-records-table .col-ffup    { width: 10%; text-align: center; }
+
+    /* ---- Footer bar ---- */
+    .rv-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        background: var(--bg);
+        border-top: 1px solid var(--border);
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .rv-verify-code {
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        background: #f0f0f0;
+        color: #333;
+        padding: 2px 8px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+    }
+
+    .rv-footer-text {
+        font-size: 11px;
+        color: var(--text-secondary);
+    }
+</style>
+
+<!-- Page header -->
+<div class="admin-page-header" style="margin-bottom: 20px;">
+    <div>
+        <h1>Medical Record</h1>
+        <p class="subtitle">{{ record.pet.name }} — {{ record.date_recorded|date:"F j, Y" }}</p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <a href="{% url 'records:admin_list' %}" class="admin-btn outline">
+            <i class='bx bx-arrow-back'></i> Back to List
+        </a>
+        <a href="{% url 'records:admin_edit' record.pk %}" class="admin-btn outline">
+            <i class='bx bx-edit-alt'></i> Edit
+        </a>
+        <a href="{% url 'records:download_pdf' record.pk %}" class="admin-btn primary">
+            <i class='bx bx-download'></i> Download PDF
+        </a>
+    </div>
+</div>
+
+<!-- Record Card -->
+<div class="record-view">
+
+    <!-- Header -->
+    <div class="rv-header">
+        <div>
+            <div class="rv-header-title">PET MEDICAL RECORD</div>
+            <div class="rv-header-sub">FMH Animal Clinic — Official Document</div>
+        </div>
+        <div class="rv-qr-wrap">
+            <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR Code">
+            <span class="rv-qr-label">Scan to verify</span>
+        </div>
+    </div>
+
+    <!-- Owner Information -->
+    <div class="rv-section-hd">Owner Information</div>
+    <div class="rv-info-grid">
+        <div class="lbl">Name</div>
+        <div class="val">{{ record.pet.owner.get_full_name|default:record.pet.owner.username }}</div>
+        <div class="lbl">Contact</div>
+        <div class="val">{{ record.pet.owner.phone_number|default:"—" }}</div>
+        <div class="lbl">Address</div>
+        <div class="val" style="grid-column: span 3;">{{ record.pet.owner.address|default:"—" }}</div>
+    </div>
+
+    <!-- Pet Information -->
+    <div class="rv-section-hd">Pet Information</div>
+    <div class="rv-info-grid cols-6">
+        <div class="lbl">Name</div>
+        <div class="val">{{ record.pet.name }}</div>
+        <div class="lbl">Species</div>
+        <div class="val">{{ record.pet.species|default:"—" }}</div>
+        <div class="lbl">Breed</div>
+        <div class="val">{{ record.pet.breed|default:"—" }}</div>
+        <div class="lbl">Sex</div>
+        <div class="val">{{ record.pet.get_sex_display|default:"—" }}</div>
+        <div class="lbl">Age / DOB</div>
+        <div class="val">{{ record.pet.dob_or_age|default:"—" }}</div>
+        <div class="lbl">Color</div>
+        <div class="val">{{ record.pet.color|default:"—" }}</div>
+    </div>
+
+    <!-- Visit Details -->
+    <div class="rv-section-hd">Visit Details — {{ record.date_recorded|date:"F j, Y" }}</div>
+    <div class="rv-vet-banner">
+        <span><i class='bx bx-user-md'></i> <strong>Veterinarian:</strong>&nbsp;
+            {% if record.vet %}Dr. {{ record.vet.first_name }} {{ record.vet.last_name }}{% else %}Not Assigned{% endif %}
+        </span>
+        <span><i class='bx bx-building'></i> <strong>Branch:</strong>&nbsp;{{ record.branch.name|default:"—" }}</span>
+        <span><i class='bx bx-pulse'></i> <strong>Status:</strong>&nbsp;{{ record.status }}</span>
+    </div>
+
+    <!-- Clinical Data Table -->
+    <div style="overflow-x: auto;">
+        <table class="rv-records-table">
+            <thead>
+                <tr>
+                    <th class="col-date">Date</th>
+                    <th class="col-vitals">Wt / Temp</th>
+                    <th class="col-history">History / Clinical Signs</th>
+                    <th class="col-tx">Treatment (Tx)</th>
+                    <th class="col-rx">Prescription (Rx)</th>
+                    <th class="col-ffup">Follow-Up</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="col-date">{{ record.date_recorded|date:"M j, Y" }}</td>
+                    <td class="col-vitals">
+                        {% if record.weight %}{{ record.weight }} kg{% else %}—{% endif %}<br>
+                        {% if record.temperature %}{{ record.temperature }}°C{% else %}—{% endif %}
+                    </td>
+                    <td class="col-history">{{ record.history_clinical_signs|default:"No notes recorded"|linebreaks }}</td>
+                    <td class="col-tx">{{ record.treatment|default:"—"|linebreaks }}</td>
+                    <td class="col-rx">{{ record.rx|default:"—"|linebreaks }}</td>
+                    <td class="col-ffup">{{ record.ff_up|date:"M j, Y"|default:"—" }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="rv-footer">
+        <div class="rv-footer-text">
+            Verification: <span class="rv-verify-code">{{ verification_hash }}</span>
+            &nbsp;•&nbsp; Scan QR code to confirm authenticity
+        </div>
+        <div class="rv-footer-text">
+            Viewed: {{ generated_date|date:"M j, Y" }} at {{ generated_date|time:"g:i A" }}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -2,15 +2,24 @@
 Views for handling specific actions within Medical Records.
 """
 # pylint: disable=no-member
+import base64
+import hashlib
+import io
 import json
 import re
 
+import qrcode
+from xhtml2pdf import pisa
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.contrib.staticfiles import finders
 from django.db.models import Q
-from django.http import HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
+from django.template.loader import render_to_string
 from django.utils import timezone
 
 from patients.models import Pet  # pylint: disable=no-member
@@ -19,18 +28,6 @@ from .models import MedicalRecord
 from .forms import MedicalRecordForm
 
 User = get_user_model()
-
-
-@login_required
-def print_record_view(request, pk):
-    """View to display a printer-friendly version of a medical record."""
-    record = get_object_or_404(MedicalRecord, pk=pk)
-
-    # Optional security: Only allow pet's owner or staff to view the record
-    if not request.user.is_staff and record.pet.owner != request.user:
-        return HttpResponseForbidden("You do not have permission to view this record.")
-
-    return render(request, 'records/print_record.html', {'record': record})
 
 
 @login_required
@@ -137,11 +134,8 @@ def admin_record_create(request):
                     pet.species = request.POST.get('pet_species')
 
                 pet_age_str = request.POST.get('pet_age', '')
-                digits = re.findall(r'\d+', pet_age_str)
-                if digits:
-                    pet.age = int(digits[0])
-                else:
-                    pet.age = getattr(pet, 'age', 0) or 0
+                if pet_age_str:
+                    pet.dob_or_age = pet_age_str.strip()
 
                 pet_sex_str = request.POST.get('pet_sex', '').upper()
                 sex_keys = dict(Pet.Sex.choices).keys()
@@ -186,7 +180,7 @@ def admin_record_create(request):
             'owner_name': p.owner.get_full_name() or p.owner.username,
             'owner_address': p.owner.address,
             'owner_contact': p.owner.phone_number,
-            'pet_age': p.age,
+            'pet_age': p.dob_or_age,
             'pet_color': p.color,
             'pet_species': p.species,
             'pet_breed': p.breed,
@@ -244,13 +238,14 @@ def admin_record_edit(request, pk):
                 pet.species = request.POST.get('pet_species')
 
             pet_age_str = request.POST.get('pet_age', '')
-            digits = re.findall(r'\d+', pet_age_str)
-            if digits:
-                pet.age = int(digits[0])
+            if pet_age_str:
+                pet.dob_or_age = pet_age_str.strip()
 
             pet_sex_str = request.POST.get('pet_sex', '').upper()
-            if pet_sex_str in ['MALE', 'FEMALE']:
-                pet.sex = pet_sex_str
+            if "MALE" in pet_sex_str:
+                pet.sex = "MALE"
+            elif "FEMALE" in pet_sex_str:
+                pet.sex = "FEMALE"
 
             pet.save()
             updated_record.save()
@@ -272,7 +267,7 @@ def admin_record_edit(request, pk):
             'owner_name': p.owner.get_full_name() or p.owner.username,
             'owner_address': p.owner.address,
             'owner_contact': p.owner.phone_number,
-            'pet_age': p.age,
+            'pet_age': p.dob_or_age,
             'pet_color': p.color,
             'pet_species': p.species,
             'pet_breed': p.breed,
@@ -305,3 +300,151 @@ def admin_record_delete(request, pk):
         return redirect('records:admin_list')
 
     return render(request, 'records/admin_confirm_delete.html', {'record': record})
+
+
+@login_required
+def admin_record_detail(request, pk):
+    """View to display a single medical record in a detail page."""
+    if not (request.user.is_staff or request.user.is_superuser):
+        return HttpResponseForbidden("You do not have permission to view this page.")
+
+    record = get_object_or_404(MedicalRecord, pk=pk)
+    verification_hash = generate_verification_hash(record)
+    qr_data = (
+        f"FMH Animal Clinic\n"
+        f"Record ID: {record.pk}\n"
+        f"Pet: {record.pet.name}\n"
+        f"Date: {record.date_recorded}\n"
+        f"Verification: {verification_hash}"
+    )
+    qr_code_base64 = generate_qr_code_base64(qr_data)
+
+    return render(request, 'records/admin_detail.html', {
+        'record': record,
+        'qr_code_base64': qr_code_base64,
+        'verification_hash': verification_hash,
+        'generated_date': timezone.now(),
+    })
+
+
+def generate_verification_hash(record):
+    """
+    Generate a unique verification hash for the medical record.
+    This can be used to verify authenticity of printed PDFs.
+    """
+    data = f"{record.pk}-{record.pet.name}-{record.date_recorded}-{record.created_at}"
+    return hashlib.sha256(data.encode()).hexdigest()[:12].upper()
+
+
+def _pdf_link_callback(uri, rel):
+    """
+    Resolve static file URIs to absolute filesystem paths so xhtml2pdf
+    can load CSS/image assets during PDF generation.
+    """
+    static_url = settings.STATIC_URL  # e.g. 'static/'
+    if uri.startswith(static_url):
+        relative = uri[len(static_url):]
+        path = finders.find(relative)
+        if path:
+            return path
+    return uri
+
+
+def generate_qr_code_base64(data):
+    """
+    Generate a QR code image and return as base64 encoded string.
+    """
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+    return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+
+@login_required
+def download_pdf_view(request, pk):
+    """
+    Generate and download a PDF version of the medical record with QR code.
+    """
+    record = get_object_or_404(MedicalRecord, pk=pk)
+
+    # Security: Only allow pet's owner or staff to download
+    if not request.user.is_staff and record.pet.owner != request.user:
+        return HttpResponseForbidden("You do not have permission to download this record.")
+
+    # Generate verification hash and QR code
+    verification_hash = generate_verification_hash(record)
+    
+    # QR code contains verification URL and record info
+    qr_data = (
+        f"FMH Animal Clinic\n"
+        f"Record ID: {record.pk}\n"
+        f"Pet: {record.pet.name}\n"
+        f"Date: {record.date_recorded}\n"
+        f"Verification: {verification_hash}"
+    )
+    qr_code_base64 = generate_qr_code_base64(qr_data)
+
+    # Render HTML template
+    html_content = render_to_string('records/pdf_record.html', {
+        'record': record,
+        'qr_code_base64': qr_code_base64,
+        'verification_hash': verification_hash,
+        'generated_date': timezone.now(),
+    })
+
+    # Generate PDF using xhtml2pdf
+    result = io.BytesIO()
+    pdf = pisa.pisaDocument(
+        io.BytesIO(html_content.encode('UTF-8')),
+        result,
+        link_callback=_pdf_link_callback,
+    )
+    
+    if pdf.err:
+        return HttpResponse('Error generating PDF', status=500)
+
+    # Create response
+    response = HttpResponse(result.getvalue(), content_type='application/pdf')
+    filename = f"medical_record_{record.pet.name}_{record.date_recorded}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
+
+
+@login_required
+def user_record_detail(request, pk):
+    """
+    User-facing detail view for a single medical record.
+    Only accessible by the pet's owner.
+    """
+    record = get_object_or_404(MedicalRecord, pk=pk)
+
+    if record.pet.owner != request.user:
+        return HttpResponseForbidden("You do not have permission to view this record.")
+
+    verification_hash = generate_verification_hash(record)
+    qr_data = (
+        f"FMH Animal Clinic\n"
+        f"Record ID: {record.pk}\n"
+        f"Pet: {record.pet.name}\n"
+        f"Date: {record.date_recorded}\n"
+        f"Verification: {verification_hash}"
+    )
+    qr_code_base64 = generate_qr_code_base64(qr_data)
+
+    return render(request, 'records/user_detail.html', {
+        'record': record,
+        'qr_code_base64': qr_code_base64,
+        'verification_hash': verification_hash,
+        'generated_date': timezone.now(),
+    })

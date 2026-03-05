@@ -121,7 +121,7 @@
         <th>Client (Owner)</th>
         <th>Species</th>
         <th>Breed</th>
-        <th>Age</th>
+        <th>D.O.B / Age</th>
         <th>Status</th>
         <th>Created</th>
         <th style="text-align: right;">Actions</th>
@@ -131,7 +131,7 @@
       {% for pet in pets %}
       <tr>
         <td>
-          <a href="#" onclick="openPatientDetail('{{ pet.name|escapejs }}', '{{ pet.species|default:'-'|escapejs }}', '{{ pet.breed|default:'-'|escapejs }}', '{{ pet.sex|default:'-'|escapejs }}', '{{ pet.age|escapejs }}', '{{ pet.color|default:'-'|escapejs }}', '{{ pet.owner.get_full_name|default:pet.owner.username|escapejs }}', '{{ pet.owner.phone_number|default:'-'|escapejs }}', '{{ pet.owner.email|default:'-'|escapejs }}', '{% url 'patients:admin_edit_pet' pet.id %}'); return false;" class="cell-link">{{ pet.name }}</a>
+          <a href="#" onclick="openPatientDetail('{{ pet.name|escapejs }}', '{{ pet.species|default:'-'|escapejs }}', '{{ pet.breed|default:'-'|escapejs }}', '{{ pet.sex|default:'-'|escapejs }}', '{{ pet.dob_or_age|default:'-'|escapejs }}', '{{ pet.color|default:'-'|escapejs }}', '{{ pet.owner.get_full_name|default:pet.owner.username|escapejs }}', '{{ pet.owner.phone_number|default:'-'|escapejs }}', '{{ pet.owner.email|default:'-'|escapejs }}', '{% url 'patients:admin_edit_pet' pet.id %}'); return false;" class="cell-link">{{ pet.name }}</a>
         </td>
         <td><span class="cell-secondary">{{ pet.name|truncatechars:1 }}{{ pet.id|stringformat:"02d" }}P{{ pet.owner.id|stringformat:"02d" }}X</span></td>
         <td>
@@ -142,7 +142,7 @@
         </td>
         <td>{{ pet.species|default:"-" }}</td>
         <td>{{ pet.breed|default:"-" }}</td>
-        <td>{{ pet.age }} yrs</td>
+        <td>{{ pet.dob_or_age|default:"-" }}</td>
         <td><span class="admin-badge active">Active</span></td>
         <td><span class="cell-secondary">{{ pet.created_at|date:"M j, Y" }}</span></td>
         <td>

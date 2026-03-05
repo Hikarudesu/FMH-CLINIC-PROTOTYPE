@@ -1,0 +1,123 @@
+{% load record_filters %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Medical Record - {{ record.pet.name }}</title>
+    <link rel="stylesheet" href="{% static 'css/records/pdf_record.css' %}">
+</head>
+<body>
+
+    <!-- Header -->
+    <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #333; margin-bottom: 10px;">
+        <tr>
+            <td style="vertical-align: middle; padding-bottom: 8px;">
+                <div class="title">PET MEDICAL RECORD</div>
+                <div class="subtitle">FMH Animal Clinic — Official Document</div>
+            </td>
+            <td style="vertical-align: middle; text-align: right; width: 72px; padding-bottom: 8px;">
+                <img src="data:image/png;base64,{{ qr_code_base64 }}" style="width: 60px; height: 60px;" alt="QR">
+                <div style="font-size: 6pt; color: #999; text-align: center;">Scan to verify</div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Owner Information -->
+    <div class="section-header">OWNER INFORMATION</div>
+    <table class="info-table">
+        <tr>
+            <td class="label">Name</td>
+            <td class="value">{{ record.pet.owner.get_full_name|default:record.pet.owner.username }}</td>
+            <td class="label">Contact</td>
+            <td class="value">{{ record.pet.owner.phone_number|default:"—" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Address</td>
+            <td class="value" colspan="3">{{ record.pet.owner.address|default:"—" }}</td>
+        </tr>
+    </table>
+
+    <!-- Pet Information -->
+    <div class="section-header">PET INFORMATION</div>
+    <table class="info-table">
+        <tr>
+            <td class="label">Name</td>
+            <td class="value">{{ record.pet.name }}</td>
+            <td class="label">Species</td>
+            <td class="value">{{ record.pet.species|default:"—" }}</td>
+            <td class="label">Breed</td>
+            <td class="value">{{ record.pet.breed|default:"—" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Sex</td>
+            <td class="value">{{ record.pet.get_sex_display|default:"—" }}</td>
+            <td class="label">Age/DOB</td>
+            <td class="value">{{ record.pet.dob_or_age|default:"—" }}</td>
+            <td class="label">Color</td>
+            <td class="value">{{ record.pet.color|default:"—" }}</td>
+        </tr>
+    </table>
+
+    <!-- Visit Details -->
+    <div class="section-header">VISIT DETAILS — {{ record.date_recorded|date:"F j, Y" }}</div>
+    <div class="vet-banner">
+        <strong>Attending Veterinarian:</strong> 
+        {% if record.vet %}Dr. {{ record.vet.first_name }} {{ record.vet.last_name }}{% else %}Not Assigned{% endif %}
+        &nbsp;&nbsp;•&nbsp;&nbsp;
+        <strong>Branch:</strong> {{ record.branch.name|default:"—" }}
+        &nbsp;&nbsp;•&nbsp;&nbsp;
+        <strong>Status:</strong> {{ record.status }}
+    </div>
+
+    <!-- Medical Record Table -->
+    <table class="records-table">
+        <thead>
+            <tr>
+                <th class="col-date">Date</th>
+                <th class="col-vitals">Wt / Temp</th>
+                <th class="col-history">History / Clinical Signs</th>
+                <th class="col-tx">Treatment (Tx)</th>
+                <th class="col-rx">Prescription (Rx)</th>
+                <th class="col-ffup">Follow-Up</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="col-date">{{ record.date_recorded|date:"M j, Y" }}</td>
+                <td class="col-vitals">
+                    {% if record.weight %}{{ record.weight }}kg{% else %}—{% endif %}<br>
+                    {% if record.temperature %}{{ record.temperature }}°C{% else %}—{% endif %}
+                </td>
+                <td class="col-history">
+                    <div class="text-cell">{{ record.history_clinical_signs|default:"No notes recorded"|break_long_words }}</div>
+                </td>
+                <td class="col-tx">
+                    <div class="text-cell">{{ record.treatment|default:"—"|break_long_words }}</div>
+                </td>
+                <td class="col-rx">
+                    <div class="text-cell">{{ record.rx|default:"—"|break_long_words }}</div>
+                </td>
+                <td class="col-ffup">{{ record.ff_up|date:"M j, Y"|default:"—" }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Footer -->
+    <div class="footer">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="vertical-align: middle;">
+                    <span class="footer-text">Verification:</span>
+                    <span class="verify-code">{{ verification_hash }}</span>
+                    <span class="footer-text" style="margin-left: 8px;">• Scan QR code to confirm authenticity</span>
+                </td>
+                <td style="vertical-align: middle; text-align: right;">
+                    <span class="generated">Generated: {{ generated_date|date:"M j, Y" }} at {{ generated_date|time:"g:i A" }}</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+</html>

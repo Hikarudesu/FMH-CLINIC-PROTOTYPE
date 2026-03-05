@@ -4,9 +4,9 @@
 
 {% block content %}
 
-<!-- ══════ PETS HERO HEADER ══════ -->
-<div class="pets-hero-banner">
-  <div class="pets-hero-bg-shapes">
+<!-- ══════ HERO ══════ -->
+<div class="appt-hero">
+  <div class="appt-hero-bg">
     <i class='bx bxs-dog hero-scatter sc-1'></i>
     <i class='bx bx-bone hero-scatter sc-2'></i>
     <i class='bx bx-paw hero-scatter sc-3'></i>
@@ -14,25 +14,26 @@
     <i class='bx bx-paw hero-scatter sc-5'></i>
     <i class='bx bxs-dog hero-scatter sc-6'></i>
   </div>
-  <div class="pets-hero-inner">
-    <div class="pets-hero-text">
+  <div class="appt-hero-inner">
+    <div class="appt-hero-text">
       <h1><i class='bx bx-paw'></i> My Pets</h1>
       <p>Manage your fur family — track health, appointments &amp; records</p>
     </div>
-    <a href="{% url 'patients:add_pet' %}" class="pets-hero-add-btn">
+    <a href="{% url 'patients:add_pet' %}" class="appt-hero-book-btn">
       <i class='bx bx-plus'></i> Register Pet
     </a>
   </div>
 </div>
 
 <!-- Tab Bar -->
-<div class="pets-tabs">
-  <button class="pets-tab active" onclick="switchTab('pets')">
+<div class="appt-tabs" id="petsTabs">
+  <button class="appt-tab tab-item active" onclick="switchTab('pets')">
     <i class='bx bx-grid-alt'></i> <span>Pets</span>
-    {% if pets %}<span class="pets-tab-badge">{{ pets|length }}</span>{% endif %}
+    {% if pets %}<span class="appt-tab-badge">{{ pets|length }}</span>{% endif %}
   </button>
-  <button class="pets-tab" onclick="switchTab('records')">
+  <button class="appt-tab tab-item" onclick="switchTab('records')">
     <i class='bx bx-file-blank'></i> <span>Records</span>
+    {% if medical_records %}<span class="appt-tab-badge">{{ medical_records|length }}</span>{% endif %}
   </button>
 </div>
 
@@ -54,73 +55,70 @@
   </div>
 
   <!-- Pet Cards Grid -->
-  <div class="mp-grid" id="petCardsGrid">
+  <div class="mp-grid-v2" id="petCardsGrid">
     {% for pet in pets %}
-    <div class="mp-card" data-name="{{ pet.name|lower }}" data-species="{{ pet.species|lower }}" data-breed="{{ pet.breed|lower }}"
+    <div class="mp-card-v2" data-name="{{ pet.name|lower }}" data-species="{{ pet.species|lower }}" data-breed="{{ pet.breed|lower }}"
          onclick="openPetDetail(this)"
          data-pet-name="{{ pet.name }}"
          data-pet-species="{{ pet.species }}"
          data-pet-breed="{{ pet.breed|default:'—' }}"
-         data-pet-age="{{ pet.age }}"
+         data-pet-age="{{ pet.dob_or_age|default:'—' }}"
          data-pet-sex="{{ pet.get_sex_display }}"
          data-pet-color="{{ pet.color|default:'—' }}"
          data-pet-since="{{ pet.created_at|date:'F j, Y' }}"
          data-pet-edit="{% url 'patients:edit_pet' pet.pk %}"
          data-pet-delete="{% url 'patients:delete_pet' pet.pk %}">
 
-      <!-- Accent top strip -->
-      <div class="mp-card-accent"></div>
-
-      <!-- Card body -->
-      <div class="mp-card-body-v3">
-        <!-- Avatar + identity -->
-        <div class="mp-card-identity">
-          <div class="mp-card-avatar-v3">
-            <span>{{ pet.name|make_list|first|upper }}</span>
-            <div class="mp-avatar-ring"></div>
-          </div>
-          <div class="mp-card-name-block">
-            <h3>{{ pet.name }}</h3>
-            <span class="mp-species-pill"><i class='bx bx-paw'></i> {{ pet.species }}{% if pet.breed %} &middot; {{ pet.breed }}{% endif %}</span>
-          </div>
+      <!-- Card Header with Avatar -->
+      <div class="mp-card-header-v2">
+        <div class="mp-avatar-large">
+          <span>{{ pet.name|make_list|first|upper }}</span>
         </div>
-
-        <!-- Info grid -->
-        <div class="mp-card-info-grid">
-          <div class="mp-info-item">
-            <div class="mp-info-icon"><i class='bx bx-time-five'></i></div>
-            <div class="mp-info-text">
-              <span class="mp-info-label">Age</span>
-              <span class="mp-info-value">{{ pet.age }} yr{{ pet.age|pluralize }}</span>
-            </div>
-          </div>
-          <div class="mp-info-item">
-            <div class="mp-info-icon"><i class='bx bx-male-female'></i></div>
-            <div class="mp-info-text">
-              <span class="mp-info-label">Sex</span>
-              <span class="mp-info-value">{{ pet.get_sex_display }}</span>
-            </div>
-          </div>
-          {% if pet.color %}
-          <div class="mp-info-item">
-            <div class="mp-info-icon"><i class='bx bx-palette'></i></div>
-            <div class="mp-info-text">
-              <span class="mp-info-label">Color</span>
-              <span class="mp-info-value">{{ pet.color }}</span>
-            </div>
-          </div>
-          {% endif %}
+        <div class="mp-card-title-block">
+          <h3>{{ pet.name }}</h3>
+          <span class="mp-species-tag">{{ pet.species }}{% if pet.breed %} · {{ pet.breed }}{% endif %}</span>
+        </div>
+        <div class="mp-card-arrow">
+          <i class='bx bx-chevron-right'></i>
         </div>
       </div>
 
-      <!-- Card footer -->
-      <div class="mp-card-footer-v3">
-        <span class="mp-card-since"><i class='bx bx-calendar'></i> Since {{ pet.created_at|date:"M Y" }}</span>
-        <span class="mp-card-view-btn"><i class='bx bx-chevron-right'></i></span>
+      <!-- Card Body with All Details -->
+      <div class="mp-card-details-grid">
+        <div class="mp-detail-item">
+          <div class="mp-detail-icon"><i class='bx bx-dna'></i></div>
+          <div class="mp-detail-content">
+            <span class="mp-detail-label">Breed</span>
+            <span class="mp-detail-value">{{ pet.breed|default:'Not specified' }}</span>
+          </div>
+        </div>
+        <div class="mp-detail-item">
+          <div class="mp-detail-icon"><i class='bx bx-calendar'></i></div>
+          <div class="mp-detail-content">
+            <span class="mp-detail-label">D.O.B / Age</span>
+            <span class="mp-detail-value">{{ pet.dob_or_age|default:'—' }}</span>
+          </div>
+        </div>
+        <div class="mp-detail-item">
+          <div class="mp-detail-icon"><i class='bx bx-male-female'></i></div>
+          <div class="mp-detail-content">
+            <span class="mp-detail-label">Sex</span>
+            <span class="mp-detail-value">{{ pet.get_sex_display }}</span>
+          </div>
+        </div>
+        <div class="mp-detail-item">
+          <div class="mp-detail-icon"><i class='bx bx-palette'></i></div>
+          <div class="mp-detail-content">
+            <span class="mp-detail-label">Color</span>
+            <span class="mp-detail-value">{{ pet.color|default:'Not specified' }}</span>
+          </div>
+        </div>
       </div>
 
-      <!-- Hover shimmer -->
-      <div class="mp-card-shimmer"></div>
+      <!-- Card Footer -->
+      <div class="mp-card-footer-v2">
+        <span class="mp-registered-date"><i class='bx bx-time-five'></i> Registered {{ pet.created_at|date:"M j, Y" }}</span>
+      </div>
     </div>
     {% endfor %}
   </div>
@@ -160,41 +158,81 @@
 </div>
 
 <!-- ═══════════════ MEDICAL RECORDS TAB ═══════════════ -->
-<div id="tab-records" class="tab-content" style="display: none;">
+<div id="tab-records" class="tab-content">
 
   {% if medical_records %}
-  <div class="mr-timeline">
-    {% for record in medical_records %}
-    <div class="mr-item">
-      <div class="mr-dot"></div>
-      <div class="mr-card">
-        <div class="mr-card-head">
-          <div class="mr-pet-badge">
-            <span class="mr-pet-initial">{{ record.pet.name|make_list|first|upper }}</span>
-            <span class="mr-pet-name">{{ record.pet.name }}</span>
-          </div>
-          <span class="mr-date"><i class='bx bx-calendar'></i> {{ record.date_recorded }}</span>
-        </div>
-        <div class="mr-card-body">
-          <div class="mr-field">
-            <span class="mr-field-label"><i class='bx bx-search-alt'></i> Diagnosis</span>
-            <p class="mr-field-value">{{ record.diagnosis|truncatechars:120 }}</p>
-          </div>
-          <div class="mr-field">
-            <span class="mr-field-label"><i class='bx bx-first-aid'></i> Treatment</span>
-            <p class="mr-field-value">{{ record.treatment|truncatechars:120 }}</p>
-          </div>
-        </div>
-        <div class="mr-card-foot">
-          {% if record.vet %}<span class="mr-meta"><i class='bx bx-user'></i> Dr. {{ record.vet.last_name }}</span>{% endif %}
-          {% if record.weight %}<span class="mr-meta"><i class='bx bx-body'></i> {{ record.weight }} kg</span>{% endif %}
-          {% if record.temperature %}<span class="mr-meta"><i class='bx bx-thermometer'></i> {{ record.temperature }} °C</span>{% endif %}
-          <a target="_blank" href="{% url 'records:print_record' record.pk %}" class="mr-print-btn"><i class='bx bx-printer'></i> Print</a>
-        </div>
-      </div>
-    </div>
-    {% endfor %}
+
+  <!-- Admin-style Table -->
+  <div class="usr-table-card">
+    <table class="usr-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Pet</th>
+          <th>Branch</th>
+          <th>Wt / Temp</th>
+          <th>History / Signs</th>
+          <th>Tx / Rx</th>
+          <th>Follow-up</th>
+          <th>Status</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in medical_records %}
+        <tr class="usr-table-row" data-pet-id="{{ record.pet.pk }}"
+            style="cursor:pointer;"
+            onclick="window.location='{% url 'records:user_detail' record.pk %}'">
+          <td><span class="usr-cell-primary">{{ record.date_recorded|date:"M j, Y" }}</span></td>
+          <td>
+            <div class="usr-cell-stack">
+              <span class="usr-cell-primary">{{ record.pet.name }}</span>
+              <span class="usr-cell-secondary">{{ record.pet.species }}{% if record.pet.breed %} · {{ record.pet.breed }}{% endif %}</span>
+            </div>
+          </td>
+          <td><span class="usr-cell-secondary">{{ record.branch.name|default:"—" }}</span></td>
+          <td><span class="usr-cell-secondary">{{ record.weight|default:"--" }} kg / {{ record.temperature|default:"--" }} °C</span></td>
+          <td><span class="usr-cell-secondary">{{ record.history_clinical_signs|default:"--"|truncatechars:35 }}</span></td>
+          <td>
+            <div class="usr-cell-stack">
+              <span class="usr-cell-secondary"><strong>Tx:</strong> {{ record.treatment|default:"--"|truncatechars:20 }}</span>
+              {% if record.rx %}<span class="usr-cell-secondary"><strong>Rx:</strong> {{ record.rx|truncatechars:20 }}</span>{% endif %}
+            </div>
+          </td>
+          <td><span class="usr-cell-secondary">{{ record.ff_up|date:"M j, Y"|default:"--" }}</span></td>
+          <td>
+            {% if record.status == 'Active' %}
+              <span class="usr-badge active">Active</span>
+            {% else %}
+              <span class="usr-badge inactive">{{ record.status }}</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="usr-actions-cell" onclick="event.stopPropagation();">
+              <a href="{% url 'records:user_detail' record.pk %}" class="usr-action-btn" title="View"><i class='bx bx-show'></i></a>
+              <a href="{% url 'records:download_pdf' record.pk %}" class="usr-action-btn" title="Download PDF"><i class='bx bx-download'></i></a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9">
+            <div style="text-align:center; padding:40px 20px; color:var(--text-secondary);">
+              <i class='bx bx-file' style="font-size:2.5rem;"></i>
+              <p style="margin-top:8px;">No records match the selected filter.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+
+  <!-- Record count -->
+  <div style="margin-top:12px; color:var(--text-secondary); font-size:0.8rem;">
+    Showing {{ medical_records|length }} record{% if medical_records|length != 1 %}s{% endif %}
+  </div>
+
   {% else %}
   <div class="pets-empty-hero" style="padding: 50px 20px;">
     <div class="pets-empty-visual" style="width: 110px; height: 110px;">
@@ -214,62 +252,109 @@
 
 <!-- ═══════════════ PET DETAIL MODAL ═══════════════ -->
 <div class="modal-overlay" id="petDetailModal">
-  <div class="modal-content mp-detail-modal">
-    <!-- Header -->
-    <div class="mp-detail-header">
-      <div class="mp-detail-avatar" id="modalAvatar"><span></span></div>
-      <div class="mp-detail-headline">
-        <h2 id="modalPetName"></h2>
-        <p id="modalPetSpecies"></p>
+  <div class="modal-content mp-detail-modal-v2">
+    <!-- Header with avatar and close -->
+    <div class="mp-detail-header-v2">
+      <div class="mp-detail-header-content">
+        <div class="mp-detail-avatar-v2" id="modalAvatar"><span></span></div>
+        <div class="mp-detail-headline-v2">
+          <h2 id="modalPetName"></h2>
+          <p id="modalPetSpecies"></p>
+        </div>
       </div>
-      <button class="modal-close" id="closePetDetail">&times;</button>
+      <button class="modal-close-v2" id="closePetDetail"><i class='bx bx-x'></i></button>
     </div>
 
-    <!-- Body -->
-    <div class="modal-body mp-detail-body">
-      <div class="mp-detail-grid">
-        <div class="mp-detail-field">
-          <div class="mp-detail-field-icon"><i class='bx bx-category'></i></div>
-          <div>
-            <span class="mp-detail-label">Breed</span>
-            <span class="mp-detail-value" id="modalBreed"></span>
+    <!-- Body with info cards -->
+    <div class="modal-body mp-detail-body-v2">
+      <div class="mp-info-cards-grid">
+        <!-- Name Card -->
+        <div class="mp-info-card">
+          <div class="mp-info-card-icon">
+            <i class='bx bx-id-card'></i>
+          </div>
+          <div class="mp-info-card-content">
+            <span class="mp-info-card-label">NAME</span>
+            <span class="mp-info-card-value" id="modalNameCard"></span>
           </div>
         </div>
-        <div class="mp-detail-field">
-          <div class="mp-detail-field-icon"><i class='bx bx-time-five'></i></div>
-          <div>
-            <span class="mp-detail-label">Age</span>
-            <span class="mp-detail-value" id="modalAge"></span>
+
+        <!-- Species Card -->
+        <div class="mp-info-card">
+          <div class="mp-info-card-icon">
+            <i class='bx bx-purchase-tag-alt'></i>
+          </div>
+          <div class="mp-info-card-content">
+            <span class="mp-info-card-label">SPECIES</span>
+            <span class="mp-info-card-value" id="modalSpeciesCard"></span>
           </div>
         </div>
-        <div class="mp-detail-field">
-          <div class="mp-detail-field-icon"><i class='bx bx-male-female'></i></div>
-          <div>
-            <span class="mp-detail-label">Sex</span>
-            <span class="mp-detail-value" id="modalSex"></span>
+
+        <!-- Breed Card -->
+        <div class="mp-info-card">
+          <div class="mp-info-card-icon">
+            <i class='bx bx-dna'></i>
+          </div>
+          <div class="mp-info-card-content">
+            <span class="mp-info-card-label">BREED</span>
+            <span class="mp-info-card-value" id="modalBreed"></span>
           </div>
         </div>
-        <div class="mp-detail-field">
-          <div class="mp-detail-field-icon"><i class='bx bx-palette'></i></div>
-          <div>
-            <span class="mp-detail-label">Color</span>
-            <span class="mp-detail-value" id="modalColor"></span>
+
+        <!-- Age Card -->
+        <div class="mp-info-card">
+          <div class="mp-info-card-icon">
+            <i class='bx bx-time-five'></i>
+          </div>
+          <div class="mp-info-card-content">
+            <span class="mp-info-card-label">AGE</span>
+            <span class="mp-info-card-value" id="modalAge"></span>
           </div>
         </div>
-        <div class="mp-detail-field full-width">
-          <div class="mp-detail-field-icon"><i class='bx bx-calendar'></i></div>
-          <div>
-            <span class="mp-detail-label">Registered Since</span>
-            <span class="mp-detail-value" id="modalSince"></span>
+
+        <!-- Sex Card -->
+        <div class="mp-info-card">
+          <div class="mp-info-card-icon">
+            <i class='bx bx-male-female'></i>
+          </div>
+          <div class="mp-info-card-content">
+            <span class="mp-info-card-label">SEX</span>
+            <span class="mp-info-card-value" id="modalSex"></span>
+          </div>
+        </div>
+
+        <!-- Color Card -->
+        <div class="mp-info-card">
+          <div class="mp-info-card-icon">
+            <i class='bx bx-palette'></i>
+          </div>
+          <div class="mp-info-card-content">
+            <span class="mp-info-card-label">COLOR</span>
+            <span class="mp-info-card-value" id="modalColor"></span>
+          </div>
+        </div>
+
+        <!-- Registered Since Card (full width) -->
+        <div class="mp-info-card mp-info-card-full">
+          <div class="mp-info-card-icon">
+            <i class='bx bx-calendar'></i>
+          </div>
+          <div class="mp-info-card-content">
+            <span class="mp-info-card-label">REGISTERED SINCE</span>
+            <span class="mp-info-card-value" id="modalSince"></span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Footer Actions -->
-    <div class="modal-footer mp-detail-footer">
-      <a id="modalEditLink" href="#" class="btn-action outline"><i class='bx bx-edit-alt'></i> Edit</a>
-      <a id="modalDeleteLink" href="#" class="btn-action danger-outline"><i class='bx bx-trash'></i> Remove</a>
+    <div class="modal-footer mp-detail-footer-v2">
+      <a id="modalEditLink" href="#" class="mp-action-btn-outline">
+        <i class='bx bx-edit-alt'></i> Edit
+      </a>
+      <a id="modalDeleteLink" href="#" class="mp-action-btn-danger">
+        <i class='bx bx-trash'></i> Remove
+      </a>
     </div>
   </div>
 </div>
@@ -327,6 +412,8 @@ function openPetDetail(card) {
   document.getElementById('modalAvatar').querySelector('span').textContent = card.dataset.petName.charAt(0).toUpperCase();
   document.getElementById('modalPetName').textContent = card.dataset.petName;
   document.getElementById('modalPetSpecies').textContent = card.dataset.petSpecies;
+  document.getElementById('modalNameCard').textContent = card.dataset.petName;
+  document.getElementById('modalSpeciesCard').textContent = card.dataset.petSpecies;
   document.getElementById('modalBreed').textContent = card.dataset.petBreed;
   document.getElementById('modalAge').textContent = card.dataset.petAge + ' year(s)';
   document.getElementById('modalSex').textContent = card.dataset.petSex;
@@ -335,6 +422,19 @@ function openPetDetail(card) {
   document.getElementById('modalEditLink').href = card.dataset.petEdit;
   document.getElementById('modalDeleteLink').href = card.dataset.petDelete;
   modal.classList.add('active');
+}
+
+/* ── Filter Records by Pet ── */
+function filterRecords(petId, btn) {
+  document.querySelectorAll('.mr-pet-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.usr-table-row').forEach(function(row) {
+    if (petId === 'all' || row.dataset.petId === petId) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
 }
 </script>
 

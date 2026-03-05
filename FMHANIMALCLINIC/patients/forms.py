@@ -7,7 +7,7 @@ class PetForm(forms.ModelForm):
 
     class Meta:
         model = Pet
-        fields = ['name', 'species', 'breed', 'age', 'sex', 'color']
+        fields = ['name', 'species', 'breed', 'dob_or_age', 'sex', 'color']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'pf-input', 'placeholder': ' ',
@@ -18,8 +18,8 @@ class PetForm(forms.ModelForm):
             'breed': forms.TextInput(attrs={
                 'class': 'pf-input', 'placeholder': ' ',
             }),
-            'age': forms.NumberInput(attrs={
-                'class': 'pf-input', 'placeholder': ' ', 'min': 0,
+            'dob_or_age': forms.TextInput(attrs={
+                'class': 'pf-input', 'placeholder': ' ',
             }),
             'sex': forms.Select(attrs={
                 'class': 'pf-input',
@@ -35,7 +35,7 @@ class AdminPetForm(forms.ModelForm):
 
     class Meta:
         model = Pet
-        fields = ['owner', 'name', 'species', 'breed', 'age', 'sex', 'color']
+        fields = ['owner', 'name', 'species', 'breed', 'dob_or_age', 'sex', 'color']
         widgets = {
             'owner': forms.Select(attrs={
                 'class': 'pf-input',
@@ -49,8 +49,8 @@ class AdminPetForm(forms.ModelForm):
             'breed': forms.TextInput(attrs={
                 'class': 'pf-input', 'placeholder': ' ',
             }),
-            'age': forms.NumberInput(attrs={
-                'class': 'pf-input', 'placeholder': ' ', 'min': 0,
+            'dob_or_age': forms.TextInput(attrs={
+                'class': 'pf-input', 'placeholder': ' ',
             }),
             'sex': forms.Select(attrs={
                 'class': 'pf-input',

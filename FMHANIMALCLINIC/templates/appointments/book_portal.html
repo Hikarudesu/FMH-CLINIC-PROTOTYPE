@@ -63,10 +63,22 @@
           <label for="{{ form.owner_name.id_for_label }}">Owner Name *</label>
           {% if form.owner_name.errors %}<span class="book-field-error">{{ form.owner_name.errors.0 }}</span>{% endif %}
         </div>
+        <div class="book-field {% if form.owner_email.errors %}has-error{% endif %}">
+          <div class="book-field-icon"><i class='bx bx-envelope'></i></div>
+          {{ form.owner_email }}
+          <label for="{{ form.owner_email.id_for_label }}">Email</label>
+          {% if form.owner_email.errors %}<span class="book-field-error">{{ form.owner_email.errors.0 }}</span>{% endif %}
+        </div>
         <div class="book-field {% if form.owner_phone.errors %}has-error{% endif %}">
           <div class="book-field-icon"><i class='bx bx-phone'></i></div>
           {{ form.owner_phone }}
           <label for="{{ form.owner_phone.id_for_label }}">Phone</label>
+        </div>
+        <div class="book-field full-width {% if form.owner_address.errors %}has-error{% endif %}">
+          <div class="book-field-icon textarea-icon"><i class='bx bx-map'></i></div>
+          {{ form.owner_address }}
+          <label for="{{ form.owner_address.id_for_label }}">Address</label>
+          {% if form.owner_address.errors %}<span class="book-field-error">{{ form.owner_address.errors.0 }}</span>{% endif %}
         </div>
 
         <!-- Pet Selector -->
@@ -80,7 +92,7 @@
                     data-name="{{ pet.name }}" 
                     data-species="{{ pet.species }}"
                     data-breed="{{ pet.breed }}"
-                    data-dob="{% if pet.age %}{{ pet.age }} years{% endif %}"
+                    data-dob="{{ pet.dob_or_age }}"
                     data-sex="{{ pet.sex }}"
                     data-color="{{ pet.color }}">
               {{ pet.name }} ({{ pet.species }})
