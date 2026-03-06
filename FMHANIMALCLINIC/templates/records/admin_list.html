@@ -4,29 +4,124 @@
 {% block title %}Medical Records{% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<div class="admin-page-header">
-  <div>
-    <h1>Medical Records</h1>
-    <p class="subtitle">Manage and track all medical records</p>
+
+<style>
+  .rec-action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .rec-action-grid .action-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-secondary); font-size: 15px;
+    text-decoration: none; transition: all 0.2s ease;
+  }
+  .rec-action-grid .action-btn:hover {
+    background: var(--primary); color: #fff;
+    border-color: var(--primary); transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(44,122,123,0.25);
+  }
+  .rec-action-grid .action-btn.danger:hover {
+    background: #e53e3e; color: #fff;
+    border-color: #e53e3e; box-shadow: 0 4px 10px rgba(229,62,62,0.25);
+  }
+  /* Search Dropdown */
+  .search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    margin-top: 4px;
+  }
+  .search-dropdown.active { display: block; }
+  .search-dropdown-item {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--border);
+  }
+  .search-dropdown-item:last-child { border-bottom: none; }
+  .search-dropdown-item:hover, .search-dropdown-item.active { background: var(--bg); }
+  .search-dropdown-item i {
+    font-size: 18px;
+    color: var(--primary);
+    width: 24px;
+    text-align: center;
+  }
+  .search-dropdown-item .item-info { flex: 1; }
+  .search-dropdown-item .item-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .search-dropdown-item .item-sub {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+  .search-dropdown-empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+  }
+  .search-dropdown-highlight {
+    background: rgba(0,150,136,0.15);
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+</style>
+
+<!-- ══════ RECORDS HERO ══════ -->
+<div class="appt-hero">
+  <div class="appt-hero-bg">
+    <i class='bx bx-plus-medical hero-scatter sc-1'></i>
+    <i class='bx bx-heart hero-scatter sc-2'></i>
+    <i class='bx bx-file-medical hero-scatter sc-3'></i>
+    <i class='bx bx-pulse hero-scatter sc-4'></i>
+    <i class='bx bx-shield-plus hero-scatter sc-5'></i>
+    <i class='bx bx-heart-circle hero-scatter sc-6'></i>
   </div>
-  <div class="admin-header-actions">
-    <form method="get" action="{% url 'records:admin_list' %}" style="margin: 0; display: flex; align-items: center; gap: 8px;">
-      <div class="admin-search-box">
-        <i class='bx bx-search'></i>
-        <input type="text" name="q" value="{{ search_query }}" placeholder="Search records..." class="admin-search-input">
-      </div>
-      <select name="branch" onchange="this.form.submit()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-primary); font-size: 14px; font-family: inherit; cursor: pointer; min-width: 160px;">
-        <option value="">All Branches</option>
-        {% for branch in branches %}
-          <option value="{{ branch.id }}" {% if selected_branch == branch.id|stringformat:"d" %}selected{% endif %}>{{ branch.name }}</option>
-        {% endfor %}
-      </select>
-    </form>
-    <a href="{% url 'records:admin_create' %}" class="admin-btn primary">
-      <i class='bx bx-plus'></i> Create New
+  <div class="appt-hero-inner">
+    <div class="appt-hero-text">
+      <h1><i class='bx bx-clipboard'></i> Medical Records</h1>
+      <p>Manage and track all pet medical records across branches</p>
+    </div>
+    <a href="{% url 'records:admin_create' %}" class="appt-hero-book-btn">
+      <i class='bx bx-plus-circle'></i> Create New
     </a>
   </div>
+</div>
+
+<!-- ══════ FILTER BAR ══════ -->
+<div class="appt-filter-bar">
+  <form method="get" action="{% url 'records:admin_list' %}" class="appt-filter-form" style="width:100%;" autocomplete="off">
+    <div class="appt-search-wrap" style="position:relative; flex:1; min-width:200px;">
+      <i class='bx bx-search appt-search-icon'></i>
+      <input type="text" name="q" value="{{ search_query }}" placeholder="Search by pet, owner, signs…" id="recordSearch" class="appt-search-input">
+      <div class="search-dropdown" id="recordSearchDropdown"></div>
+    </div>
+    <div class="appt-filter-divider"></div>
+    <select name="branch" onchange="this.form.submit()" class="appt-filter-select">
+      <option value="">All Branches</option>
+      {% for branch in branches %}
+        <option value="{{ branch.id }}" {% if selected_branch == branch.id|stringformat:"d" %}selected{% endif %}>{{ branch.name }}</option>
+      {% endfor %}
+    </select>
+    {% if search_query or selected_branch %}
+    <div class="appt-filter-divider"></div>
+    <a href="{% url 'records:admin_list' %}" class="appt-clear-btn"><i class='bx bx-x'></i> Clear</a>
+    {% endif %}
+  </form>
 </div>
 
 <!-- Main Table Container -->
@@ -34,7 +129,7 @@
   <table class="admin-table">
     <thead>
       <tr>
-        <th>Date</th>
+        <th>Last Visit</th>
         <th>Pet</th>
         <th>Branch</th>
         <th>Wt / Temp</th>
@@ -47,9 +142,16 @@
     </thead>
     <tbody>
       {% for record in records %}
-      <tr style="cursor: pointer;" onclick="window.location='{% url 'records:admin_detail' record.pk %}';">
+      {% with latest=record.latest_entry %}
+      <tr class="searchable-row" style="cursor: pointer;"
+          data-pet="{{ record.pet.name }}"
+          data-owner="{{ record.pet.owner.get_full_name|default:record.pet.owner.username }}"
+          data-branch="{{ record.branch.name|default:'' }}"
+          data-href="{% url 'records:admin_detail' record.pk %}"
+          onclick="window.location='{% url 'records:admin_detail' record.pk %}';">
         <td>
-          <span class="cell-primary">{{ record.date_recorded|date:"M j, Y" }}</span>
+          <span class="cell-primary">{{ latest.date_recorded|date:"M j, Y"|default:"—" }}</span>
+          <span class="cell-secondary" style="font-size:11px;">{{ record.entries.count }} entr{{ record.entries.count|pluralize:'y,ies' }}</span>
         </td>
         <td>
           <div class="cell-stack">
@@ -61,19 +163,19 @@
           <span class="cell-secondary">{{ record.branch.name|default:"—" }}</span>
         </td>
         <td>
-          <span class="cell-secondary">{{ record.weight|default:"--" }} kg / {{ record.temperature|default:"--" }} °C</span>
+          <span class="cell-secondary">{{ latest.weight|default:"--" }} kg / {{ latest.temperature|default:"--" }} °C</span>
         </td>
         <td>
-          <span class="cell-secondary">{{ record.history_clinical_signs|default:"--"|truncatechars:35 }}</span>
+          <span class="cell-secondary">{{ latest.history_clinical_signs|default:"--"|truncatechars:35 }}</span>
         </td>
         <td>
           <div class="cell-stack">
-            <span class="cell-secondary"><strong>Tx:</strong> {{ record.treatment|default:"--"|truncatechars:20 }}</span>
-            {% if record.rx %}<span class="cell-secondary"><strong>Rx:</strong> {{ record.rx|truncatechars:20 }}</span>{% endif %}
+            <span class="cell-secondary"><strong>Tx:</strong> {{ latest.treatment|default:"--"|truncatechars:20 }}</span>
+            {% if latest.rx %}<span class="cell-secondary"><strong>Rx:</strong> {{ latest.rx|truncatechars:20 }}</span>{% endif %}
           </div>
         </td>
         <td>
-          <span class="cell-secondary">{{ record.ff_up|date:"M j, Y"|default:"--" }}</span>
+          <span class="cell-secondary">{{ latest.ff_up|date:"M j, Y"|default:"--" }}</span>
         </td>
         <td>
           {% if record.status == 'Active' %}
@@ -83,13 +185,15 @@
           {% endif %}
         </td>
         <td>
-          <div class="actions-cell" onclick="event.stopPropagation();">
+          <div onclick="event.stopPropagation();" class="rec-action-grid">
+            <a href="{% url 'records:admin_edit' record.pk %}" class="action-btn" title="Edit Record"><i class='bx bx-edit-alt'></i></a>
+            <a href="{% url 'records:admin_delete' record.pk %}" class="action-btn danger" title="Delete Record"><i class='bx bx-trash'></i></a>
+            <a href="{% url 'records:admin_add_entry' record.pk %}" class="action-btn" title="Add Visit Entry"><i class='bx bx-plus'></i></a>
             <a href="{% url 'records:download_pdf' record.pk %}" class="action-btn" title="Download PDF"><i class='bx bx-download'></i></a>
-            <a href="{% url 'records:admin_edit' record.pk %}" class="action-btn" title="Edit"><i class='bx bx-edit-alt'></i></a>
-            <a href="{% url 'records:admin_delete' record.pk %}" class="action-btn danger" title="Delete"><i class='bx bx-trash'></i></a>
           </div>
         </td>
       </tr>
+      {% endwith %}
       {% empty %}
       <tr>
         <td colspan="9">
@@ -118,4 +222,104 @@
   </div>
 </div>
 {% endif %}
+
+<script>
+// ══════ RECORDS SEARCH AUTOCOMPLETE + LIVE FILTER ══════
+(function initRecordSearch() {
+  const searchInput = document.getElementById('recordSearch');
+  const dropdown    = document.getElementById('recordSearchDropdown');
+  if (!searchInput || !dropdown) return;
+
+  function buildData() {
+    return Array.from(document.querySelectorAll('tr.searchable-row')).map(row => ({
+      pet   : row.dataset.pet    || '',
+      owner : row.dataset.owner  || '',
+      branch: row.dataset.branch || '',
+      href  : row.dataset.href   || '#',
+      row   : row
+    }));
+  }
+
+  let records = buildData();
+
+  function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  function highlight(text, q) {
+    if (!q) return text;
+    return text.replace(new RegExp('(' + esc(q) + ')', 'gi'),
+      '<span class="search-dropdown-highlight">$1</span>');
+  }
+
+  function renderDropdown(results, q) {
+    if (!results.length) {
+      dropdown.innerHTML = '<div class="search-dropdown-empty"><i class="bx bx-search-alt"></i> No records found</div>';
+    } else {
+      dropdown.innerHTML = results.slice(0, 8).map(r => `
+        <div class="search-dropdown-item" data-href="${r.href}">
+          <i class='bx bx-file-blank'></i>
+          <div class="item-info">
+            <div class="item-name">${highlight(r.pet, q)}</div>
+            <div class="item-sub">${highlight(r.owner, q)} &bull; ${r.branch || '—'}</div>
+          </div>
+          <i class='bx bx-chevron-right' style="color:var(--text-secondary);"></i>
+        </div>`).join('');
+      dropdown.querySelectorAll('.search-dropdown-item').forEach(item => {
+        item.addEventListener('mousedown', e => { e.preventDefault(); window.location = item.dataset.href; });
+      });
+    }
+    dropdown.style.display = 'block';
+    dropdown.classList.add('active');
+  }
+
+  function hideDropdown() {
+    dropdown.classList.remove('active');
+    dropdown.style.display = '';
+  }
+
+  function filterRows(q) {
+    records.forEach(r => {
+      const pl = r.pet.toLowerCase(); const ol = r.owner.toLowerCase(); const bl = r.branch.toLowerCase();
+      const matches = !q || pl.includes(q) || ol.includes(q) || bl.includes(q);
+      r.row.style.display = matches ? '' : 'none';
+    });
+  }
+
+  searchInput.addEventListener('input', function () {
+    const q = this.value.toLowerCase().trim();
+    filterRows(q);
+    if (!q) { hideDropdown(); return; }
+    const results = records.filter(r =>
+      r.pet.toLowerCase().includes(q) || r.owner.toLowerCase().includes(q) || r.branch.toLowerCase().includes(q));
+    renderDropdown(results, q);
+  });
+
+  searchInput.addEventListener('focus', function () {
+    if (this.value.trim()) this.dispatchEvent(new Event('input'));
+  });
+
+  searchInput.addEventListener('blur', function () {
+    setTimeout(hideDropdown, 150);
+  });
+
+  searchInput.addEventListener('keydown', function (e) {
+    const items = Array.from(dropdown.querySelectorAll('.search-dropdown-item'));
+    let idx = items.findIndex(i => i.classList.contains('active'));
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      items[idx]?.classList.remove('active');
+      idx = (idx + 1) % items.length;
+      items[idx]?.classList.add('active');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[idx]?.classList.remove('active');
+      idx = (idx - 1 + items.length) % items.length;
+      items[idx]?.classList.add('active');
+    } else if (e.key === 'Enter' && idx >= 0) {
+      e.preventDefault(); items[idx]?.click();
+    } else if (e.key === 'Escape') {
+      hideDropdown();
+    }
+  });
+}());
+</script>
 {% endblock %}

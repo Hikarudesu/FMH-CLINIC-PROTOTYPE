@@ -5,6 +5,65 @@
 
 {% block content %}
 
+<style>
+  /* Search Dropdown */
+  .search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    margin-top: 4px;
+  }
+  .search-dropdown.active { display: block; }
+  .search-dropdown-item {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--border);
+  }
+  .search-dropdown-item:last-child { border-bottom: none; }
+  .search-dropdown-item:hover, .search-dropdown-item.active { background: var(--bg); }
+  .search-dropdown-item i {
+    font-size: 18px;
+    color: var(--primary);
+    width: 24px;
+    text-align: center;
+  }
+  .search-dropdown-item .item-info { flex: 1; }
+  .search-dropdown-item .item-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .search-dropdown-item .item-sub {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+  .search-dropdown-empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+  }
+  .search-dropdown-highlight {
+    background: rgba(0,150,136,0.15);
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+</style>
+
 <!-- ══════ APPOINTMENTS HERO ══════ -->
 <div class="appt-hero">
   <div class="appt-hero-bg">
@@ -46,9 +105,10 @@
 <div class="appt-filter-bar">
   <form method="GET" id="apptFilterForm" class="appt-filter-form">
     <input type="hidden" name="view" id="currentViewInput" value="{{ current_view }}">
-    <div class="appt-search-wrap">
+    <div class="appt-search-wrap" style="position:relative;">
       <i class='bx bx-search appt-search-icon'></i>
-      <input type="text" name="q" placeholder="Search by owner, pet, or email..." value="{{ q }}" id="apptSearch" class="appt-search-input">
+      <input type="text" name="q" placeholder="Search by owner, pet, or email..." value="{{ q }}" id="apptSearch" class="appt-search-input" autocomplete="off">
+      <div class="search-dropdown" id="apptSearchDropdown"></div>
     </div>
     <div class="appt-filter-divider"></div>
     <div class="appt-filter-group">
@@ -100,7 +160,12 @@
     </thead>
     <tbody>
       {% for appt in appointments %}
-      <tr class="accordion-row" data-id="{{ appt.pk }}">
+      <tr class="accordion-row searchable-row" data-id="{{ appt.pk }}"
+          data-owner="{{ appt.owner_name }}"
+          data-pet="{{ appt.pet_name }}"
+          data-branch="{{ appt.branch.name }}"
+          data-vet="{{ appt.preferred_vet.full_name|default:'Any available' }}"
+          data-details-id="details-{{ appt.pk }}">
         <td>
           <div class="avatar-cell">
             <div class="avatar-sm">{{ appt.owner_name|make_list|first|upper }}</div>
@@ -481,5 +546,119 @@ document.querySelectorAll('.accordion-row').forEach(row => {
 const CALENDAR_API = "{% url 'appointments:admin_calendar_api' %}";
 </script>
 <script src="{% static 'js/appointments/admin_calendar.js' %}"></script>
+
+<script>
+// ══════ APPOINTMENTS SEARCH AUTOCOMPLETE + LIVE FILTER ══════
+(function initApptSearch() {
+  const searchInput = document.getElementById('apptSearch');
+  const dropdown   = document.getElementById('apptSearchDropdown');
+  if (!searchInput || !dropdown) return;
+
+  // Collect data from data-* attributes on each searchable row
+  function buildData() {
+    const list = [];
+    document.querySelectorAll('tr.searchable-row').forEach(row => {
+      const editLink = row.querySelector('a[href*="edit"]');
+      list.push({
+        owner : row.dataset.owner  || '',
+        pet   : row.dataset.pet    || '',
+        branch: row.dataset.branch || '',
+        vet   : row.dataset.vet    || '',
+        href  : editLink ? editLink.getAttribute('href') : '#',
+        row   : row,
+        detailsId: row.dataset.detailsId || ''
+      });
+    });
+    return list;
+  }
+
+  let appts = buildData();
+
+  function esc(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  function highlight(text, q) {
+    if (!q) return text;
+    return text.replace(new RegExp('(' + esc(q) + ')', 'gi'),
+      '<span class="search-dropdown-highlight">$1</span>');
+  }
+
+  function renderDropdown(results, q) {
+    if (!results.length) {
+      dropdown.innerHTML = '<div class="search-dropdown-empty"><i class="bx bx-search-alt"></i> No appointments found</div>';
+    } else {
+      dropdown.innerHTML = results.slice(0, 8).map(a => `
+        <div class="search-dropdown-item" data-href="${a.href}">
+          <i class='bx bx-calendar-event'></i>
+          <div class="item-info">
+            <div class="item-name">${highlight(a.owner, q)}</div>
+            <div class="item-sub">${highlight(a.pet, q)} &bull; ${a.branch || '—'}</div>
+          </div>
+          <i class='bx bx-chevron-right' style="color:var(--text-secondary);"></i>
+        </div>`).join('');
+      dropdown.querySelectorAll('.search-dropdown-item').forEach(item => {
+        item.addEventListener('mousedown', e => { e.preventDefault(); window.location = item.dataset.href; });
+      });
+    }
+    dropdown.style.display = 'block';
+    dropdown.classList.add('active');
+  }
+
+  function hideDropdown() {
+    dropdown.classList.remove('active');
+    dropdown.style.display = '';
+  }
+
+  function filterRows(q) {
+    appts.forEach(a => {
+      const ol = a.owner.toLowerCase(); const pl = a.pet.toLowerCase();
+      const bl = a.branch.toLowerCase(); const vl = a.vet.toLowerCase();
+      const matches = !q || ol.includes(q) || pl.includes(q) || bl.includes(q) || vl.includes(q);
+      a.row.style.display = matches ? '' : 'none';
+      if (!matches && a.detailsId) {
+        const detailRow = document.getElementById(a.detailsId);
+        if (detailRow) detailRow.style.display = 'none';
+      }
+    });
+  }
+
+  searchInput.addEventListener('input', function () {
+    const q = this.value.toLowerCase().trim();
+    filterRows(q);
+    if (!q) { hideDropdown(); return; }
+    const results = appts.filter(a =>
+      a.owner.toLowerCase().includes(q) || a.pet.toLowerCase().includes(q) ||
+      a.branch.toLowerCase().includes(q) || a.vet.toLowerCase().includes(q));
+    renderDropdown(results, q);
+  });
+
+  searchInput.addEventListener('focus', function () {
+    if (this.value.trim()) this.dispatchEvent(new Event('input'));
+  });
+
+  searchInput.addEventListener('blur', function () {
+    setTimeout(hideDropdown, 150);
+  });
+
+  searchInput.addEventListener('keydown', function (e) {
+    const items = Array.from(dropdown.querySelectorAll('.search-dropdown-item'));
+    let idx = items.findIndex(i => i.classList.contains('active'));
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      items[idx]?.classList.remove('active');
+      idx = (idx + 1) % items.length;
+      items[idx]?.classList.add('active');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[idx]?.classList.remove('active');
+      idx = (idx - 1 + items.length) % items.length;
+      items[idx]?.classList.add('active');
+    } else if (e.key === 'Enter' && idx >= 0) {
+      e.preventDefault(); items[idx]?.click();
+    } else if (e.key === 'Escape') {
+      hideDropdown();
+    }
+  });
+}());
+</script>
 
 {% endblock %}
