@@ -11,8 +11,9 @@ from accounts.models import User
 from branches.models import Branch
 from notifications.models import Notification
 from notifications.email_utils import send_reservation_notification
-from .models import Product, StockAdjustment, Reservation
-from .forms import StockAdjustmentForm, ProductForm
+from .models import Product, StockAdjustment, Reservation, StockTransfer
+from .forms import StockAdjustmentForm, ProductForm, StockTransferRequestForm
+from django.db.models import Q
 
 
 @login_required
@@ -339,3 +340,82 @@ def cancel_reservation_view(request, pk):
     messages.success(
         request, "Reservation cancelled. Stock has been restored.")
     return redirect('inventory:catalog')
+
+
+@login_required
+def stock_transfer_list_view(request):
+    """List all stock transfers for the user's branch."""
+    if hasattr(request.user, 'staff_profile') and request.user.staff_profile.branch:
+        branch = request.user.staff_profile.branch
+        transfers = StockTransfer.objects.filter(
+            Q(source_product__branch=branch) | Q(destination_branch=branch)
+        ).select_related('source_product', 'destination_branch')
+    else:
+        # Admin or HQ staff sees all
+        transfers = StockTransfer.objects.all().select_related(
+            'source_product', 'destination_branch')
+
+    context = {
+        'transfers': transfers,
+        'page_title': 'Stock Transfers'
+    }
+    return render(request, 'inventory/stock_transfer_list.html', context)
+
+
+@login_required
+def stock_transfer_request_view(request):
+    """View to request stock from another branch."""
+    if not hasattr(request.user, 'staff_profile') or not request.user.staff_profile.branch:
+        messages.error(
+            request, "You must be assigned to a branch to request transfers.")
+        return redirect('inventory:management')
+
+    branch = request.user.staff_profile.branch
+
+    if request.method == 'POST':
+        form = StockTransferRequestForm(request.POST, user_branch=branch)
+        if form.is_valid():
+            transfer = form.save(commit=False)
+            transfer.requested_by = request.user
+            transfer.save()
+            messages.success(
+                request, f"Requested {transfer.quantity}x {transfer.source_product.name} from {transfer.source_product.branch.name}.")
+            return redirect('inventory:transfer_list')
+    else:
+        form = StockTransferRequestForm(user_branch=branch)
+
+    context = {
+        'form': form,
+        'page_title': 'Request Stock Transfer',
+        'branch': branch
+    }
+    return render(request, 'inventory/stock_transfer_form.html', context)
+
+
+@login_required
+def stock_transfer_update_status_view(request, pk):
+    """Update status of a stock transfer (Approve, Reject, Complete)."""
+    transfer = get_object_or_404(StockTransfer, pk=pk)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        try:
+            if action == 'approve':
+                transfer.status = StockTransfer.Status.APPROVED
+                transfer.processed_by = request.user
+                transfer.save()
+                messages.success(request, f"Transfer #{transfer.pk} approved.")
+            elif action == 'reject':
+                transfer.status = StockTransfer.Status.REJECTED
+                transfer.processed_by = request.user
+                transfer.save()
+                messages.success(request, f"Transfer #{transfer.pk} rejected.")
+            elif action == 'complete':
+                transfer.complete_transfer(request.user)
+                messages.success(
+                    request, f"Transfer #{transfer.pk} completed successfully.")
+        except ValueError as e:
+            messages.error(request, str(e))
+
+    return redirect('inventory:transfer_list')

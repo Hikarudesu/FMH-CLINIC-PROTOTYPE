@@ -1,0 +1,69 @@
+{% extends 'base/portal_admin.html' %}
+{% load static %}
+
+{% block title %}Request Stock Transfer{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Request Stock Transfer</h1>
+    <p class="page-subtitle">Request missing stock from other branches to {{ branch.name }}</p>
+  </div>
+  <a href="{% url 'inventory:transfer_list' %}" class="btn-action text">
+    <i class='bx bx-x'></i> Cancel
+  </a>
+</div>
+
+<div class="dashboard-grid" style="grid-template-columns: 1fr; max-width: 600px; margin: 0 auto;">
+  <div class="dashboard-card" style="box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+    <form method="post" class="portal-form">
+      {% csrf_token %}
+      
+      <!-- General Form Errors -->
+      {% if form.non_field_errors %}
+      <div class="form-error-alert" style="background: #ffebee; color: #c62828; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem;">
+          {{ form.non_field_errors }}
+      </div>
+      {% endif %}
+
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label for="{{ form.destination_branch.id_for_label }}" style="font-weight: 600; font-size: 0.85rem; color: var(--text-2); display: block; margin-bottom: 8px;">Requesting Branch (Destination)</label>
+        {{ form.destination_branch }}
+        {% if form.destination_branch.errors %}
+            <div style="color: #c62828; font-size: 0.8rem; margin-top: 5px;">{{ form.destination_branch.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label for="{{ form.source_product.id_for_label }}" style="font-weight: 600; font-size: 0.85rem; color: var(--text-2); display: block; margin-bottom: 8px;">Source Product (From another branch)</label>
+        {{ form.source_product }}
+        {% if form.source_product.errors %}
+            <div style="color: #c62828; font-size: 0.8rem; margin-top: 5px;">{{ form.source_product.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label for="{{ form.quantity.id_for_label }}" style="font-weight: 600; font-size: 0.85rem; color: var(--text-2); display: block; margin-bottom: 8px;">Quantity to Transfer</label>
+        {{ form.quantity }}
+        {% if form.quantity.errors %}
+            <div style="color: #c62828; font-size: 0.8rem; margin-top: 5px;">{{ form.quantity.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 30px;">
+        <label for="{{ form.notes.id_for_label }}" style="font-weight: 600; font-size: 0.85rem; color: var(--text-2); display: block; margin-bottom: 8px;">Notes</label>
+        {{ form.notes }}
+        {% if form.notes.errors %}
+            <div style="color: #c62828; font-size: 0.8rem; margin-top: 5px;">{{ form.notes.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 15px; border-top: 1px solid var(--border);">
+        <button type="submit" class="btn-action primary" style="width: 100%; padding: 12px; font-size: 1rem;">
+          <i class='bx bx-send'></i> Submit Request
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

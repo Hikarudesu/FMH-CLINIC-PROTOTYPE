@@ -1,0 +1,93 @@
+{% extends 'base/portal_admin.html' %}
+{% load static %}
+
+{% block title %}Stock Transfers{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h1>Stock Transfers</h1>
+    <p class="page-subtitle">Manage inventory transfers between branches</p>
+  </div>
+  <div class="page-header-actions" style="display: flex; gap: 12px; align-items: center;">
+    <a href="{% url 'inventory:transfer_request' %}" class="btn-action primary">
+      <i class='bx bx-git-pull-request'></i> Request Transfer
+    </a>
+  </div>
+</div>
+
+<div class="dashboard-grid" style="grid-template-columns: 1fr;">
+  <div class="dashboard-card" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="portal-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Source Branch</th>
+            <th>Destination Branch</th>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Requested By</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for transfer in transfers %}
+          <tr>
+            <td style="white-space: nowrap;">{{ transfer.created_at|date:"M j, Y g:i A" }}</td>
+            <td style="font-weight: 600;">{{ transfer.source_product.branch.name }}</td>
+            <td style="font-weight: 600;">{{ transfer.destination_branch.name }}</td>
+            <td>{{ transfer.source_product.name }}</td>
+            <td style="font-weight: 700;">{{ transfer.quantity }}</td>
+            <td>{{ transfer.requested_by.get_full_name|default:transfer.requested_by.username }}</td>
+            <td>
+                <span style="
+                    padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
+                    {% if transfer.status == 'Pending' %}background: #fff3e0; color: #e65100;
+                    {% elif transfer.status == 'Approved' %}background: #e3f2fd; color: #1565c0;
+                    {% elif transfer.status == 'Rejected' %}background: #ffebee; color: #c62828;
+                    {% elif transfer.status == 'Completed' %}background: #e8f5e9; color: #2e7d32;
+                    {% endif %}
+                ">{{ transfer.status }}</span>
+            </td>
+            <td>
+                {% if transfer.status == 'Pending' and request.user.staff_profile.branch == transfer.source_product.branch or request.user.is_superuser %}
+                <div style="display: flex; gap: 5px;">
+                    <form method="POST" action="{% url 'inventory:transfer_update_status' transfer.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="approve">
+                        <button type="submit" class="btn-action primary" style="padding: 4px 10px; font-size: 0.75rem;">Approve</button>
+                    </form>
+                    <form method="POST" action="{% url 'inventory:transfer_update_status' transfer.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reject">
+                        <button type="submit" class="btn-action text" style="padding: 4px 10px; font-size: 0.75rem; color: #c62828;">Reject</button>
+                    </form>
+                </div>
+                {% elif transfer.status == 'Approved' and request.user.staff_profile.branch == transfer.destination_branch or request.user.is_superuser %}
+                <form method="POST" action="{% url 'inventory:transfer_update_status' transfer.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="complete">
+                    <button type="submit" class="btn-action primary" style="padding: 4px 10px; font-size: 0.75rem;">Mark Received</button>
+                </form>
+                {% else %}
+                <span style="color: var(--text-3); font-size: 0.8rem;">—</span>
+                {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 50px; color: var(--text-3);">
+                <i class='bx bx-transfer' style="font-size: 2.5rem; display: block; margin-bottom: 10px; opacity: 0.5;"></i>
+                No transfers found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

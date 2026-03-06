@@ -5,10 +5,12 @@ import uuid
 
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 from branches.models import Branch
+from utils.models import SoftDeleteModel
 
 
-class Product(models.Model):
+class Product(SoftDeleteModel):
     """Represents a product or medication in the clinic's inventory."""
 
     ITEM_TYPE_CHOICES = [
@@ -81,6 +83,7 @@ class Product(models.Model):
         return 0
 
     def save(self, *args, **kwargs):
+        """Override save to auto-generate SKU and verify availability."""
         if self.stock_quantity == 0:
             self.is_available = False
         else:
@@ -99,13 +102,15 @@ class StockAdjustment(models.Model):
     """Tracks history of stock changes (purchases, returns, damages)."""
 
     ADJUSTMENT_TYPES = [
-        ('Purchase', 'Purchase'),
-        ('Return', 'Return'),
-        ('Damage', 'Damaged Stock'),
-        ('Expiration', 'Expired'),
-        ('Correction', 'Inventory Correction'),
-        ('Sale', 'Sale'),
-        ('Reservation', 'Reservation'),
+        ('Purchase', 'Add Stock (New Purchase / Delivery)'),
+        ('Return', 'Add Stock (Customer Return)'),
+        ('Transfer In', 'Add Stock (Received from another branch)'),
+        ('Damage', 'Remove Stock (Damaged / Broken)'),
+        ('Expiration', 'Remove Stock (Expired)'),
+        ('Sale', 'Remove Stock (Sold offline / manual)'),
+        ('Reservation', 'Remove Stock (Reserved)'),
+        ('Transfer Out', 'Remove Stock (Sent to another branch)'),
+        ('Correction', 'Inventory Update (Manual Count Correction)'),
     ]
 
     branch = models.ForeignKey(
@@ -115,16 +120,17 @@ class StockAdjustment(models.Model):
 
     adjustment_type = models.CharField(
         max_length=20, choices=ADJUSTMENT_TYPES, default='Purchase')
-    reference = models.CharField(max_length=50, help_text="e.g., PO123")
+    reference = models.CharField(
+        max_length=50, help_text="e.g., Receipt #, Invoice ID, or N/A")
     date = models.DateField()
 
     quantity = models.IntegerField(
-        help_text="Positive for additions, negative for subtractions")
+        help_text="Enter the number of items. Removals are calculated automatically.")
     cost_per_unit = models.DecimalField(
         max_digits=10, decimal_places=2, default=0.00)
 
     reason = models.CharField(
-        max_length=255, blank=True, null=True, help_text="e.g., Damaged stock")
+        max_length=255, blank=True, null=True, help_text="e.g., Damaged, Expired, Returned")
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -146,7 +152,7 @@ class StockAdjustment(models.Model):
 
             # Enforce negative sign for deduction types
             if self.adjustment_type in [
-                'Damage', 'Expiration', 'Sale', 'Reservation'
+                'Damage', 'Expiration', 'Sale', 'Reservation', 'Transfer Out'
             ]:
                 if self.quantity > 0:
                     self.quantity = -self.quantity
@@ -165,6 +171,7 @@ class Reservation(models.Model):
     """A product reservation made by a user from the digital catalog."""
 
     class Status(models.TextChoices):
+        """Status choices for a Reservation."""
         PENDING = 'Pending', 'Pending'
         CONFIRMED = 'Confirmed', 'Confirmed'
         CANCELLED = 'Cancelled', 'Cancelled'
@@ -187,6 +194,7 @@ class Reservation(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """Meta options for Reservation."""
         ordering = ['-created_at']
 
     def __str__(self):
@@ -194,3 +202,110 @@ class Reservation(models.Model):
             f"Reservation #{self.pk} — {self.product.name} "
             f"x{self.quantity} ({self.status})"
         )
+
+
+class StockTransfer(models.Model):
+    """Tracks inventory transfers between branches."""
+
+    class Status(models.TextChoices):
+        """Status choices for a StockTransfer."""
+        PENDING = 'Pending', 'Pending'
+        APPROVED = 'Approved', 'Approved'
+        REJECTED = 'Rejected', 'Rejected'
+        COMPLETED = 'Completed', 'Completed'
+
+    source_product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name='outgoing_transfers')
+    destination_branch = models.ForeignKey(
+        Branch, on_delete=models.CASCADE, related_name='incoming_transfers')
+
+    quantity = models.PositiveIntegerField(default=1)
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.PENDING)
+
+    notes = models.TextField(
+        blank=True, help_text="Reason for transfer or special instructions")
+
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+        related_name='requested_transfers'
+    )
+    processed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='processed_transfers'
+    )
+
+    class Meta:
+        """Meta options for StockTransfer."""
+        ordering = ['-created_at']
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return (
+            f"Transfer {self.quantity}x {self.source_product.name} "
+            f"to {self.destination_branch.name}"
+        )
+
+    def complete_transfer(self, user):
+        """Executes the transfer of stock if status changes to COMPLETED."""
+        if self.status not in (self.Status.PENDING, self.Status.APPROVED):
+            raise ValueError(
+                "Transfer must be pending or approved to complete.")
+
+        # Deduct from source branch
+        # pylint: disable=no-member
+        if self.source_product.stock_quantity < self.quantity:
+            raise ValueError("Insufficient stock in source branch.")
+
+        self.source_product.stock_quantity -= self.quantity
+        self.source_product.save()
+
+        # Add a stock adjustment for source
+        StockAdjustment.objects.create(
+            branch=self.source_product.branch,
+            product=self.source_product,
+            adjustment_type='Transfer Out',
+            reference=f"TRF-OUT-{self.pk}",
+            date=timezone.now().date(),
+            quantity=self.quantity * -1,
+            reason=f"Transfer to {self.destination_branch.name}",
+            cost_per_unit=self.source_product.unit_cost
+        )
+
+        # Add to destination branch
+        dest_product, _created = Product.objects.get_or_create(
+            sku=self.source_product.sku,
+            branch=self.destination_branch,
+            defaults={
+                'name': self.source_product.name,
+                'description': self.source_product.description,
+                'item_type': self.source_product.item_type,
+                'barcode': self.source_product.barcode,
+                'manufacturer': self.source_product.manufacturer,
+                'unit_cost': self.source_product.unit_cost,
+                'price': self.source_product.price,
+                'min_stock_level': self.source_product.min_stock_level,
+                'expiration_date': self.source_product.expiration_date,
+            }
+        )
+
+        dest_product.stock_quantity += self.quantity
+        dest_product.save()
+
+        # Add a stock adjustment for destination
+        StockAdjustment.objects.create(
+            branch=self.destination_branch,
+            product=dest_product,
+            adjustment_type='Transfer In',
+            reference=f"TRF-IN-{self.pk}",
+            date=timezone.now().date(),
+            quantity=self.quantity,
+            reason=f"Transfer from {self.source_product.branch.name}",
+            cost_per_unit=dest_product.unit_cost
+        )
+
+        self.status = self.Status.COMPLETED
+        self.processed_by = user
+        self.save()

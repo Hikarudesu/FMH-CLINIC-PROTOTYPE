@@ -2,9 +2,10 @@
 
 from django.db import models
 from branches.models import Branch
+from utils.models import SoftDeleteModel
 
 
-class BillableItem(models.Model):
+class BillableItem(SoftDeleteModel):
     """Represents a clinic service (consultations, procedures, grooming, etc.)."""
 
     name = models.CharField(max_length=200)

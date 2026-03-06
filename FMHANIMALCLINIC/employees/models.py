@@ -1,17 +1,20 @@
+"""Models for the employees app: Staff members, Vet schedules, and recurring shifts."""
 from datetime import timedelta
 
 from django.db import models
 from django.utils import timezone
 from branches.models import Branch
+from utils.models import SoftDeleteModel
 
 # Default lookahead for auto-generation (days)
 SCHEDULE_LOOKAHEAD_DAYS = 30
 
 
-class StaffMember(models.Model):
+class StaffMember(SoftDeleteModel):
     """Represents a staff member at the clinic."""
 
     class Position(models.TextChoices):
+        """Staff positions choices."""
         VETERINARIAN = 'VETERINARIAN', 'Veterinarian'
         VET_ASSISTANT = 'VET_ASSISTANT', 'Vet Assistant'
         RECEPTIONIST = 'RECEPTIONIST', 'Receptionist'
@@ -57,23 +60,27 @@ class StaffMember(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """Meta options for StaffMember model."""
         ordering = ['last_name', 'first_name']
 
     def __str__(self):
+        # pylint: disable=no-member
         return f'{self.first_name} {self.last_name} — {self.get_position_display()}'
 
     @property
     def full_name(self):
+        """Returns the full name of the staff member."""
         return f'{self.first_name} {self.last_name}'
 
     @property
     def is_vet(self):
+        """Returns True if the staff member is a veterinarian."""
         return self.position == self.Position.VETERINARIAN
 
     @property
     def license_expired(self):
+        """Returns True if the vet license has expired."""
         if self.license_expiry:
-            from django.utils import timezone
             return self.license_expiry < timezone.now().date()
         return False
 
@@ -82,6 +89,7 @@ class VetSchedule(models.Model):
     """Represents a vet/staff schedule entry for a specific day."""
 
     class ShiftType(models.TextChoices):
+        """Schedules Shift Types choices."""
         GENERAL = 'GENERAL', 'General'
         SURGERY = 'SURGERY', 'Surgery Only'
         TELEHEALTH = 'TELEHEALTH', 'Telehealth'
@@ -113,10 +121,12 @@ class VetSchedule(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        """Meta options for VetSchedule model."""
         ordering = ['date', 'start_time']
         # Removed unique_together to allow multiple shifts per vet per day
 
     def __str__(self):
+        # pylint: disable=no-member
         return f'{self.staff.full_name} — {self.date} ({self.start_time}–{self.end_time})'
 
 
@@ -124,6 +134,7 @@ class RecurringSchedule(models.Model):
     """Weekly recurring schedule template for automatic schedule generation."""
 
     class DayOfWeek(models.IntegerChoices):
+        """Days of the week choices for schedules."""
         MONDAY = 0, 'Monday'
         TUESDAY = 1, 'Tuesday'
         WEDNESDAY = 2, 'Wednesday'
@@ -160,10 +171,15 @@ class RecurringSchedule(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        """Meta options for RecurringSchedule model."""
         ordering = ['staff', 'day_of_week', 'start_time']
 
     def __str__(self):
-        return f'{self.staff.full_name} — {self.get_day_of_week_display()} ({self.start_time}–{self.end_time})'
+        # pylint: disable=no-member
+        return (
+            f'{self.staff.full_name} — {self.get_day_of_week_display()} '
+            f'({self.start_time}–{self.end_time})'
+        )
 
     def save(self, *args, **kwargs):
         """Override save to auto-generate VetSchedule entries for the next N days."""
@@ -174,7 +190,8 @@ class RecurringSchedule(models.Model):
     def generate_entries(self, days_ahead=SCHEDULE_LOOKAHEAD_DAYS):
         """Generate VetSchedule entries from this template for the next N days."""
         today = timezone.now().date()
-        start_date = self.effective_from if self.effective_from and self.effective_from > today else today
+        start = self.effective_from
+        start_date = start if start and start > today else today
         end_date = start_date + timedelta(days=days_ahead)
         if self.effective_until and end_date > self.effective_until:
             end_date = self.effective_until
@@ -183,6 +200,7 @@ class RecurringSchedule(models.Model):
         current = start_date
         while current <= end_date:
             if current.weekday() == self.day_of_week:
+                # pylint: disable=no-member
                 # Skip if entry already exists (overlap detection)
                 exists = VetSchedule.objects.filter(
                     staff=self.staff,
@@ -207,8 +225,12 @@ class RecurringSchedule(models.Model):
 
     @classmethod
     def regenerate_all(cls, days_ahead=SCHEDULE_LOOKAHEAD_DAYS):
-        """Regenerate entries for ALL active recurring templates. Can be called via management command or cron."""
+        """
+        Regenerate entries for ALL active recurring templates. 
+        Can be called via management command or cron.
+        """
         total = 0
+        # pylint: disable=no-member
         for tmpl in cls.objects.filter(is_active=True).select_related('staff', 'branch'):
             total += tmpl.generate_entries(days_ahead=days_ahead)
         return total

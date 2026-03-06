@@ -38,17 +38,17 @@
 
       <!-- Type -->
       <div class="form-group" style="margin:0;">
-        <label for="{{ form.adjustment_type.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Type*</label>
+        <label for="{{ form.adjustment_type.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Adjustment Reason*</label>
         {{ form.adjustment_type }}
-        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Adjustment type affects stock</span>
+        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Select the reason for adding or removing stock</span>
         {% if form.adjustment_type.errors %}<small style="color: var(--danger);">{{ form.adjustment_type.errors.as_text }}</small>{% endif %}
       </div>
 
       <!-- Reference -->
       <div class="form-group" style="margin:0;">
-        <label for="{{ form.reference.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Reference*</label>
+        <label for="{{ form.reference.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Reference Number / ID*</label>
         {{ form.reference }}
-        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Unique identifier (e.g., PO number)</span>
+        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Receipt number, invoice ID, or type "N/A" if none</span>
         {% if form.reference.errors %}<small style="color: var(--danger);">{{ form.reference.errors.as_text }}</small>{% endif %}
       </div>
 
@@ -61,17 +61,17 @@
 
       <!-- Reason -->
       <div class="form-group" style="margin:0;">
-        <label for="{{ form.reason.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Reason</label>
+        <label for="{{ form.reason.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Additional Notes (Optional)</label>
         {{ form.reason }}
-        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Optional explanation</span>
+        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Any extra details about this adjustment</span>
         {% if form.reason.errors %}<small style="color: var(--danger);">{{ form.reason.errors.as_text }}</small>{% endif %}
       </div>
 
       <!-- Cost Per Unit -->
       <div class="form-group" style="margin:0;">
-        <label for="{{ form.cost_per_unit.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Cost per Unit*</label>
+        <label for="{{ form.cost_per_unit.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Cost per Unit</label>
         {{ form.cost_per_unit }}
-        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Total: 0.00</span>
+        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Relevant for purchases (leave as 0.00 if N/A)</span>
         {% if form.cost_per_unit.errors %}<small style="color: var(--danger);">{{ form.cost_per_unit.errors.as_text }}</small>{% endif %}
       </div>
 
@@ -79,6 +79,7 @@
       <div class="form-group" style="margin:0;">
         <label for="{{ form.quantity.id_for_label }}" style="font-size: 0.9rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; display: block;">Quantity*</label>
         {{ form.quantity }}
+        <span style="font-size: 0.75rem; color: var(--text-3); margin-top: 6px; display: block;">Enter amount (System will automatically add or remove based on reason)</span>
         {% if form.quantity.errors %}<small style="color: var(--danger);">{{ form.quantity.errors.as_text }}</small>{% endif %}
       </div>
 

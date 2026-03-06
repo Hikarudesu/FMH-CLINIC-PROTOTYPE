@@ -249,7 +249,7 @@
           <div class="sidebar-item has-submenu">
             <a
               href="#"
-              class="sidebar-link {% if 'billing' in request.path or 'inventory' in request.path %}active{% endif %}"
+              class="sidebar-link {% if 'billing' in request.path or 'inventory' in request.path or 'payslips' in request.path %}active{% endif %}"
               id="financeDropdownToggle"
             >
               <i class="bx bx-wallet"></i><span>Finance</span>
@@ -257,10 +257,16 @@
             </a>
             <div class="sidebar-submenu" id="financeSubmenu">
               <a href="{% url 'billing:billable_items' %}" class="sidebar-submenu-link {% if request.resolver_match.url_name == 'billable_items' %}active{% endif %}">
-                <i class="bx bx-briefcase"></i><span>Services</span>
+                <i class="bx bx-briefcase"></i><span>Clinic Services</span>
               </a>
-              <a href="{% url 'inventory:management' %}" class="sidebar-submenu-link {% if 'inventory' in request.path %}active{% endif %}">
-                <i class='bx bx-package'></i><span>Inventory</span>
+              <a href="{% url 'inventory:management' %}" class="sidebar-submenu-link {% if request.resolver_match.url_name == 'management' %}active{% endif %}">
+                <i class='bx bx-package'></i><span>Inventory Management</span>
+              </a>
+              <a href="{% url 'inventory:transfer_list' %}" class="sidebar-submenu-link {% if 'transfers' in request.path %}active{% endif %}">
+                <i class='bx bx-transfer'></i><span>Stock Transfers</span>
+              </a>
+              <a href="{% url 'employees:payslip_list' %}" class="sidebar-submenu-link {% if 'payslip' in request.path %}active{% endif %}">
+                <i class="bx bx-receipt"></i><span>Payslips</span>
               </a>
             </div>
           </div>
@@ -279,9 +285,6 @@
               </a>
               <a href="{% url 'employees:schedule' %}" class="sidebar-submenu-link {% if request.resolver_match.url_name == 'schedule' %}active{% endif %}">
                 <i class="bx bx-calendar-event"></i><span>Schedule</span>
-              </a>
-              <a href="{% url 'employees:payslip_list' %}" class="sidebar-submenu-link {% if 'payslip' in request.resolver_match.url_name %}active{% endif %}">
-                <i class="bx bx-receipt"></i><span>Payslips</span>
               </a>
               <a href="{% url 'branches:list' %}" class="sidebar-submenu-link {% if 'branches' in request.resolver_match.app_name %}active{% endif %}">
                 <i class="bx bx-building-house"></i><span>Manage Branches</span>

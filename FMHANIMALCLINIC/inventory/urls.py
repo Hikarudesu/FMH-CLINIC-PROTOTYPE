@@ -23,4 +23,9 @@ urlpatterns = [
          name='confirm_reservation'),
     path('reservation/<int:pk>/cancel/', views.cancel_reservation_view,
          name='cancel_reservation'),
+    path('transfers/', views.stock_transfer_list_view, name='transfer_list'),
+    path('transfers/request/', views.stock_transfer_request_view,
+         name='transfer_request'),
+    path('transfers/<int:pk>/update-status/',
+         views.stock_transfer_update_status_view, name='transfer_update_status'),
 ]
