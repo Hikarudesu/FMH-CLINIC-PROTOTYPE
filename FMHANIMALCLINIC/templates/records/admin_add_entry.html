@@ -1,0 +1,101 @@
+{% extends 'base/portal_admin.html' %}
+
+{% block title %}Add Visit Entry — {{ record.pet.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom: 24px;">
+    <div>
+        <h1 style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">
+            Add Visit Entry
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 14px; margin: 0;">
+            Adding a new visit row to <strong>{{ record.pet.name }}</strong>'s medical record card.
+        </p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'records:admin_detail' record.pk %}" class="btn btn-outline"
+           style="display: flex; align-items: center; gap: 8px; border: 1px solid var(--border);
+                  background: var(--surface); color: var(--text-secondary); padding: 8px 16px;
+                  border-radius: var(--radius-sm); font-weight: 500; text-decoration: none;">
+            <i class='bx bx-arrow-back'></i> Back to Record
+        </a>
+    </div>
+</div>
+
+<div class="dashboard-card" style="padding: 32px; max-width: 900px; margin: 0 auto; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+
+    <div style="border-bottom: 2px solid var(--primary); padding-bottom: 16px; margin-bottom: 24px;">
+        <h2 style="color: var(--primary); font-family: monospace; font-size: 18px; letter-spacing: 1px; margin: 0;">
+            NEW VISIT ENTRY — {{ record.pet.name|upper }}
+        </h2>
+        <p style="margin: 4px 0 0; font-size: 13px; color: var(--text-secondary);">
+            Owner: {{ record.pet.owner.get_full_name|default:record.pet.owner.username }}
+            &nbsp;|&nbsp; Branch: {{ record.branch.name|default:"—" }}
+        </p>
+    </div>
+
+    <style>
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        .form-control-custom { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; background-color: var(--bg); color: var(--text-primary); font-size: 14px; font-family: inherit; transition: all 0.2s; box-sizing: border-box; }
+        .form-control-custom:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(44,122,123,0.1); outline: none; }
+        textarea.form-control-custom { min-height: 80px; resize: vertical; }
+    </style>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="form-group">
+                <label class="form-label">Date</label>
+                {{ form.date_recorded }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">FF-UP (Follow-Up Date)</label>
+                {{ form.ff_up }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">Weight (kg)</label>
+                {{ form.weight }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">Temperature (°C)</label>
+                {{ form.temperature }}
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">History / Clinical Signs</label>
+            {{ form.history_clinical_signs }}
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">Treatment (Tx)</label>
+            {{ form.treatment }}
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">Prescription (Rx)</label>
+            {{ form.rx }}
+        </div>
+
+        {% for error in form.non_field_errors %}
+        <div style="color: var(--accent); font-size: 13px; margin-bottom: 12px;">{{ error }}</div>
+        {% endfor %}
+
+        <script>
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                if (!el.classList.contains('form-control-custom')) el.classList.add('form-control-custom');
+            });
+        </script>
+
+        <div style="padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary"
+                    style="background: var(--primary); color: white; padding: 12px 32px;
+                           border-radius: var(--radius-sm); font-weight: 600; border: none;
+                           font-size: 15px; cursor: pointer;">
+                <i class='bx bx-plus'></i> Add Entry to Record
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -8,8 +8,7 @@
 
 <style>
     .record-view {
-        max-width: 960px;
-        margin: 0 auto;
+        width: 100%;
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: var(--radius-lg);
@@ -155,12 +154,60 @@
         word-break: break-word;
     }
 
-    .rv-records-table .col-date    { width: 11%; text-align: center; }
-    .rv-records-table .col-vitals  { width: 9%;  text-align: center; }
-    .rv-records-table .col-history { width: 22%; }
-    .rv-records-table .col-tx      { width: 24%; }
-    .rv-records-table .col-rx      { width: 24%; }
+    .rv-records-table .col-date    { width: 10%; text-align: center; }
+    .rv-records-table .col-vitals  { width: 8%;  text-align: center; }
+    .rv-records-table .col-history { width: 21%; }
+    .rv-records-table .col-tx      { width: 21%; }
+    .rv-records-table .col-rx      { width: 21%; }
     .rv-records-table .col-ffup    { width: 10%; text-align: center; }
+    .rv-records-table .col-actions { width: 9%;  text-align: center; }
+
+    /* ── Row action buttons ── */
+    .rv-action-wrap {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        align-items: center;
+    }
+    .rv-btn-edit,
+    .rv-btn-delete {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        border: 1.5px solid transparent;
+        cursor: pointer;
+        font-size: 15px;
+        transition: all 0.18s ease;
+        background: none;
+        text-decoration: none;
+    }
+    .rv-btn-edit {
+        color: var(--primary);
+        border-color: rgba(99,90,255,0.25);
+        background: rgba(99,90,255,0.07);
+    }
+    .rv-btn-edit:hover {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99,90,255,0.3);
+    }
+    .rv-btn-delete {
+        color: #e53e3e;
+        border-color: rgba(229,62,62,0.25);
+        background: rgba(229,62,62,0.07);
+    }
+    .rv-btn-delete:hover {
+        background: #e53e3e;
+        color: #fff;
+        border-color: #e53e3e;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(229,62,62,0.3);
+    }
 
     /* ---- Footer bar ---- */
     .rv-footer {
@@ -189,24 +236,363 @@
         font-size: 11px;
         color: var(--text-secondary);
     }
+
+    /* ── Detail Hero ── */
+    .rec-detail-hero {
+        position: relative;
+        background: var(--primary-gradient);
+        border-radius: var(--radius-lg);
+        padding: 28px 32px 24px;
+        margin-bottom: 22px;
+        overflow: hidden;
+        animation: fadeUp 0.4s var(--ease) both;
+    }
+    .rec-detail-hero-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+    }
+    .rec-detail-hero-inner {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .rec-detail-hero-text h1 {
+        color: #fff;
+        font-size: 1.45rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 4px;
+    }
+    .rec-detail-hero-text h1 i { font-size: 1.5rem; }
+    .rec-detail-hero-text p {
+        color: rgba(255,255,255,0.75);
+        font-size: 0.85rem;
+        margin: 0;
+    }
+    .rec-hero-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    /* Ghost back button */
+    .rec-hero-btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 18px;
+        background: rgba(255,255,255,0.12);
+        backdrop-filter: blur(8px);
+        border: 1.5px solid rgba(255,255,255,0.25);
+        color: rgba(255,255,255,0.85);
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: all 0.25s ease;
+    }
+    .rec-hero-btn-back:hover {
+        background: rgba(255,255,255,0.22);
+        color: #fff;
+        border-color: rgba(255,255,255,0.45);
+        transform: translateY(-1px);
+    }
+    /* Edit button */
+    .rec-hero-btn-edit {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 20px;
+        background: rgba(255,255,255,0.18);
+        backdrop-filter: blur(8px);
+        border: 1.5px solid rgba(255,255,255,0.35);
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 700;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.25s ease;
+    }
+    .rec-hero-btn-edit:hover {
+        background: rgba(255,255,255,0.30);
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    /* Add Entry button */
+    .rec-hero-btn-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 22px;
+        background: rgba(255,255,255,0.18);
+        backdrop-filter: blur(8px);
+        border: 1.5px solid rgba(255,255,255,0.35);
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 700;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.25s ease;
+    }
+    .rec-hero-btn-add:hover {
+        background: rgba(255,255,255,0.30);
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    /* Download PDF — solid white */
+    .rec-hero-btn-pdf {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 22px;
+        background: #fff;
+        border: 1.5px solid #fff;
+        color: var(--primary);
+        font-size: 0.85rem;
+        font-weight: 700;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.25s ease;
+    }
+    .rec-hero-btn-pdf:hover {
+        background: rgba(255,255,255,0.88);
+        color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    }
+    .rec-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.25);
+        color: rgba(255,255,255,0.9);
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 20px;
+        margin-top: 6px;
+    }
+
+    /* ── Entry rows ── */
+    .rv-entry-row {
+        transition: background 0.15s ease;
+    }
+    .rv-entry-row:hover {
+        background: #f7f9ff;
+    }
+
+    /* ── Edit Entry Modal ── */
+    .entry-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        z-index: 9000;
+        align-items: center;
+        justify-content: center;
+    }
+    .entry-modal-overlay.open {
+        display: flex;
+    }
+    @keyframes emSlideUp {
+        from { opacity: 0; transform: translateY(20px) scale(0.98); }
+        to   { opacity: 1; transform: translateY(0)    scale(1);    }
+    }
+    .entry-modal {
+        background: var(--surface);
+        border-radius: 18px;
+        box-shadow: 0 28px 70px rgba(0,0,0,0.28);
+        width: 90%;
+        max-width: 700px;
+        max-height: 90vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        animation: emSlideUp 0.25s ease both;
+    }
+    .entry-modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px 18px;
+        border-bottom: 1px solid var(--border);
+        background: var(--primary-gradient);
+        border-radius: 18px 18px 0 0;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+    .entry-modal-head h3 {
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 800;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .entry-modal-close {
+        background: rgba(255,255,255,0.2);
+        border: 1.5px solid rgba(255,255,255,0.3);
+        color: #fff;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s, transform 0.15s;
+        line-height: 1;
+    }
+    .entry-modal-close:hover {
+        background: rgba(255,255,255,0.35);
+        transform: rotate(90deg);
+    }
+    .entry-modal-body {
+        padding: 22px 24px 4px;
+    }
+    .em-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+    .em-row.single { grid-template-columns: 1fr; }
+    .em-field label {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+    .em-field input,
+    .em-field textarea {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1.5px solid var(--border);
+        border-radius: 9px;
+        padding: 9px 11px;
+        font-size: 13px;
+        color: var(--text-primary);
+        background: var(--bg);
+        font-family: inherit;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .em-field input:focus,
+    .em-field textarea:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99,90,255,0.12);
+        outline: none;
+    }
+    .em-field textarea {
+        resize: vertical;
+        min-height: 75px;
+    }
+    .entry-modal-foot {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        padding: 16px 24px 22px;
+        border-top: 1px solid var(--border);
+        margin-top: 8px;
+    }
+    .em-btn-cancel {
+        padding: 9px 22px;
+        background: transparent;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .em-btn-cancel:hover {
+        border-color: var(--text-primary);
+        color: var(--text-primary);
+    }
+    .em-btn-save {
+        padding: 9px 26px;
+        background: var(--primary-gradient);
+        border: none;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #fff;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        transition: all 0.2s;
+    }
+    .em-btn-save:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(99,90,255,0.28);
+    }
+    .em-click-hint {
+        padding: 7px 14px;
+        background: #eef5ff;
+        border-bottom: 1px solid #cfe2ff;
+        font-size: 11px;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+    }
 </style>
 
-<!-- Page header -->
-<div class="admin-page-header" style="margin-bottom: 20px;">
-    <div>
-        <h1>Medical Record</h1>
-        <p class="subtitle">{{ record.pet.name }} — {{ record.date_recorded|date:"F j, Y" }}</p>
+<!-- ══════ DETAIL HERO ══════ -->
+<div class="rec-detail-hero">
+    <div class="rec-detail-hero-bg">
+        <i class='bx bx-plus-medical hero-scatter sc-1'></i>
+        <i class='bx bx-heart hero-scatter sc-2'></i>
+        <i class='bx bx-file-medical hero-scatter sc-3'></i>
+        <i class='bx bx-pulse hero-scatter sc-4'></i>
+        <i class='bx bx-shield-plus hero-scatter sc-5'></i>
+        <i class='bx bx-heart-circle hero-scatter sc-6'></i>
     </div>
-    <div style="display: flex; gap: 8px;">
-        <a href="{% url 'records:admin_list' %}" class="admin-btn outline">
-            <i class='bx bx-arrow-back'></i> Back to List
-        </a>
-        <a href="{% url 'records:admin_edit' record.pk %}" class="admin-btn outline">
-            <i class='bx bx-edit-alt'></i> Edit
-        </a>
-        <a href="{% url 'records:download_pdf' record.pk %}" class="admin-btn primary">
-            <i class='bx bx-download'></i> Download PDF
-        </a>
+    <div class="rec-detail-hero-inner">
+        <div class="rec-detail-hero-text">
+            <h1><i class='bx bx-clipboard'></i> {{ record.pet.name }}'s Medical Record</h1>
+            <p>{{ record.pet.owner.get_full_name|default:record.pet.owner.username }} &nbsp;·&nbsp; {{ record.branch.name|default:"No Branch" }}</p>
+            <span class="rec-hero-badge">
+                <i class='bx bx-list-ul'></i>
+                {{ entries.count }} visit entr{{ entries.count|pluralize:'y,ies' }}
+            </span>
+        </div>
+        <div class="rec-hero-actions">
+            <a href="{% url 'records:admin_list' %}" class="rec-hero-btn-back">
+                <i class='bx bx-arrow-back'></i> Back
+            </a>
+            <a href="{% url 'records:admin_edit' record.pk %}" class="rec-hero-btn-edit">
+                <i class='bx bx-edit-alt'></i> Edit Record
+            </a>
+            <a href="{% url 'records:admin_add_entry' record.pk %}" class="rec-hero-btn-add">
+                <i class='bx bx-plus-circle'></i> Add Visit Entry
+            </a>
+            <a href="{% url 'records:download_pdf' record.pk %}" class="rec-hero-btn-pdf">
+                <i class='bx bx-download'></i> Download PDF
+            </a>
+        </div>
     </div>
 </div>
 
@@ -254,11 +640,8 @@
     </div>
 
     <!-- Visit Details -->
-    <div class="rv-section-hd">Visit Details — {{ record.date_recorded|date:"F j, Y" }}</div>
+    <div class="rv-section-hd">Visit History</div>
     <div class="rv-vet-banner">
-        <span><i class='bx bx-user-md'></i> <strong>Veterinarian:</strong>&nbsp;
-            {% if record.vet %}Dr. {{ record.vet.first_name }} {{ record.vet.last_name }}{% else %}Not Assigned{% endif %}
-        </span>
         <span><i class='bx bx-building'></i> <strong>Branch:</strong>&nbsp;{{ record.branch.name|default:"—" }}</span>
         <span><i class='bx bx-pulse'></i> <strong>Status:</strong>&nbsp;{{ record.status }}</span>
     </div>
@@ -274,20 +657,45 @@
                     <th class="col-tx">Treatment (Tx)</th>
                     <th class="col-rx">Prescription (Rx)</th>
                     <th class="col-ffup">Follow-Up</th>
+                    <th class="col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td class="col-date">{{ record.date_recorded|date:"M j, Y" }}</td>
+                {% for entry in entries %}
+                <tr class="rv-entry-row"
+                    data-pk="{{ entry.pk }}"
+                    data-date="{{ entry.date_recorded|date:'Y-m-d' }}"
+                    data-weight="{{ entry.weight|default:'' }}"
+                    data-temp="{{ entry.temperature|default:'' }}"
+                    data-history="{{ entry.history_clinical_signs|default:''|escapejs }}"
+                    data-treatment="{{ entry.treatment|default:''|escapejs }}"
+                    data-rx="{{ entry.rx|default:''|escapejs }}"
+                    data-ffup="{{ entry.ff_up|date:'Y-m-d'|default:'' }}">
+                    <td class="col-date">{{ entry.date_recorded|date:"M j, Y" }}</td>
                     <td class="col-vitals">
-                        {% if record.weight %}{{ record.weight }} kg{% else %}—{% endif %}<br>
-                        {% if record.temperature %}{{ record.temperature }}°C{% else %}—{% endif %}
+                        {% if entry.weight %}{{ entry.weight }} kg{% else %}—{% endif %}<br>
+                        {% if entry.temperature %}{{ entry.temperature }}°C{% else %}—{% endif %}
                     </td>
-                    <td class="col-history">{{ record.history_clinical_signs|default:"No notes recorded"|linebreaks }}</td>
-                    <td class="col-tx">{{ record.treatment|default:"—"|linebreaks }}</td>
-                    <td class="col-rx">{{ record.rx|default:"—"|linebreaks }}</td>
-                    <td class="col-ffup">{{ record.ff_up|date:"M j, Y"|default:"—" }}</td>
+                    <td class="col-history">{{ entry.history_clinical_signs|default:"—"|linebreaks }}</td>
+                    <td class="col-tx">{{ entry.treatment|default:"—"|linebreaks }}</td>
+                    <td class="col-rx">{{ entry.rx|default:"—"|linebreaks }}</td>
+                    <td class="col-ffup">{{ entry.ff_up|date:"M j, Y"|default:"—" }}</td>
+                    <td class="col-actions">
+                        <div class="rv-action-wrap">
+                            <button type="button" class="rv-btn-edit" title="Edit entry"
+                                onclick="openEntryModalFromBtn(this)" data-row-ref="rv-entry-row">
+                                <i class='bx bx-edit-alt'></i>
+                            </button>
+                            <a href="{% url 'records:admin_entry_delete' entry.pk %}" class="rv-btn-delete" title="Delete entry"
+                                onclick="return confirm('Delete this visit entry? This cannot be undone.')">
+                                <i class='bx bx-trash'></i>
+                            </a>
+                        </div>
+                    </td>
                 </tr>
+                {% empty %}
+                <tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-secondary);">No visit entries yet. <a href="{% url 'records:admin_add_entry' record.pk %}">Add the first entry.</a></td></tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
@@ -299,9 +707,104 @@
             &nbsp;•&nbsp; Scan QR code to confirm authenticity
         </div>
         <div class="rv-footer-text">
-            Viewed: {{ generated_date|date:"M j, Y" }} at {{ generated_date|time:"g:i A" }}
+            Last Updated: {{ record.updated_at|date:"M j, Y" }} at {{ record.updated_at|time:"g:i A" }}
         </div>
     </div>
 
 </div>
+
+<!-- ══ EDIT ENTRY MODAL ══ -->
+<div class="entry-modal-overlay" id="entryModal">
+    <div class="entry-modal">
+        <div class="entry-modal-head">
+            <h3><i class='bx bx-edit-alt'></i> Edit Visit Entry &mdash; <span id="emDateLabel"></span></h3>
+            <button type="button" class="entry-modal-close" onclick="closeEntryModal()">&times;</button>
+        </div>
+        <form id="entryEditForm" method="post">
+            {% csrf_token %}
+            <div class="entry-modal-body">
+                <div class="em-row">
+                    <div class="em-field">
+                        <label>Date of Visit</label>
+                        <input type="date" name="date_recorded" id="emDate" required>
+                    </div>
+                    <div class="em-field">
+                        <label>Follow-Up Date</label>
+                        <input type="date" name="ff_up" id="emFfup">
+                    </div>
+                </div>
+                <div class="em-row">
+                    <div class="em-field">
+                        <label>Weight (kg)</label>
+                        <input type="number" step="0.01" name="weight" id="emWeight" placeholder="e.g. 5.50">
+                    </div>
+                    <div class="em-field">
+                        <label>Temperature (&deg;C)</label>
+                        <input type="number" step="0.1" name="temperature" id="emTemp" placeholder="e.g. 38.5">
+                    </div>
+                </div>
+                <div class="em-row single">
+                    <div class="em-field">
+                        <label>History / Clinical Signs</label>
+                        <textarea name="history_clinical_signs" id="emHistory"></textarea>
+                    </div>
+                </div>
+                <div class="em-row single">
+                    <div class="em-field">
+                        <label>Treatment (Tx)</label>
+                        <textarea name="treatment" id="emTreatment"></textarea>
+                    </div>
+                </div>
+                <div class="em-row single">
+                    <div class="em-field">
+                        <label>Prescription (Rx)</label>
+                        <textarea name="rx" id="emRx"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="entry-modal-foot">
+                <button type="button" class="em-btn-cancel" onclick="closeEntryModal()">Cancel</button>
+                <button type="submit" class="em-btn-save"><i class='bx bx-save'></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const EDIT_URL_TPL = "{% url 'records:admin_entry_edit' entry_pk=0 %}";
+
+function openEntryModal(row) {
+    document.getElementById('emDateLabel').textContent = row.querySelector('.col-date').textContent.trim().replace(' ✎', '');
+    document.getElementById('emDate').value      = row.dataset.date;
+    document.getElementById('emWeight').value    = row.dataset.weight;
+    document.getElementById('emTemp').value      = row.dataset.temp;
+    document.getElementById('emHistory').value   = row.dataset.history;
+    document.getElementById('emTreatment').value = row.dataset.treatment;
+    document.getElementById('emRx').value        = row.dataset.rx;
+    document.getElementById('emFfup').value      = row.dataset.ffup;
+
+    document.getElementById('entryEditForm').action = EDIT_URL_TPL.replace('/0/', '/' + row.dataset.pk + '/');
+    document.getElementById('entryModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeEntryModal() {
+    document.getElementById('entryModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function openEntryModalFromBtn(btn) {
+    var row = btn.closest('.rv-entry-row');
+    openEntryModal(row);
+}
+
+document.getElementById('entryModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEntryModal();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeEntryModal();
+});
+</script>
+
 {% endblock %}

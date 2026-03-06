@@ -5,6 +5,63 @@
 
 {% block content %}
 <style>
+  /* Search Dropdown */
+  .search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    margin-top: 4px;
+  }
+  .search-dropdown.active { display: block; }
+  .search-dropdown-item {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--border);
+  }
+  .search-dropdown-item:last-child { border-bottom: none; }
+  .search-dropdown-item:hover { background: var(--bg); }
+  .search-dropdown-item i {
+    font-size: 18px;
+    color: var(--primary);
+    width: 24px;
+    text-align: center;
+  }
+  .search-dropdown-item .item-info { flex: 1; }
+  .search-dropdown-item .item-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .search-dropdown-item .item-sub {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+  .search-dropdown-empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+  }
+  .search-dropdown-highlight {
+    background: rgba(0,150,136,0.15);
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+
   /* Modal Overlay */
   .pm-modal-overlay {
     position: fixed;
@@ -92,23 +149,42 @@
   }
 </style>
 
-<!-- Page Header -->
-<div class="admin-page-header">
-  <div>
-    <h1>Patients Management</h1>
-    <p class="subtitle">Manage your clients and their pets in one place</p>
+<!-- ══════ PATIENTS HERO ══════ -->
+<div class="appt-hero">
+  <div class="appt-hero-bg">
+    <i class='bx bxs-dog hero-scatter sc-1'></i>
+    <i class='bx bx-paw hero-scatter sc-2'></i>
+    <i class='bx bxs-dog hero-scatter sc-3'></i>
+    <i class='bx bx-paw hero-scatter sc-4'></i>
+    <i class='bx bxs-dog hero-scatter sc-5'></i>
+    <i class='bx bx-paw hero-scatter sc-6'></i>
   </div>
-  <div class="admin-header-actions">
-    <form method="get" action="{% url 'patients:admin_list' %}" style="margin: 0;">
-      <div class="admin-search-box">
-        <i class='bx bx-search'></i>
-        <input type="text" name="q" value="{{ search_query }}" placeholder="Search patients..." class="admin-search-input">
-      </div>
-    </form>
-    <a href="{% url 'patients:admin_add_pet' %}" class="admin-btn primary">
-      <i class='bx bx-plus'></i> Add Patient
+  <div class="appt-hero-inner">
+    <div class="appt-hero-text">
+      <h1><i class='bx bxs-dog'></i> Patients Management</h1>
+      <p>Manage all registered clients and their pets in one place</p>
+    </div>
+    <a href="{% url 'patients:admin_add_pet' %}" class="appt-hero-book-btn">
+      <i class='bx bx-plus-circle'></i> Add Patient
     </a>
   </div>
+</div>
+
+<!-- ══════ SEARCH & FILTER BAR ══════ -->
+<div class="appt-filter-bar">
+  <form method="get" action="{% url 'patients:admin_list' %}" class="appt-filter-form" style="width:100%;" autocomplete="off">
+    <div class="appt-search-wrap" style="position:relative;">
+      <i class='bx bx-search appt-search-icon'></i>
+      <input type="text" name="q" value="{{ search_query }}" placeholder="Search by pet name, owner, species..." id="patientSearch" class="appt-search-input">
+      <div class="search-dropdown" id="patientSearchDropdown"></div>
+    </div>
+    <div class="appt-filter-divider"></div>
+    <span style="color:var(--text-secondary); font-size:0.85rem;">{{ pets|length }} patient{{ pets|length|pluralize }}</span>
+    {% if search_query %}
+    <div class="appt-filter-divider"></div>
+    <a href="{% url 'patients:admin_list' %}" class="appt-clear-btn"><i class='bx bx-x'></i> Clear</a>
+    {% endif %}
+  </form>
 </div>
 
 <!-- Main Table Container -->
@@ -129,7 +205,12 @@
     </thead>
     <tbody>
       {% for pet in pets %}
-      <tr>
+      <tr class="searchable-row"
+          data-name="{{ pet.name }}"
+          data-owner="{{ pet.owner.get_full_name|default:pet.owner.username }}"
+          data-species="{{ pet.species|default:'' }}"
+          data-breed="{{ pet.breed|default:'' }}"
+          data-edit-url="{% url 'patients:admin_edit_pet' pet.id %}">
         <td>
           <a href="#" onclick="openPatientDetail('{{ pet.name|escapejs }}', '{{ pet.species|default:'-'|escapejs }}', '{{ pet.breed|default:'-'|escapejs }}', '{{ pet.sex|default:'-'|escapejs }}', '{{ pet.dob_or_age|default:'-'|escapejs }}', '{{ pet.color|default:'-'|escapejs }}', '{{ pet.owner.get_full_name|default:pet.owner.username|escapejs }}', '{{ pet.owner.phone_number|default:'-'|escapejs }}', '{{ pet.owner.email|default:'-'|escapejs }}', '{% url 'patients:admin_edit_pet' pet.id %}'); return false;" class="cell-link">{{ pet.name }}</a>
         </td>
@@ -253,6 +334,112 @@
       closePatientDetail();
     }
   });
+
+  // ══════ SEARCH AUTOCOMPLETE + LIVE FILTER ══════
+  (function initPatientSearch() {
+    const searchInput = document.getElementById('patientSearch');
+    const dropdown    = document.getElementById('patientSearchDropdown');
+    if (!searchInput || !dropdown) return;
+
+    function buildData() {
+      return Array.from(document.querySelectorAll('tr.searchable-row')).map(row => ({
+        name   : row.dataset.name    || '',
+        owner  : row.dataset.owner   || '',
+        species: row.dataset.species || '',
+        breed  : row.dataset.breed   || '',
+        editUrl: row.dataset.editUrl || '#',
+        row    : row
+      }));
+    }
+
+    let patients = buildData();
+
+    function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+    function highlight(text, q) {
+      if (!q) return text;
+      return text.replace(new RegExp('(' + esc(q) + ')', 'gi'),
+        '<span class="search-dropdown-highlight">$1</span>');
+    }
+
+    function renderDropdown(results, q) {
+      if (!results.length) {
+        dropdown.innerHTML = '<div class="search-dropdown-empty"><i class="bx bx-search-alt"></i> No patients found</div>';
+      } else {
+        dropdown.innerHTML = results.slice(0, 8).map(p => `
+          <div class="search-dropdown-item" data-name="${p.name}">
+            <i class='bx bxs-dog'></i>
+            <div class="item-info">
+              <div class="item-name">${highlight(p.name, q)}</div>
+              <div class="item-sub">${highlight(p.owner, q)} &bull; ${p.species}${p.breed && p.breed !== '-' ? ' &bull; ' + p.breed : ''}</div>
+            </div>
+            <i class='bx bx-chevron-right' style="color:var(--text-secondary);"></i>
+          </div>`).join('');
+        dropdown.querySelectorAll('.search-dropdown-item').forEach((item, idx) => {
+          item.addEventListener('mousedown', e => {
+            e.preventDefault();
+            searchInput.value = results[idx].name;
+            filterRows(results[idx].name.toLowerCase());
+            hideDropdown();
+          });
+        });
+      }
+      dropdown.style.display = 'block';
+      dropdown.classList.add('active');
+    }
+
+    function hideDropdown() {
+      dropdown.classList.remove('active');
+      dropdown.style.display = '';
+    }
+
+    function filterRows(q) {
+      patients.forEach(p => {
+        const nl = p.name.toLowerCase(); const ol = p.owner.toLowerCase();
+        const sl = p.species.toLowerCase(); const bl = p.breed.toLowerCase();
+        const matches = !q || nl.includes(q) || ol.includes(q) || sl.includes(q) || bl.includes(q);
+        p.row.style.display = matches ? '' : 'none';
+      });
+    }
+
+    searchInput.addEventListener('input', function () {
+      const q = this.value.toLowerCase().trim();
+      filterRows(q);
+      if (!q) { hideDropdown(); return; }
+      const results = patients.filter(p =>
+        p.name.toLowerCase().includes(q) || p.owner.toLowerCase().includes(q) ||
+        p.species.toLowerCase().includes(q) || p.breed.toLowerCase().includes(q));
+      renderDropdown(results, q);
+    });
+
+    searchInput.addEventListener('focus', function () {
+      if (this.value.trim()) this.dispatchEvent(new Event('input'));
+    });
+
+    searchInput.addEventListener('blur', function () {
+      setTimeout(hideDropdown, 150);
+    });
+
+    searchInput.addEventListener('keydown', function (e) {
+      const items = Array.from(dropdown.querySelectorAll('.search-dropdown-item'));
+      let idx = items.findIndex(i => i.classList.contains('active'));
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        items[idx]?.classList.remove('active');
+        idx = (idx + 1) % items.length;
+        items[idx]?.classList.add('active');
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        items[idx]?.classList.remove('active');
+        idx = (idx - 1 + items.length) % items.length;
+        items[idx]?.classList.add('active');
+      } else if (e.key === 'Enter' && idx >= 0) {
+        e.preventDefault(); items[idx]?.click();
+      } else if (e.key === 'Escape') {
+        hideDropdown();
+      }
+    });
+  }());
 </script>
 
 {% endblock %}

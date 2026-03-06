@@ -677,14 +677,12 @@ def api_owner_pets(request):
     pets = Pet.objects.filter(owner=owner).order_by('name')
     data = []
     for pet in pets:
-        # Return age as text string
-        dob_text = f'{pet.age} years' if pet.age else ''
         data.append({
             'id': pet.id,
             'name': pet.name,
             'species': pet.species or '',
             'breed': pet.breed or '',
-            'dob': dob_text,
+            'dob': pet.dob_or_age or '',
             'sex': pet.sex or '',
             'color': pet.color or '',
         })

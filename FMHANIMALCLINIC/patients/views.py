@@ -20,8 +20,13 @@ def admin_list_view(request):
 
     query = request.GET.get('q', '')
     if query:
+        from django.db.models import Q
         pets = Pet.objects.filter(
-            name__icontains=query).select_related('owner')
+            Q(name__icontains=query) |
+            Q(owner__first_name__icontains=query) |
+            Q(owner__last_name__icontains=query) |
+            Q(owner__username__icontains=query)
+        ).select_related('owner')
     else:
         pets = Pet.objects.select_related('owner').all().order_by('-id')
 

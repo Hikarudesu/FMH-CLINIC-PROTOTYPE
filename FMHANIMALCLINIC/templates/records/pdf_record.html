@@ -83,23 +83,27 @@
             </tr>
         </thead>
         <tbody>
+            {% for entry in entries %}
             <tr>
-                <td class="col-date">{{ record.date_recorded|date:"M j, Y" }}</td>
+                <td class="col-date">{{ entry.date_recorded|date:"M j, Y" }}</td>
                 <td class="col-vitals">
-                    {% if record.weight %}{{ record.weight }}kg{% else %}—{% endif %}<br>
-                    {% if record.temperature %}{{ record.temperature }}°C{% else %}—{% endif %}
+                    {% if entry.weight %}{{ entry.weight }}kg{% else %}—{% endif %}<br>
+                    {% if entry.temperature %}{{ entry.temperature }}°C{% else %}—{% endif %}
                 </td>
                 <td class="col-history">
-                    <div class="text-cell">{{ record.history_clinical_signs|default:"No notes recorded"|break_long_words }}</div>
+                    <div class="text-cell">{{ entry.history_clinical_signs|default:"No notes recorded"|break_long_words }}</div>
                 </td>
                 <td class="col-tx">
-                    <div class="text-cell">{{ record.treatment|default:"—"|break_long_words }}</div>
+                    <div class="text-cell">{{ entry.treatment|default:"—"|break_long_words }}</div>
                 </td>
                 <td class="col-rx">
-                    <div class="text-cell">{{ record.rx|default:"—"|break_long_words }}</div>
+                    <div class="text-cell">{{ entry.rx|default:"—"|break_long_words }}</div>
                 </td>
-                <td class="col-ffup">{{ record.ff_up|date:"M j, Y"|default:"—" }}</td>
+                <td class="col-ffup">{{ entry.ff_up|date:"M j, Y"|default:"—" }}</td>
             </tr>
+            {% empty %}
+            <tr><td colspan="6" style="text-align:center;">No visit entries recorded.</td></tr>
+            {% endfor %}
         </tbody>
     </table>
 
@@ -113,7 +117,7 @@
                     <span class="footer-text" style="margin-left: 8px;">• Scan QR code to confirm authenticity</span>
                 </td>
                 <td style="vertical-align: middle; text-align: right;">
-                    <span class="generated">Generated: {{ generated_date|date:"M j, Y" }} at {{ generated_date|time:"g:i A" }}</span>
+                    <span class="generated">Last Updated: {{ record.updated_at|date:"M j, Y" }} at {{ record.updated_at|time:"g:i A" }}</span>
                 </td>
             </tr>
         </table>
