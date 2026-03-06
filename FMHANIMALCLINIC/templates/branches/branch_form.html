@@ -1,97 +1,315 @@
+<!-- prettier-ignore -->
 {% extends 'base/portal_admin.html' %}
 
+<!-- prettier-ignore -->
 {% block title %}{{ action }} Branch{% endblock %}
 
+<!-- prettier-ignore -->
 {% block content %}
-<!-- Page Header -->
-<div class="page-header">
-  <div>
-    <h1>{{ action }} Branch</h1>
-    <p class="page-subtitle">{% if action == 'Add' %}Register a new clinic location{% else %}Update {{ branch.name }} details{% endif %}</p>
-  </div>
-  <div class="page-header-actions">
-    <a href="{% url 'branches:list' %}" class="btn-action outline"><i class='bx bx-arrow-back'></i> Back to Branches</a>
-  </div>
+<style>
+  .pm-header {
+    margin-bottom: 24px;
+  }
+  .pm-title {
+    color: var(--text-primary);
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+  .pm-subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin: 0;
+  }
+  .admin-form-container {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px;
+    max-width: 800px;
+    margin-top: 24px;
+  }
+  .admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .admin-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .admin-field label {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .admin-input {
+    width: 100%;
+    padding: 12px 16px;
+    background-color: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .admin-input:focus {
+    border-color: var(--primary);
+  }
+  select.admin-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a0a0b0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+  }
+  .admin-field-full {
+    grid-column: 1 / -1;
+  }
+  .admin-actions {
+    margin-top: 32px;
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+  }
+  .btn-cancel {
+    padding: 10px 24px;
+    background-color: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.2s;
+  }
+  .btn-cancel:hover {
+    background-color: var(--surface-hover);
+  }
+  .btn-submit {
+    padding: 10px 24px;
+    background-color: var(--primary);
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-submit:hover {
+    opacity: 0.9;
+  }
+  .error-text {
+    color: #ff4d4d;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 32px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    grid-column: 1 / -1;
+  }
+  .form-section-title:first-of-type {
+    margin-top: 0;
+  }
+  .form-section-title i {
+    color: var(--primary);
+    font-size: 1.1rem;
+  }
+  .form-section-hint {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-left: 4px;
+  }
+  .form-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+  .form-checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+  }
+</style>
+
+<div class="pm-header">
+  <h1 class="pm-title">{{ action }} Branch</h1>
+  <p class="pm-subtitle">
+    {% if action == 'Add' %}Register a new clinic location{% else %}Update {{
+    branch.name }} details{% endif %}
+  </p>
 </div>
 
-<!-- Branch Form Card -->
-<div class="dashboard-card full-width">
-  <div class="card-header">
-    <h3><i class='bx bx-building-house'></i> Branch Details</h3>
-  </div>
-  <div class="card-body">
-    <form method="POST" class="pet-form">
-      {% csrf_token %}
+<div class="admin-form-container">
+  <form method="POST" autocomplete="off">
+    {% csrf_token %}
 
-      <div class="form-section-title"><i class='bx bx-info-circle'></i> General Information</div>
-      <div class="form-grid">
-        <div class="form-group {% if form.name.errors %}has-error{% endif %}">
-          <label for="{{ form.name.id_for_label }}">Branch Name <span class="text-danger-inline">*</span></label>
-          {{ form.name }}
-          {% if form.name.errors %}<span class="form-error">{{ form.name.errors.0 }}</span>{% endif %}
-        </div>
-        <div class="form-group {% if form.branch_code.errors %}has-error{% endif %}">
-          <label for="{{ form.branch_code.id_for_label }}">Branch Code</label>
-          {{ form.branch_code }}
-          {% if form.branch_code.errors %}<span class="form-error">{{ form.branch_code.errors.0 }}</span>{% endif %}
-        </div>
-        <div class="form-group {% if form.phone_number.errors %}has-error{% endif %}">
-          <label for="{{ form.phone_number.id_for_label }}">Phone Number <span class="text-danger-inline">*</span></label>
-          {{ form.phone_number }}
-          {% if form.phone_number.errors %}<span class="form-error">{{ form.phone_number.errors.0 }}</span>{% endif %}
-        </div>
-        <div class="form-group {% if form.email.errors %}has-error{% endif %}">
-          <label for="{{ form.email.id_for_label }}">Email</label>
-          {{ form.email }}
-          {% if form.email.errors %}<span class="form-error">{{ form.email.errors.0 }}</span>{% endif %}
-        </div>
+    <div class="admin-grid">
+      <div class="form-section-title">
+        <i class="bx bx-info-circle"></i> General Information
       </div>
 
-      <div class="form-section-title"><i class='bx bx-map'></i> Location</div>
-      <div class="form-grid">
-        <div class="form-group {% if form.address.errors %}has-error{% endif %}" style="grid-column: 1 / -1;">
-          <label for="{{ form.address.id_for_label }}">Street Address <span class="text-danger-inline">*</span></label>
-          {{ form.address }}
-          {% if form.address.errors %}<span class="form-error">{{ form.address.errors.0 }}</span>{% endif %}
-        </div>
-        <div class="form-group {% if form.city.errors %}has-error{% endif %}">
-          <label for="{{ form.city.id_for_label }}">City <span class="text-danger-inline">*</span></label>
-          {{ form.city }}
-          {% if form.city.errors %}<span class="form-error">{{ form.city.errors.0 }}</span>{% endif %}
-        </div>
-        <div class="form-group {% if form.state.errors %}has-error{% endif %}">
-          <label for="{{ form.state.id_for_label }}">State/Province <span class="text-danger-inline">*</span></label>
-          {{ form.state }}
-          {% if form.state.errors %}<span class="form-error">{{ form.state.errors.0 }}</span>{% endif %}
-        </div>
-        <div class="form-group {% if form.zip_code.errors %}has-error{% endif %}">
-          <label for="{{ form.zip_code.id_for_label }}">Zip/Postal Code <span class="text-danger-inline">*</span></label>
-          {{ form.zip_code }}
-          {% if form.zip_code.errors %}<span class="form-error">{{ form.zip_code.errors.0 }}</span>{% endif %}
-        </div>
+      <div class="admin-field">
+        <label for="{{ form.name.id_for_label }}">Branch Name *</label>
+        {{ form.name }}
+        <script>
+          document
+            .getElementById("{{ form.name.id_for_label }}")
+            .classList.add("admin-input");
+        </script>
+        {% if form.name.errors %}
+        <div class="error-text">{{ form.name.errors.0 }}</div>
+        {% endif %}
       </div>
 
-      <div class="form-section-title"><i class='bx bx-time'></i> Operations</div>
-      <div class="form-group {% if form.operating_hours.errors %}has-error{% endif %}">
-        <label for="{{ form.operating_hours.id_for_label }}">Operating Hours</label>
+      <div class="admin-field">
+        <label for="{{ form.branch_code.id_for_label }}">Branch Code</label>
+        {{ form.branch_code }}
+        <script>
+          document
+            .getElementById("{{ form.branch_code.id_for_label }}")
+            .classList.add("admin-input");
+        </script>
+        {% if form.branch_code.errors %}
+        <div class="error-text">{{ form.branch_code.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="admin-field">
+        <label for="{{ form.phone_number.id_for_label }}">Phone Number *</label>
+        {{ form.phone_number }}
+        <script>
+          document
+            .getElementById("{{ form.phone_number.id_for_label }}")
+            .classList.add("admin-input");
+        </script>
+        {% if form.phone_number.errors %}
+        <div class="error-text">{{ form.phone_number.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="admin-field">
+        <label for="{{ form.email.id_for_label }}">Email</label>
+        {{ form.email }}
+        <script>
+          document
+            .getElementById("{{ form.email.id_for_label }}")
+            .classList.add("admin-input");
+        </script>
+        {% if form.email.errors %}
+        <div class="error-text">{{ form.email.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-section-title"><i class="bx bx-map"></i> Location</div>
+
+      <div class="admin-field admin-field-full">
+        <label for="{{ form.address.id_for_label }}">Street Address *</label>
+        {{ form.address }}
+        <script>
+          document
+            .getElementById("{{ form.address.id_for_label }}")
+            .classList.add("admin-input");
+        </script>
+        {% if form.address.errors %}
+        <div class="error-text">{{ form.address.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="admin-field">
+        <label for="{{ form.city.id_for_label }}">City *</label>
+        {{ form.city }}
+        <script>
+          document
+            .getElementById("{{ form.city.id_for_label }}")
+            .classList.add("admin-input");
+        </script>
+        {% if form.city.errors %}
+        <div class="error-text">{{ form.city.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="admin-field">
+        <label for="{{ form.state.id_for_label }}">State/Province *</label>
+        {{ form.state }}
+        <script>
+          document
+            .getElementById("{{ form.state.id_for_label }}")
+            .classList.add("admin-input");
+        </script>
+        {% if form.state.errors %}
+        <div class="error-text">{{ form.state.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="admin-field">
+        <label for="{{ form.zip_code.id_for_label }}">Zip/Postal Code *</label>
+        {{ form.zip_code }}
+        <script>
+          document
+            .getElementById("{{ form.zip_code.id_for_label }}")
+            .classList.add("admin-input");
+        </script>
+        {% if form.zip_code.errors %}
+        <div class="error-text">{{ form.zip_code.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-section-title">
+        <i class="bx bx-time"></i> Operations
+      </div>
+
+      <div class="admin-field admin-field-full">
+        <label for="{{ form.operating_hours.id_for_label }}"
+          >Operating Hours</label
+        >
         {{ form.operating_hours }}
-        {% if form.operating_hours.errors %}<span class="form-error">{{ form.operating_hours.errors.0 }}</span>{% endif %}
+        <script>
+          let hoursInput = document.getElementById(
+            "{{ form.operating_hours.id_for_label }}",
+          );
+          if (hoursInput) {
+            hoursInput.classList.add("admin-input");
+            if (hoursInput.tagName.toLowerCase() === "textarea") {
+              hoursInput.setAttribute("rows", "3");
+            }
+          }
+        </script>
+        {% if form.operating_hours.errors %}
+        <div class="error-text">{{ form.operating_hours.errors.0 }}</div>
+        {% endif %}
       </div>
 
-      <div class="form-grid" style="margin-top: 12px;">
-        <div class="form-group">
-          <label class="form-checkbox-label">
-            {{ form.is_active }}
-            <span>Active Branch</span>
-          </label>
-        </div>
+      <div class="admin-field admin-field-full" style="margin-top: 8px">
+        <label class="form-checkbox-label">
+          {{ form.is_active }}
+          <span>Active Branch</span>
+        </label>
       </div>
+    </div>
 
-      <div class="form-actions">
-        <button type="submit" class="btn-action primary"><i class='bx bx-check'></i> {{ action }} Branch</button>
-        <a href="{% url 'branches:list' %}" class="btn-action outline">Cancel</a>
-      </div>
-    </form>
-  </div>
+    <!-- Form Actions -->
+    <div class="admin-actions">
+      <a href="{% url 'branches:list' %}" class="btn-cancel">Cancel</a>
+      <button type="submit" class="btn-submit">{{ action }} Branch</button>
+    </div>
+  </form>
 </div>
 {% endblock %}
